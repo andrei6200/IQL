@@ -4,35 +4,12 @@
 
 #define YYSTYPE char *
  
-extern "C"
-{
-        int yyparse(void);
-        int yylex(void);  
-        int yywrap()
-        {
-                return 1;
-        }
-}
-
 void yyerror(const char *str)
 {
         fprintf(stderr,"error: %s\n",str);
 }
- /*
-int yywrap()
-{
-        return 1;
-} */
  
-// extern int yydebug;
- 
-main()
-{
-//		yydebug = 1;
-        yyparse();
-} 
-
-
+extern int yylex();
 
 %}
 
@@ -91,3 +68,12 @@ statements:
 
 statement: WORD | block | quotedname
 		;
+
+
+%%
+
+
+main()
+{
+        yyparse();
+} 

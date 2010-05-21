@@ -2,10 +2,11 @@
 #define YYSTYPE char *
 
 #include <stdio.h>
-#include "parser.hpp"
+#include "parser.h"
+
 %}
 
-
+%option noyywrap
 
 %%
 
