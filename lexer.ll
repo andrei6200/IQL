@@ -1,5 +1,5 @@
 %{
-#define YYSTYPE char *
+// #define YYSTYPE char *
 
 #include <stdio.h>
 #include "parser.h"
@@ -10,14 +10,13 @@
 
 %%
 
-zone                    return ZONETOK;
-file                    return FILETOK;
-[a-zA-Z][a-zA-Z0-9]*    yylval=strdup(yytext); return WORD;
-[a-zA-Z0-9\/.-]+        yylval=strdup(yytext); return FILENAME;
-\"                      return QUOTE;
-\{                      return OBRACE;
-\}                      return EBRACE;
+
+
+
+test					return TEST;
+select					return SELECT;
+[0-9]+					yylval = atoi(yytext); return NUMBER;
 ;                       return SEMICOLON;
-\n                      /* ignore EOL */;
+\n                      return EOL;
 [ \t]+                  /* ignore whitespace */;
 %%
