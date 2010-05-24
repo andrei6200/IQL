@@ -11,12 +11,12 @@ top_builddir = ..
 
 # ************************* AA: START - We need the following to be able to use this Makefile outside the PG sourcetree
 srcdir = .
-CFLAGS = -Iinclude/
+CFLAGS = 
 CC = gcc
-OUTLIB = libmypg.a
+OUTLIB = lib/libparse.a
 
 # The following is taken from Postgresql Makefile
-CFLAGS = $(CFLAGS) -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -fno-strict-aliasing -fwrapv
+CFLAGS = -Iinclude/ -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -fno-strict-aliasing -fwrapv
 # ************************* AA: END - We need the following to be able to use this Makefile outside the PG sourcetree
 
 

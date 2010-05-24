@@ -2,41 +2,50 @@
 #include <stdio.h>
 #include <string.h>
 
-// #define YYSTYPE char *
- 
-void yyerror(const char *str)
-{
-        fprintf(stderr,"error: %s\n",str);
-}
- 
 extern int yylex();
 
 %}
 
-%token NUMBER SELECT TEST SEMICOLON EOL
+/******************************** START POSTGRESQL *********************************/
+/* Special token types, not actually keywords - see the "lex" file */
+%token <str>    IDENT FCONST SCONST BCONST XCONST Op 
+%token <ival>   ICONST PARAM
+%left 			TYPECAST
+/******************************** END POSTGRESQL *********************************/
+
+%token <str> HQLNUMBER HQLSELECT HQLTEST HQLSEMICOLON HQLEOL
 %error-verbose
+%locations
+
+%union
+{
+  char		*str;
+  char		*keyword;
+  int		ival;
+}
 
 %%
 
 commands:
         |        
-		  commands command EOL
+		  commands command HQLEOL
 		| 
-		  commands command SEMICOLON
+		  commands command HQLSEMICOLON
         ;
 
 command:	
-		TEST		
+		HQLTEST		
 			{ printf("Statement: TEST\n"); }
-		| TEST NUMBER
-			{ printf("Statement: TEST number: %d\n", $2); }
-		| SELECT NUMBER
-			{ printf("Statement: SELECT number: %d\n", $2); }
+		| HQLTEST HQLNUMBER
+			{ printf("Statement: TEST number: %s\n", $2); }
+		| HQLSELECT HQLNUMBER
+			{ printf("Statement: SELECT number: %s\n", $2); }
 
 %%
 
 
-main()
+int main()
 {
-        yyparse();
+	yyparse();
+	return 0;
 } 
