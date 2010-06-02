@@ -32,7 +32,9 @@ FLEXFLAGS = -CF
 # ********************* AA: START - New targets
 
 # all is the default target
-all: $(OBJS)
+all: $(OUTLIB)
+
+$(OUTLIB): $(OBJS)
 	ar rcs $(OUTLIB)  *.o
 
 

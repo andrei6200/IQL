@@ -358,12 +358,12 @@ other			.
 
 
 
-test					return HQLTEST;
-select					return HQLSELECT;
-[0-9]+					yylval.str = yytext; return HQLNUMBER;
-;                       return HQLSEMICOLON;
-\n                      return HQLEOL;
-[ \t]+                  /* ignore whitespace */;
+ //test					return HQLTEST;
+ //select					return HQLSELECT;
+ //[0-9]+					yylval.str = yytext; return HQLNUMBER;
+ //;                       return HQLSEMICOLON;
+ //\n                      return HQLEOL;
+ //[ \t]+                  /* ignore whitespace */;
 
 
 
@@ -701,7 +701,7 @@ select					return HQLSELECT;
 					/* and treat it as {identifier} */
 //					ident = downcase_truncate_identifier(yytext, yyleng, true);
 //					yylval.str = ident;
-                                        strncpy(yylval.str, yytext, yyleng);
+                                        yylval.str = strdup(yytext);
 					return IDENT;
 				}
 
@@ -873,7 +873,7 @@ select					return HQLSELECT;
 					 * if necessary.
 					 */
 //					ident = downcase_truncate_identifier(yytext, yyleng, true);
-					strncpy(yylval.str, yytext, yyleng);
+					yylval.str = strdup(yytext);
 //					yylval.str = ident;
 					return IDENT;
 				}
