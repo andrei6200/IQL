@@ -464,7 +464,6 @@ other			.
 					 * We will pass this along as a normal character string,
 					 * but preceded with an internally-generated "NCHAR".
 					 */
-					/*
 					const ScanKeyword *keyword;
 
 					SET_YYLLOC();
@@ -474,9 +473,6 @@ other			.
 					Assert(keyword != NULL);
 					yylval.keyword = keyword->name;
 					return keyword->value;
-					*/
-					yylval.keyword = "nchar";
-					return "nchar";
 				}
 
 {xqstart}		{
@@ -860,14 +856,14 @@ other			.
 					SET_YYLLOC();
 
 					/* Is it a keyword? */
-					/*
 					keyword = ScanKeywordLookup(yytext);
 					if (keyword != NULL)
 					{
+                                            printf("\n[LEXER]: Found keyword: %s\n\n", keyword->name);
+                                            printf("\n[LEXER]: With lexer token: %d\n\n", keyword->value);
 						yylval.keyword = keyword->name;
 						return keyword->value;
 					}
-					*/
 					/*
 					 * No.  Convert the identifier to lower case, and truncate
 					 * if necessary.

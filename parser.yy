@@ -1,5 +1,6 @@
 %{
-/*#define YYDEBUG 1*/
+#define YYDEBUG 1
+int yydebug = 1;
 
 #include <stdio.h>
 #include <string.h>
@@ -332,6 +333,7 @@ char* parsetree;
 %error-verbose
 %locations
 %expect 0
+
 //
 //%union
 //{
@@ -371,21 +373,34 @@ stmtblock:	stmtmulti
 /* the thrashing around here is to discard "empty" statements... */
 stmtmulti:	stmtmulti ';' stmt
 				{ if ($3 != NULL)
+					{
 					$$ = cat2($1, $3);
+					printf("\t*** Single statement (in a series): %s\n", $3);
+					}
 				  else
+				  {
 					$$ = $1;
+					printf("\t*** Empty statement (in a series). \n");
+					}
 				}
 			| stmt
 					{ if ($1 != NULL)
+					{
 						$$ = $1;
+						printf("\t*** Single unique statement: %s\n", $1);
+						}
 					  else
+					  {
 						$$ = NULL;
+						printf("\t*** Single empty statement.\n");
+					  }
 					}
 		;
 
-stmt:	SelectStmt
+stmt:	SelectStmt  { $$ = $1; }
         | // Empty
                 { $$ = NULL; }
+		| SELECT	{ $$ = "SELECT"; }
 
 /*****************************************************************************
  *

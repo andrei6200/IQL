@@ -10,12 +10,15 @@ VALGRIND = valgrind
 
 INCLUDES = -Ipostgres/include/ 
 LIBS = -Lpostgres/lib/ -lparse
-CFLAGS = $(PGCFLAGS) $(INCLUDES) -D_GNU_SOURCE $(LIBS)
+CFLAGS = $(PGCFLAGS) $(INCLUDES) -D_GNU_SOURCE
+FLEXFLAGS = -Cf -i
+YACCFLAGS = -d --debug --report=itemset
+# YACCFLAGS = --verbose -d
 
 all: subdir
-	$(FLEX) -o "lexer.c" -i -I lexer.ll
-	$(YACC) --verbose -d parser.yy  -o parser.c
-	$(CC) $(CFLAGS) lexer.c parser.c -o parser  
+	$(FLEX) $(FLEXFLAGS) -o "lexer.c" lexer.ll
+	$(YACC) $(YACCFLAGS) parser.yy  -o parser.c
+	$(CC) $(CFLAGS) lexer.c parser.c $(LIBS) -o parser  
 
 subdir:
 	make -C postgres
