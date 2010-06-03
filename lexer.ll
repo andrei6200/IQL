@@ -795,7 +795,8 @@ other			.
 
 {param}			{
 					SET_YYLLOC();
-					yylval.ival = atol(yytext + 1);
+//					yylval.ival = atol(yytext + 1);
+					yylval.ival = strdup(yytext);
 					return PARAM;
 				}
 
@@ -817,7 +818,8 @@ other			.
 						yylval.str = strdup(yytext);
 						return FCONST;
 					}
-					yylval.ival = val;
+//					yylval.ival = val;
+					yylval.ival = strdup(yytext);
 					return ICONST;
 				}
 {decimal}		{

@@ -7,12 +7,14 @@ failed=0
 
 
 for file in `ls $dir`; do
-	if ./parser < $dir/$file > /dev/null 2>/dev/null
+	filename="$dir/$file"
+	echo "Test $filename"
+	if ./parser < $filename > /dev/null 2>/dev/null
 		then 
-			echo "Test $file ok"
+			echo "... ok"
 			passed=$((passed+1))
 		else 
-			echo "Test $file failed ..."
+			echo "... failed ..."
 			failed=$((failed+1))
 	fi
 done
