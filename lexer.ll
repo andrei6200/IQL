@@ -1,5 +1,7 @@
 %{
 
+int errorCount = 0;
+
 /******************************** START POSTGRESQL *********************************/
 
 #include "c.h"
@@ -940,6 +942,7 @@ yyerror(const char *message)
 				 lexer_errposition()));
 */
 		printf("\nERROR: %s at end of input\n", message);
+                errorCount += 1;
 	}
 	else
 	{
@@ -951,6 +954,7 @@ yyerror(const char *message)
 				 lexer_errposition()));
 */
 		printf("\nERROR: %s at or near \"%s\"\n", message, loc);
+                errorCount += 1;
 	}
 }
 

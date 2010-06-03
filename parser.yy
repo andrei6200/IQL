@@ -2822,9 +2822,11 @@ any_operator:
 
 #include "str.c"
 
+extern int errorCount;
+
 int main()
 {
 	yyparse();
         printf("\n\n\nPARSE TREE: \n%s\n", parsetree);
-	return 0;
+	return errorCount;
 } 
