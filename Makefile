@@ -11,8 +11,8 @@ VALGRIND = valgrind
 INCLUDES = -Ipostgres/include/ 
 LIBS = -Lpostgres/lib/ -lparse
 CFLAGS = $(PGCFLAGS) $(INCLUDES) -D_GNU_SOURCE
-FLEXFLAGS = -Cf -i
-YACCFLAGS = -d --debug --report=itemset
+FLEXFLAGS = -CF
+YACCFLAGS = -d --report=itemset
 # YACCFLAGS = --verbose -d
 
 all: subdir

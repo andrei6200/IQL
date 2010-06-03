@@ -1,6 +1,4 @@
 %{
-#define YYDEBUG 1
-int yydebug = 1;
 
 #include <stdio.h>
 #include <string.h>
@@ -48,36 +46,6 @@ char* parsetree;
         char*                           windef;
         char*                           jexpr;
         char*                           into;
-/*
-	JoinType			jtype;
-	DropBehavior		dbehavior;
-	OnCommitAction		oncommit;
-	List				*list;
-	Node				*node;
-	Value				*value;
-	ObjectType			objtype;
-
-	TypeName			*typnam;
-	FunctionParameter   *fun_param;
-	FunctionParameterMode fun_param_mode;
-	FuncWithArgs		*funwithargs;
-	DefElem				*defelt;
-	SortBy				*sortby;
-	WindowDef			*windef;
-	JoinExpr			*jexpr;
-	IndexElem			*ielem;
-	Alias				*alias;
-	RangeVar			*range;
-	IntoClause			*into;
-	WithClause			*with;
-	A_Indices			*aind;
-	ResTarget			*target;
-	struct PrivTarget	*privtarget;
-	AccessPriv			*accesspriv;
-
-	InsertStmt			*istmt;
-	VariableSetStmt		*vsetstmt;
-*/
 }
 
 
@@ -125,10 +93,9 @@ char* parsetree;
 %type <node>	select_limit_value select_offset_value
 
 %type <node>	TableFuncElement
-//%type <node>	columnDef
 %type <node>	where_clause
-				a_expr b_expr c_expr func_expr AexprConst indirection_el
-				columnref in_expr having_clause func_table array_expr
+                a_expr b_expr c_expr func_expr AexprConst indirection_el
+                columnref in_expr having_clause func_table array_expr
 %type <list>	row type_list array_expr_list
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
@@ -146,14 +113,14 @@ char* parsetree;
                 CharacterWithLength CharacterWithoutLength
                 ConstDatetime ConstInterval
                 Bit ConstBit BitWithLength BitWithoutLength
-%type <str>		character
-%type <str>		extract_arg
-%type <str>		opt_charset
+%type <str>	character
+%type <str>	extract_arg
+%type <str>	opt_charset
 %type <boolean> opt_varying opt_timezone
 
 %type <ival>	Iconst
-%type <str>		Sconst
-%type <str>		ColId ColLabel type_function_name
+%type <str>	Sconst
+%type <str>	ColId ColLabel type_function_name
 
 %type <keyword> unreserved_keyword type_func_name_keyword
 %type <keyword> col_name_keyword reserved_keyword
@@ -230,7 +197,7 @@ char* parsetree;
 
 	PARSER PARTIAL PARTITION PASSWORD PLACING PLANS POSITION
 	PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
-	PRIOR PROCEDURAL PROCEDURE
+	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
 	QUOTE
 
@@ -327,38 +294,16 @@ char* parsetree;
 
 /******************************** END POSTGRESQL *********************************/
 
-//%token <str> HQLNUMBER HQLSELECT HQLTEST HQLSEMICOLON HQLEOL
 %token <str> TYPECAST
 
 %error-verbose
 %locations
 %expect 0
 
-//
-//%union
-//{
-//  char		*str;
-//  char		*keyword;
-//  int		ival;
-//}
 
 
 %%
 
-//commands:
-//        |
-//		  commands command HQLEOL
-//		|
-//		  commands command HQLSEMICOLON
-//        ;
-//
-//command:
-//		HQLTEST
-//			{ printf("Statement: TEST\n"); }
-//		| HQLTEST HQLNUMBER
-//			{ printf("Statement: TEST number: %s\n", $2); }
-//		| HQLSELECT HQLNUMBER
-//			{ printf("Statement: SELECT number: %s\n", $2); }
 
 /******************************** START POSTGRESQL *********************************/
 /*
@@ -374,7 +319,7 @@ stmtblock:	stmtmulti
 stmtmulti:	stmtmulti ';' stmt
 				{ if ($3 != NULL)
 					{
-					$$ = cat2($1, $3);
+					$$ = cat3($1, "\n", $3);
 					printf("\t*** Single statement (in a series): %s\n", $3);
 					}
 				  else
@@ -400,7 +345,6 @@ stmtmulti:	stmtmulti ';' stmt
 stmt:	SelectStmt  { $$ = $1; }
         | // Empty
                 { $$ = NULL; }
-		| SELECT	{ $$ = "SELECT"; }
 
 /*****************************************************************************
  *
@@ -447,12 +391,12 @@ stmt:	SelectStmt  { $$ = $1; }
  * with or without outer parentheses.
  */
 
-SelectStmt: select_no_parens			%prec UMINUS
+SelectStmt:     select_no_parens			%prec UMINUS
 			| select_with_parens		%prec UMINUS
 		;
 
 select_with_parens:
-			'(' select_no_parens ')'				{ $$ = cat3("(", $2, ")"); }
+			'(' select_no_parens ')'			{ $$ = cat3("(", $2, ")"); }
 			| '(' select_with_parens ')'			{ $$ = cat3("(", $2, ")"); }
 		;
 
@@ -518,7 +462,8 @@ select_clause:
 simple_select:
 			SELECT opt_distinct target_list
 			into_clause from_clause where_clause
-//			group_clause having_clause window_clause		// AA: We do not want to support SQL windows
+// AA: We do not want to support SQL windows
+//			group_clause having_clause window_clause		
 			group_clause having_clause
 				{
     $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
@@ -527,7 +472,7 @@ simple_select:
 //			| values_clause							{ $$ = $1; }
 			| TABLE relation_expr
 				{
-					/* same as SELECT * FROM relation_expr */
+                            /* same as SELECT * FROM relation_expr */
                             $$ = cat2($1, $2);
 				}
 			| select_clause UNION opt_all select_clause
@@ -659,6 +604,7 @@ select_limit:
 				{
 					/* Disabled because it was too confusing, bjm 2002-02-18 */
                                         $$ = cat4($1, $2, ",", $4);
+                                        // TODO: Report error
 				}
 			/* SQL:2008 syntax variants */
 /*			| OFFSET select_offset_value2 row_or_rows
@@ -1908,7 +1854,7 @@ over_clause:
  * ROW keyword, there must be more than one a_expr inside the parens.
  */
 row:		ROW '(' expr_list ')'					{ $$ = cat4($1, "(", $3, ")"); }
-			| ROW '(' ')'							{ $$ = NULL; }
+			| ROW '(' ')'					{ $$ = NULL; }
 			| '(' expr_list ',' a_expr ')'			{ $$ = cat5("(", $2, ",", $4, ")"); }
 		;
 

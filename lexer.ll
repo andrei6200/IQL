@@ -859,8 +859,6 @@ other			.
 					keyword = ScanKeywordLookup(yytext);
 					if (keyword != NULL)
 					{
-                                            printf("\n[LEXER]: Found keyword: %s\n\n", keyword->name);
-                                            printf("\n[LEXER]: With lexer token: %d\n\n", keyword->value);
 						yylval.keyword = keyword->name;
 						return keyword->value;
 					}

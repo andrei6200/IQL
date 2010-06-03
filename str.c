@@ -1,5 +1,5 @@
 /*
- * File:   str.h
+ * File:   str.c
  * Author: andrei
  *
  * Created on June 2, 2010, 9:57 PM
