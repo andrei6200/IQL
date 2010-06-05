@@ -104,3 +104,14 @@ char* cat9(char* s1, char* s2, char* s3, char* s4, char* s5, char* s6, char* s7,
 
     return strdup(output);
 }
+
+char* cat10(char* s1, char* s2, char* s3, char* s4, char* s5, char* s6, char* s7, char* s8, char* s9, char* s10)
+{
+    char* part2 = cat6(s5, s6, s7, s8, s9, 10);
+    char* part1 = cat4(s1, s2, s3, s4);
+    sprintf(output, "%s%s%s", part1, SEPARATOR, part2);
+    free(part1);
+    free(part2);
+
+    return strdup(output);
+}

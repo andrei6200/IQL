@@ -11,8 +11,7 @@ top_builddir = ..
 
 # ************************* AA: START - We need the following to be able to use this Makefile outside the PG sourcetree
 srcdir = .
-CFLAGS = 
-CC = gcc
+CC = colorgcc
 OUTLIB = lib/libparse.a
 
 # The following is taken from Postgresql Makefile

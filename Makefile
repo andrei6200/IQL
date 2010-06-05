@@ -7,20 +7,21 @@ FLEX = flex
 YACC = bison
 VALGRIND = valgrind
 
-INCLUDES = -Ipostgres/include/ 
-LIBS = -Lpostgres/lib/ -lparse
+INCLUDES = -Ipostgres/include/  -Irasdaman/
+LIBS = -Lpostgres/lib/ -Lrasdaman/rasql/lib/ -lparse -lrqlparse
 CFLAGS = $(PGCFLAGS) $(INCLUDES) -D_GNU_SOURCE
 FLEXFLAGS = -CF
 YACCFLAGS = -d --report=itemset
 # YACCFLAGS = --verbose -d
 
 BIN=parser
-LIB=postgres/lib/libparse.a
+LIB=postgres/lib/libparse.a rasdaman/rasql/lib/librqlparse
 
 all: $(BIN)
 
 $(LIB):
 	make -C postgres
+	make -C rasdaman/rasql
 
 ### Parser actually builds the parser program
 $(BIN): parser.c lexer.c $(LIB)

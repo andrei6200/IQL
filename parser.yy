@@ -5,6 +5,8 @@
 
 #include "str.h"
 
+int yydebug=1;
+
 extern int yylex();
 
 /******************************** START POSTGRESQL *********************************/
@@ -33,6 +35,7 @@ char* parsetree;
 	char*				chr;
 	char*				str;
 	char*				keyword;
+        char*                           rasqlKeyword;
 	char*				boolean;
 	char*				node;
 	char*				list;
@@ -230,6 +233,8 @@ char* parsetree;
 
 	ZONE
 
+
+
 /* The grammar thinks these are keywords, but they are not in the kwlist.h
  * list and so can never be entered directly.  The filter in parser.c
  * creates these tokens when required.
@@ -296,9 +301,70 @@ char* parsetree;
 
 %token <str> TYPECAST
 
+/* Rasdaman keywords (which are not SQL keywords) */
+%token <rasqlKeyword>   ABS ADD ADDCELLS A_INDEX ALIGNED
+            RQLALL ARCCOS ARCSIN ARCTAN AREA ASSIGN AUTO
+            AVGCELLS BMP TBOOL BORDER TCHAR COLLECTION
+            COMPLEX CONDENSE COS COSH COUNTCELLS
+            DECOMP DELETE DEM DIMENSION D_INDEX DIRECTIONAL TDOUBLE 
+            EXP EXTEND FASTSCALE TFLOAT HDF HI IM IN
+            INTEREST INV_BMP INV_CSV INV_DEM INV_HDF INV_JPEG INV_PNG
+            INV_TIFF INV_TOR INV_VFF IT_INDEX JPEG LIST LN RQLLOG LO
+            TLONG MARRAY MAXCELLS MEMBERS MINCELLS
+            TOCTET OID PNG PROJECT RC_INDEX RD_INDEX
+            REGULAR RE RPT_INDEX RRPT_INDEX SCALE SDOM
+            SHIFT TSHORT SINH SIN SIZE RQLSOME SQRT STATISTIC STRCT
+            SUBTILING TANH TAN TC_INDEX THRESHOLD TIFF TILE TILING TOR 
+            TULONG TUNSIG TUSHORT VFF XOR
+
+            RASQL       // TODO: Remove me soon
+
+%token <rasqlKeyword>
+                PLUS
+                MINUS
+                MULT
+                DIV
+                EQUAL
+                LESS
+                GREATER
+                LESSEQUAL
+                GREATEREQUAL
+                NOTEQUAL
+                COLON
+                SEMICOLON
+                COMMA
+                DOT
+                LEPAR
+                REPAR
+                LRPAR
+                RRPAR
+                LCPAR
+                RCPAR
+                MDDPARAM
+
+
+/* Rasql statements */
+%type <node> selectExp resultList generalExp spatialOpList spatialOpList2
+            spatialOp condenseOpLit inductionExp castType collectionList
+            iteratedCollection variable reduceIdent intLitExp generalLit
+            mddLit scalarLit atomicLit scalarLitList ivList
+
+            mddExp trimExp reduceExp functionExp integerExp mintervalExp 
+            condenseExp  intervalExp Identifier
+
+            IntegerLit StringLit FloatLit oidLit dimensionLitList
+
+            complexLit marray_head iv 
+
+%type <node>    collectionIterator attributeIdent marrayVariable condenseVariable 
+                namedCollection structSelection
+
+%type <boolean> BooleanLit
+
 %error-verbose
 %locations
 %expect 0
+%debug
 
 
 
@@ -345,6 +411,8 @@ stmtmulti:	stmtmulti ';' stmt
 stmt:	SelectStmt  { $$ = $1; }
         | // Empty
                 { $$ = NULL; }
+        | selectExp { $$ = $1; }
+
 
 /*****************************************************************************
  *
@@ -2816,6 +2884,668 @@ any_operator:
 			;
 
 /******************************** END POSTGRESQL *********************************/
+
+
+
+
+/******************************** START RASQL *********************************/
+selectExp: RASQL SELECT resultList FROM collectionList WHERE generalExp
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| RASQL SELECT resultList FROM collectionList
+	{
+            $$ = cat4($1, $2, $3, $4);
+	};
+
+resultList: resultList COMMA generalExp
+	{
+	  $$ = $3;
+	}
+	| generalExp
+	{
+	  $$ = $1;
+	};
+
+generalExp: mddExp                          { $$ = $1; }
+	| trimExp                           { $$ = $1; }
+	| reduceExp                         { $$ = $1; }
+	| inductionExp                      { $$ = $1; }
+	| functionExp                       { $$ = $1; }
+	| integerExp                        { $$ = $1; }
+	| condenseExp                       { $$ = $1; }
+	| variable                          { $$ = $1; }
+	| mintervalExp                      { $$ = $1; }
+	| intervalExp                       { $$ = $1; }
+	| generalLit
+	{
+            $$ = $1;
+	};
+
+integerExp: generalExp DOT LO
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp DOT HI
+	{
+            $$ = cat3($1, $2, $3);
+	};
+
+mintervalExp: LEPAR spatialOpList REPAR
+	{
+    $$ = cat3($1, $2, $3);
+	}
+	| SDOM LRPAR collectionIterator RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	};
+
+spatialOpList:  // empty
+	{
+            $$ = "emptySpatialOpList";
+	}
+	| spatialOpList2
+	{
+	  $$ = $1;
+	};
+
+spatialOpList2: spatialOpList2 COMMA spatialOp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| spatialOp
+	{
+            $$ = $1;
+	};
+
+spatialOp: generalExp        { $$ = $1; };
+
+intervalExp: generalExp COLON generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| MULT COLON generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp COLON MULT
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| MULT COLON MULT
+	{
+            $$ = cat3($1, $2, $3);
+	};
+
+condenseExp: CONDENSE condenseOpLit OVER condenseVariable IN generalExp WHERE generalExp USING generalExp
+	{
+            $$ = cat10($1, $2, $3, $4, $5, $6, $7, $8, $10);
+	}
+	| CONDENSE condenseOpLit OVER condenseVariable IN generalExp USING generalExp
+	{
+            $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
+	};
+
+condenseOpLit: PLUS
+	{
+            $$ = $1;
+	}
+	| MINUS
+	{
+            $$ = $1;
+	}
+	| MULT
+	{
+            $$ = $1;
+	}
+	| DIV
+	{
+            $$ = $1;
+	}
+	| AND
+	{
+            $$ = $1;
+	}
+	| OR
+	{
+            $$ = $1;
+	};
+
+functionExp: OID LRPAR collectionIterator RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| SHIFT LRPAR generalExp COMMA generalExp RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| EXTEND LRPAR generalExp COMMA generalExp RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| SCALE LRPAR generalExp COMMA generalExp RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| BIT LRPAR generalExp COMMA generalExp RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| TIFF LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| TIFF LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| BMP LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| BMP LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| HDF LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| HDF LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| CSV LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| CSV LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| JPEG LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| JPEG LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| PNG LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| PNG LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| VFF LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| VFF LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| TOR LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| TOR LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| DEM LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| DEM LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| INV_TIFF LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| INV_TIFF LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| INV_BMP LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| INV_BMP LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| INV_HDF LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| INV_HDF LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| INV_CSV LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| INV_CSV LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| INV_JPEG LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| INV_JPEG LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| INV_PNG LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| INV_PNG LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| INV_VFF LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| INV_VFF LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| INV_TOR LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| INV_TOR LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| INV_DEM LRPAR generalExp COMMA StringLit RRPAR
+	{
+            $$ = cat6($1, $2, $3, $4, $5, $6);
+	}
+	| INV_DEM LRPAR generalExp  RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	};
+
+
+structSelection: DOT attributeIdent
+	{
+    $$ = cat2($1, $2);
+	}
+	| DOT intLitExp
+	{
+            $$ = cat2($1, $2);
+	};
+
+inductionExp: SQRT LRPAR generalExp RRPAR
+	{
+    $$ = cat4($1, $2, $3, $4);
+ 	}
+	| ABS LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| EXP LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| RQLLOG LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| LN LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| SIN LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| COS LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| TAN LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| SINH LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| COSH LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| TANH LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| ARCSIN LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| ARCCOS LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| ARCTAN LRPAR generalExp RRPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+        | generalExp DOT RE
+        {
+            $$ = cat3($1, $2, $3);
+        }
+        | generalExp DOT IM
+        {
+            $$ = cat3($1, $2, $3);
+        }
+	| NOT generalExp
+	{
+            $$ = cat2($1, $2);
+	}
+	| generalExp OVERLAY generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp IS generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp AND generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp OR generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp XOR generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp PLUS generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp MINUS generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp MULT generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp DIV generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp EQUAL generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp LESS generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp GREATER generalExp
+	{
+            $$ = cat3($1, $2, $3);
+ 	}
+	| generalExp LESSEQUAL generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp GREATEREQUAL generalExp
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| generalExp NOTEQUAL generalExp
+	{
+            $$ = cat3($1, $2, $3);
+ 	}
+	| PLUS  generalExp %prec UNARYOP
+	{
+	  $$ = $2;
+	}
+	| MINUS generalExp %prec UNARYOP
+	{
+            $$ = cat2($1, $2);
+	}
+	| LRPAR castType RRPAR generalExp %prec UNARYOP
+	{
+            $$ = cat4($1, $2, $3, $4);
+	}
+	| LRPAR generalExp RRPAR
+	{
+	  $$ = $2;
+	}
+	| generalExp structSelection
+	{
+            $$ = cat2($1, $2);
+	};
+
+castType: TBOOL			{ $$ = $1; }
+	| TCHAR			{ $$ = $1; }
+	| TOCTET		{ $$ = $1; }
+	| TSHORT		{ $$ = $1; }
+	| TUSHORT		{ $$ = $1; }
+	| TLONG			{ $$ = $1; }
+	| TULONG		{ $$ = $1; }
+	| TFLOAT		{ $$ = $1; }
+	| TDOUBLE		{ $$ = $1; }
+	| TUNSIG TSHORT	        { $$ = $1; }
+	| TUNSIG TLONG	        { $$ = $1; }
+
+collectionList: collectionList COMMA iteratedCollection
+	{
+    $$ = cat3($1, $2, $3);
+	}
+	| iteratedCollection
+	{
+            $$ = $1;
+	};
+
+iteratedCollection: namedCollection AS collectionIterator
+	{
+            $$ = cat3($1, $2, $3);
+	}
+	| namedCollection collectionIterator
+	{
+            $$ = cat2($1, $2);
+	}
+	| namedCollection
+	{
+            $$ = $1;
+	};
+
+variable: Identifier
+	{
+            $$ = $1;
+	};
+
+namedCollection: Identifier;
+
+collectionIterator: Identifier;
+
+attributeIdent: Identifier;
+
+//typeName: Identifier;
+
+marrayVariable: Identifier;
+
+condenseVariable: Identifier;
+
+reduceExp: reduceIdent LRPAR generalExp RRPAR
+	{
+    $$ = cat4($1, $2, $3, $4);
+	};
+
+reduceIdent: ALL
+	{
+            $$ = $1;
+	}
+	| SOME
+	{
+            $$ = $1;
+	}
+	| COUNTCELLS
+	{
+            $$ = $1;
+	}
+	| ADDCELLS
+	{
+            $$ = $1;
+	}
+	| AVGCELLS
+	{
+            $$ = $1;
+	}
+	| MINCELLS
+	{
+            $$ = $1;
+	}
+	| MAXCELLS
+	{
+            $$ = $1;
+	};
+
+intLitExp: IntegerLit                          { $$ = $1; };
+
+generalLit: scalarLit                          { $$ = $1; }
+	| mddLit                               { $$ = $1; }
+	| StringLit
+	{
+            $$ = $1;
+	}
+	| oidLit                              { $$ = $1; };
+
+oidLit: LESS StringLit GREATER
+	{
+    $$ = cat3($1, $2, $3);
+	};
+
+mddLit: LESS mintervalExp dimensionLitList GREATER
+	{
+    $$ = cat4($1, $2, $3, $4);
+	}
+	| MDDPARAM
+	{
+            $$ = $1;
+	};
+
+dimensionLitList: dimensionLitList SEMICOLON scalarLitList
+	{
+	}
+	| scalarLitList
+	{
+	  $$ = $1;
+	};
+
+scalarLit: complexLit
+	{
+	  $$ = $1;
+	}
+	| atomicLit
+	{
+	  $$ = $1;
+	};
+
+atomicLit: BooleanLit
+	{
+            $$ = $1;
+	}
+	| IntegerLit
+	{
+            $$ = $1;
+	}
+	| FloatLit
+	{
+            $$ = $1;
+	}
+        | COMPLEX LRPAR FloatLit COMMA FloatLit RRPAR
+        {
+            $$ = $1;
+	};
+
+complexLit: LCPAR scalarLitList RCPAR
+	{
+    $$ = cat3($1, $2, $3);
+	}
+	| STRCT LCPAR scalarLitList RCPAR
+	{
+            $$ = cat4($1, $2, $3, $4);
+	};
+
+scalarLitList: scalarLitList COMMA scalarLit
+	{
+    $$ = cat3($1, $2, $3);
+	}
+	| scalarLit
+	{
+            $$ = $1;
+	};
+
+
+trimExp: generalExp mintervalExp
+	{
+    $$ = cat2($1, $2);
+	};
+
+marray_head:
+        MARRAY iv
+	{
+    $$ = cat2($1, $2);
+	};
+
+mddExp: marray_head VALUES generalExp
+	{
+    $$ = cat3($1, $2, $3);
+	}
+	| marray_head COMMA ivList VALUES generalExp
+	{
+            $$ = cat5($1, $2, $3, $4, $5);
+	};
+
+ivList: ivList COMMA iv
+	{
+    $$ = cat3($1, $2, $3);
+	}
+	| iv
+	{
+            $$ = $1;
+	};
+
+iv: marrayVariable IN generalExp
+	{
+    $$ = cat3($1, $2, $3);
+	};
+
+
+
+/******************************** END RASQL *********************************/
+
+
+/* The following rules link the RaSQL terminal rules to the PostgreSQL terminal lexmes */
+Identifier: IDENT   { $$ = $1; }
+
+IntegerLit: ICONST  { $$ = $1; }
+
+FloatLit: FCONST    { $$ = $1; }
+
+StringLit: SCONST   { $$ = $1; }
+
+BooleanLit: BCONST  { $$ = $1;  }
 
 
 %%

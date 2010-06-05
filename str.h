@@ -29,6 +29,8 @@ char* cat8(char* s1, char* s2, char* s3, char* s4, char* s5, char* s6, char* s7,
 
 char* cat9(char* s1, char* s2, char* s3, char* s4, char* s5, char* s6, char* s7, char* s8, char* s9);
 
+char* cat10(char* s1, char* s2, char* s3, char* s4, char* s5, char* s6, char* s7, char* s8, char* s9, char* s10);
+
 
 
 #ifdef	__cplusplus
