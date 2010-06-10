@@ -9,7 +9,7 @@ YACC = bison
 VALGRIND = valgrind
 
 INCLUDES = -Ipostgres/include/  -Irasdaman/
-LIBS = -Lpostgres/lib/ -Lrasdaman/rasql/lib/ -lparse -lrqlparse
+LIBS = -Lpostgres/lib/ -Lrasdaman/rasql/lib/ -lparse -lrqlparse -lpqxx
 CFLAGS = $(PGCFLAGS) $(INCLUDES) -D_GNU_SOURCE
 FLEXFLAGS = -CF
 YACCFLAGS = -d --report=itemset
