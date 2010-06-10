@@ -1,0 +1,2 @@
+- Check if PostgreSQL can properly parse and understand "<=" or ">="
+    - Had 2 operators "<" and "=", and not the combined one

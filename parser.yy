@@ -15,13 +15,13 @@ extern int yylex();
 #include <limits.h>
 
 /* Location tracking support --- simpler than bison's default */
-#define YYLLOC_DEFAULT(Current, Rhs, N) \
-	do { \
-		if (N) \
-			(Current) = (Rhs)[1]; \
-		else \
-			(Current) = (Rhs)[0]; \
-	} while (0)
+//#define YYLLOC_DEFAULT(Current, Rhs, N) \
+//	do { \
+//		if (N) \
+//			(Current) = (Rhs)[1]; \
+//		else \
+//			(Current) = (Rhs)[0]; \
+//	} while (0)
 /******************************** END POSTGRESQL *********************************/
 
 char* parsetree;
@@ -67,10 +67,10 @@ char* parsetree;
 
 %type <str>	all_Op MathOp SpecialRuleRelation
 
-%type <list>	stmtblock stmtmulti opt_distinct
+%type <list>	stmtblock stmtmulti
 
                 sort_clause opt_sort_clause sortby_list
-                name_list from_clause from_list opt_array_bounds
+                name_list from_clause from_list
                 expr_list attrs
                 target_list
 
@@ -98,8 +98,8 @@ char* parsetree;
 %type <node>	TableFuncElement
 %type <node>	where_clause
                 a_expr b_expr c_expr func_expr AexprConst indirection_el
-                columnref in_expr having_clause func_table array_expr
-%type <list>	row type_list array_expr_list
+                columnref in_expr having_clause func_table
+%type <list>	row type_list
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
@@ -246,14 +246,18 @@ char* parsetree;
 %token <ival>	ICONST PARAM
 
 /* precedence: lowest to highest */
+%left           COLON
+%left           OVERLAY
 %nonassoc	SET				/* see relation_expr_opt_alias */
 %left		UNION EXCEPT
 %left		INTERSECT
-%left		OR
+%left		OR XOR
 %left		AND
 %right		NOT
-%right		'='
-%nonassoc	'<' '>'
+//%right        '='
+%right          EQUAL NOTEQUAL
+//%nonassoc	'<' '>'
+%nonassoc       LESS GREATER LESSEQUAL GREATEREQUAL
 %nonassoc	LIKE ILIKE SIMILAR
 %nonassoc	ESCAPE
 %nonassoc	OVERLAPS
@@ -275,16 +279,22 @@ char* parsetree;
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
 %nonassoc	IS NULL_P TRUE_P FALSE_P UNKNOWN /* sets precedence for IS NULL, etc */
-%left		'+' '-'
-%left		'*' '/' '%'
-%left		'^'
+//%left		'+' '-'
+%left           PLUS MINUS
+//%left		'*' '/' '%'
+%left           MULT DIV MOD
+//%left           "^"
+%left		POWER
 /* Unary Operators */
 %left		AT ZONE			/* sets precedence for AT TIME ZONE */
 %right		UMINUS
-%left		'[' ']'
-%left		'(' ')'
+//%left		'[' ']'
+%left           LEPAR REPAR
+//%left		'(' ')'
+%left           LRPAR RRPAR
 %left		TYPECAST
-%left		'.'
+//%left		'.'
+%left           DOT SDOM
 /*
  * These might seem to be low-precedence, but actually they are not part
  * of the arithmetic hierarchy at all in their use as JOIN operators.
@@ -302,28 +312,29 @@ char* parsetree;
 %token <str> TYPECAST
 
 /* Rasdaman keywords (which are not SQL keywords) */
-%token <rasqlKeyword>   ABS ADD ADDCELLS A_INDEX ALIGNED
-            RQLALL ARCCOS ARCSIN ARCTAN AREA ASSIGN AUTO
-            AVGCELLS BMP TBOOL BORDER TCHAR COLLECTION
+%token <rasqlKeyword>   ABS ADDCELLS
+            RQLALL ARCCOS ARCSIN ARCTAN
+            AVGCELLS BMP TBOOL TCHAR 
             COMPLEX CONDENSE COS COSH COUNTCELLS
-            DECOMP DELETE DEM DIMENSION D_INDEX DIRECTIONAL TDOUBLE 
-            EXP EXTEND FASTSCALE TFLOAT HDF HI IM IN
-            INTEREST INV_BMP INV_CSV INV_DEM INV_HDF INV_JPEG INV_PNG
-            INV_TIFF INV_TOR INV_VFF IT_INDEX JPEG LIST LN RQLLOG LO
-            TLONG MARRAY MAXCELLS MEMBERS MINCELLS
-            TOCTET OID PNG PROJECT RC_INDEX RD_INDEX
-            REGULAR RE RPT_INDEX RRPT_INDEX SCALE SDOM
-            SHIFT TSHORT SINH SIN SIZE RQLSOME SQRT STATISTIC STRCT
-            SUBTILING TANH TAN TC_INDEX THRESHOLD TIFF TILE TILING TOR 
+            DEM TDOUBLE 
+            EXP EXTEND TFLOAT HDF HI IM
+            INV_BMP INV_CSV INV_DEM INV_HDF INV_JPEG INV_PNG
+            INV_TIFF INV_TOR INV_VFF JPEG LN RQLLOG LO
+            TLONG MARRAY MAXCELLS MINCELLS
+            TOCTET OID PNG
+            RE SCALE SDOM
+            SHIFT TSHORT SINH SIN SQRT STRCT
+            TANH TAN TIFF TOR 
             TULONG TUNSIG TUSHORT VFF XOR
 
-            RASQL       // TODO: Remove me soon
 
 %token <rasqlKeyword>
                 PLUS
                 MINUS
                 MULT
                 DIV
+                MOD
+                POWER
                 EQUAL
                 LESS
                 GREATER
@@ -344,9 +355,9 @@ char* parsetree;
 
 
 /* Rasql statements */
-%type <node> selectExp resultList generalExp spatialOpList spatialOpList2
-            spatialOp condenseOpLit inductionExp castType collectionList
-            iteratedCollection variable reduceIdent intLitExp generalLit
+%type <node> generalExp spatialOpList spatialOpList2
+            spatialOp condenseOpLit inductionExp castType
+            variable reduceIdent intLitExp generalLit
             mddLit scalarLit atomicLit scalarLitList ivList
 
             mddExp trimExp reduceExp functionExp integerExp mintervalExp 
@@ -357,15 +368,14 @@ char* parsetree;
             complexLit marray_head iv 
 
 %type <node>    collectionIterator attributeIdent marrayVariable condenseVariable 
-                namedCollection structSelection
+                structSelection
 
 %type <boolean> BooleanLit
 
 %error-verbose
 %locations
-%expect 0
+//%expect 0
 %debug
-
 
 
 %%
@@ -382,7 +392,7 @@ stmtblock:	stmtmulti
 		;
 
 /* the thrashing around here is to discard "empty" statements... */
-stmtmulti:	stmtmulti ';' stmt
+stmtmulti:	stmtmulti SEMICOLON stmt
 				{ if ($3 != NULL)
 					{
 					$$ = cat3($1, "\n", $3);
@@ -411,7 +421,6 @@ stmtmulti:	stmtmulti ';' stmt
 stmt:	SelectStmt  { $$ = $1; }
         | // Empty
                 { $$ = NULL; }
-        | selectExp { $$ = $1; }
 
 
 /*****************************************************************************
@@ -464,8 +473,8 @@ SelectStmt:     select_no_parens			%prec UMINUS
 		;
 
 select_with_parens:
-			'(' select_no_parens ')'			{ $$ = cat3("(", $2, ")"); }
-			| '(' select_with_parens ')'			{ $$ = cat3("(", $2, ")"); }
+			LRPAR select_no_parens RRPAR			{ $$ = cat3("(", $2, ")"); }
+			| LRPAR select_with_parens RRPAR			{ $$ = cat3("(", $2, ")"); }
 		;
 
 /*
@@ -528,14 +537,32 @@ select_clause:
  * However, this is not checked by the grammar; parse analysis must check it.
  */
 simple_select:
-			SELECT opt_distinct target_list
+// AA: We need to refactor opt_distinct to remove some shift/reduce conflicts
+//			SELECT opt_distinct target_list
+                        SELECT target_list
 			into_clause from_clause where_clause
 // AA: We do not want to support SQL windows
 //			group_clause having_clause window_clause		
 			group_clause having_clause
-				{
-    $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
-				}
+                        {
+                            $$ = cat7($1, $2, $3, $4, $5, $6, $7);
+                        }
+                        |
+                        SELECT DISTINCT target_list into_clause from_clause where_clause group_clause having_clause
+                        {
+                            $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
+                        }
+                        |
+                        SELECT DISTINCT ON LRPAR expr_list RRPAR target_list into_clause from_clause where_clause group_clause having_clause
+                        {
+                            $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
+                        }
+                        |
+                        SELECT ALL target_list into_clause from_clause where_clause group_clause having_clause
+                        {
+                            $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
+                        }
+                        
 // AA: Disable VALUES clause, we do not want data to be input at run-time
 //			| values_clause							{ $$ = $1; }
 			| TABLE relation_expr
@@ -617,12 +644,12 @@ opt_all:	ALL										{ $$ = "ALL"; }
 /* We use (NULL) as a placeholder to indicate that all target expressions
  * should be placed in the DISTINCT list during parsetree analysis.
  */
-opt_distinct:
-			DISTINCT								{ $$ = "DISTINCT"; }
-			| DISTINCT ON '(' expr_list ')'			{ $$ = cat5($1, $2, "(", $4, ")"); }
-			| ALL									{ $$ = "ALL"; }
-			| /*EMPTY*/								{ $$ = NULL; }
-		;
+//opt_distinct:
+//			DISTINCT								{ $$ = "DISTINCT"; }
+//			| DISTINCT ON LRPAR expr_list RRPAR			{ $$ = cat5($1, $2, "(", $4, ")"); }
+//			| ALL									{ $$ = "ALL"; }
+//			| /*EMPTY*/								{ $$ = NULL; }
+//		;
 
 opt_sort_clause:
 			sort_clause								{ $$ = $1;}
@@ -635,7 +662,7 @@ sort_clause:
 
 sortby_list:
 			sortby									{ $$ = $1; }
-			| sortby_list ',' sortby				{ $$ = cat3($1, ",", $3); }
+			| sortby_list COMMA sortby				{ $$ = cat3($1, $2, $3); }
 		;
 
 sortby:		a_expr USING qual_all_Op opt_nulls_order
@@ -748,17 +775,17 @@ table_ref:	relation_expr
 				{
                                         $$ = cat2($1, $2);
 				}
-			| func_table AS '(' TableFuncElementList ')'
+			| func_table AS LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = cat5($1, $2, "(", $4, ")");
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
-			| func_table AS ColId '(' TableFuncElementList ')'
+			| func_table AS ColId LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = cat6($1, $2, $3, "(", $5, ")");
+                                        $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
-			| func_table ColId '(' TableFuncElementList ')'
+			| func_table ColId LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = cat5($1, $2, "(", $4, ")");
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
 // AA: We do not allow subqueries in the FROM clause
 /*			| select_with_parens
@@ -768,9 +795,9 @@ table_ref:	relation_expr
 				{
 					$$ = $1;
 				}
-			| '(' joined_table ')' alias_clause
+			| LRPAR joined_table RRPAR alias_clause
 				{
-                                        $$ = cat4("(", $2, ")", $4);
+                                        $$ = cat4($1, $2, $3, $4);
 				}
 		;
 
@@ -793,9 +820,9 @@ table_ref:	relation_expr
  */
 
 joined_table:
-			'(' joined_table ')'
+			LRPAR joined_table RRPAR
 				{
-                                    $$ = cat3("(", $2, ")");
+                                    $$ = cat3($1, $2, $3);
 				}
 			| table_ref CROSS JOIN table_ref
 				{
@@ -823,17 +850,17 @@ joined_table:
 		;
 
 alias_clause:
-			AS ColId '(' name_list ')'
+			AS ColId LRPAR name_list RRPAR
 				{
-                                        $$ = cat5($1, $2, "(", $4, ")");
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
 			| AS ColId
 				{
                                         $$ = cat2($1, $2);
 				}
-			| ColId '(' name_list ')'
+			| ColId LRPAR name_list RRPAR
 				{
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
 			| ColId
 				{
@@ -861,7 +888,7 @@ join_outer: OUTER_P									{ $$ = NULL; }
  * We return USING as a List node, while an ON-expr will not be a List.
  */
 
-join_qual:	USING '(' name_list ')'					{ $$ = cat4($1, "(", $3, ")"); }
+join_qual:	USING LRPAR name_list RRPAR					{ $$ = cat4($1, $2, $3, $4); }
 			| ON a_expr								{ $$ = cat2($1, $2); }
 		;
 
@@ -872,20 +899,20 @@ relation_expr:
 					/* default inheritance */
                                         $$ = $1;
 				}
-			| qualified_name '*'
+			| qualified_name MULT
 				{
 					/* inheritance query */
-                                        $$ = cat2($1, "*");
+                                        $$ = cat2($1, $2);
 				}
 			| ONLY qualified_name
 				{
 					/* no inheritance */
                                         $$ = cat2($1, $2);
 				}
-			| ONLY '(' qualified_name ')'
+			| ONLY LRPAR qualified_name RRPAR
 				{
 					/* no inheritance, SQL99-style syntax */
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
 		;
 
@@ -907,9 +934,9 @@ TableFuncElementList:
 				{
 					$$ = $1;
 				}
-			| TableFuncElementList ',' TableFuncElement
+			| TableFuncElementList COMMA TableFuncElement
 				{
-					$$ = cat3($1, ",", $3);
+					$$ = cat3($1, $2, $3);
 				}
 		;
 
@@ -929,41 +956,44 @@ TableFuncElement:	ColId Typename
  *
  *****************************************************************************/
 
-Typename:	SimpleTypename opt_array_bounds
+Typename:
+// AA: Do not use SQL arrays, since their use conflicts with RaSQL arrays
+//                        SimpleTypename opt_array_bounds
+                        SimpleTypename
 				{
-                                        $$ = cat2($1, $2);
+                                        $$ = $1;
 				}
-			| SETOF SimpleTypename opt_array_bounds
-				{
-					$$ = cat3($1, $2, $3);
-				}
-			/* SQL standard syntax, currently only one-dimensional */
-			| SimpleTypename ARRAY '[' Iconst ']'
-				{
-                                        $$ = cat5($1, $2, "[", $4, "]");
-				}
-			| SETOF SimpleTypename ARRAY '[' Iconst ']'
-				{
-					$$ = cat6($1, $2, $3, "[", $5, "]");
-				}
-			| SimpleTypename ARRAY
-				{
-                                        $$ = cat2($1, $2);
-				}
-			| SETOF SimpleTypename ARRAY
-				{
-					$$ = cat3($1, $2, $3);
-				}
+//			| SETOF SimpleTypename opt_array_bounds
+//				{
+//					$$ = cat3($1, $2, $3);
+//				}
+//			/* SQL standard syntax, currently only one-dimensional */
+//			| SimpleTypename ARRAY LEPAR Iconst REPAR
+//				{
+//                                        $$ = cat5($1, $2, $3, $4, $5);
+//				}
+//			| SETOF SimpleTypename ARRAY LEPAR Iconst REPAR
+//				{
+//					$$ = cat6($1, $2, $3, $4, $5, $6);
+//				}
+//			| SimpleTypename ARRAY
+//				{
+//                                        $$ = cat2($1, $2);
+//				}
+//			| SETOF SimpleTypename ARRAY
+//				{
+//					$$ = cat3($1, $2, $3);
+//				}
 		;
 
-opt_array_bounds:
-			opt_array_bounds '[' ']'
-					{  $$ = cat3($1, "[", "]"); }
-			| opt_array_bounds '[' Iconst ']'
-					{  $$ = cat4($1, "[", $3, "]"); }
-			| /*EMPTY*/
-					{  $$ = NULL; }
-		;
+//opt_array_bounds:
+//			opt_array_bounds LEPAR REPAR
+//					{  $$ = cat3($1, $2, $3); }
+//			| opt_array_bounds LEPAR Iconst RRPAR
+//					{  $$ = cat4($1, $2, $3, $4); }
+//			| /*EMPTY*/
+//					{  $$ = NULL; }
+//		;
 
 SimpleTypename:
 			GenericType								{ $$ = $1; }
@@ -975,9 +1005,9 @@ SimpleTypename:
 				{
                                         $$ = cat2($1, $2);
 				}
-			| ConstInterval '(' Iconst ')' opt_interval
+			| ConstInterval LRPAR Iconst RRPAR opt_interval
 				{
-                                        $$ = cat5($1, "(", $3, ")", $5);
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
 		;
 
@@ -1017,7 +1047,7 @@ GenericType:
 				}
 		;
 
-opt_type_modifiers: '(' expr_list ')'				{ $$ = cat3("(", $2, ")"); }
+opt_type_modifiers: LRPAR expr_list RRPAR				{ $$ = cat3($1, $2, $3); }
 					| /* EMPTY */					{ $$ = NULL; }
 		;
 
@@ -1070,13 +1100,13 @@ Numeric:	INT_P
 				}
 		;
 
-opt_float:	'(' Iconst ')'
+opt_float:	LRPAR Iconst RRPAR
 				{
 					/*
 					 * Check FLOAT() precision limits assuming IEEE floating
 					 * types - thomas 1997-09-18
 					 */
-                                        $$ = cat3("(", $2, ")");
+                                        $$ = cat3($1, $2, $3);
 				}
 			| /*EMPTY*/
 				{
@@ -1111,17 +1141,28 @@ ConstBit:	BitWithLength
 		;
 
 BitWithLength:
-			BIT opt_varying '(' expr_list ')'
+			BIT VARYING LRPAR expr_list RRPAR
 				{
-                                        $$ = cat5($1, $2, "(", $4, ")");
+                                        $$ = cat5($1, $2, $3, $4, $5);
+				}
+                        |
+                        BIT LRPAR expr_list RRPAR
+                                {
+                                        $$ = cat4($1, $2, $3, $4);
 				}
 		;
 
 BitWithoutLength:
-			BIT opt_varying
+			BIT VARYING
 				{
 					/* bit defaults to bit(1), varbit to no limit */
                                         $$ = cat2($1, $2);
+				}
+                        |
+                        BIT
+				{
+					/* bit defaults to bit(1), varbit to no limit */
+                                        $$ = $1;
 				}
 		;
 
@@ -1156,9 +1197,9 @@ ConstCharacter:  CharacterWithLength
 				}
 		;
 
-CharacterWithLength:  character '(' Iconst ')' opt_charset
+CharacterWithLength:  character LRPAR Iconst RRPAR opt_charset
 				{
-                                        $$ = cat5($1, "(", $3, ")", $5);
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
 		;
 
@@ -1183,8 +1224,10 @@ character:	CHARACTER opt_varying
 		;
 
 opt_varying:
+// AA: Disable the VARYING keyword. It introduces ambiguities in the grammar. 
 			VARYING									{ $$ = "TRUE"; }
-			| /*EMPTY*/								{ $$ = "FALSE"; }
+			|
+/*EMPTY*/								{ $$ = "FALSE"; }
 		;
 
 opt_charset:
@@ -1196,17 +1239,17 @@ opt_charset:
  * SQL92 date/time types
  */
 ConstDatetime:
-			TIMESTAMP '(' Iconst ')' opt_timezone
+			TIMESTAMP LRPAR Iconst RRPAR opt_timezone
 				{
-                                        $$ = cat5($1, "(", $3, ")", $5);
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
 			| TIMESTAMP opt_timezone
 				{
                                         $$ = cat2($1, $2);
 				}
-			| TIME '(' Iconst ')' opt_timezone
+			| TIME LRPAR Iconst RRPAR opt_timezone
 				{
-                                        $$ = cat5($1, "(", $3, ")", $5);
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
 			| TIME opt_timezone
 				{
@@ -1277,9 +1320,9 @@ interval_second:
 				{
                                     $$ = $1;
 				}
-			| SECOND_P '(' Iconst ')'
+			| SECOND_P LRPAR Iconst RRPAR
 				{
-                            $$ = cat4($1, "(", $3, ")");
+                            $$ = cat4($1, $2, $3, $4);
 				}
 		;
 
@@ -1308,11 +1351,20 @@ interval_second:
  */
 a_expr:		c_expr									{ $$ = $1; }
 			| a_expr TYPECAST Typename
-					{ $$ = cat3($1, $2, $3); }
+                            { $$ = cat3($1, $2, $3); }
 			| a_expr AT TIME ZONE a_expr
-				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
-				}
+                            {
+                                $$ = cat5($1, $2, $3, $4, $5);
+                            }
+
+                /*
+                 * AA: Include RaSQL expressions as well.
+                 */
+
+                        | generalExp
+                            {
+                                $$ = $1;
+                            }
 		/*
 		 * These operators must be called out explicitly in order to make use
 		 * of yacc/bison's automatic operator-precedence handling.  All other
@@ -1322,28 +1374,34 @@ a_expr:		c_expr									{ $$ = $1; }
 		 * If you add more explicitly-known operators, be sure to add them
 		 * also to b_expr and to the MathOp list above.
 		 */
-			| '+' a_expr					%prec UMINUS
-                                { $$ = cat2("+", $2); }
-			| '-' a_expr					%prec UMINUS
-				{ $$ = cat2("-", $2); }
-			| a_expr '+' a_expr
-				{ $$ = cat3($1, "+", $3); }
-			| a_expr '-' a_expr
-				{ $$ = cat3($1, "-", $3); }
-			| a_expr '*' a_expr
-				{ $$ = cat3($1, "*", $3); }
-			| a_expr '/' a_expr
-				{ $$ = cat3($1, "/", $3); }
-			| a_expr '%' a_expr
-				{ $$ = cat3($1, "%", $3); }
-			| a_expr '^' a_expr
-				{ $$ = cat3($1, "^", $3); }
-			| a_expr '<' a_expr
-				{ $$ = cat3($1, "<", $3); }
-			| a_expr '>' a_expr
-				{ $$ = cat3($1, ">", $3); }
-			| a_expr '=' a_expr
-				{ $$ = cat3($1, "=", $3); }
+			| PLUS a_expr					%prec UMINUS
+                                { $$ = cat2($1, $2); }
+			| MINUS a_expr					%prec UMINUS
+				{ $$ = cat2($1, $2); }
+			| a_expr PLUS a_expr
+				{ $$ = cat3($1, $2, $3); }
+			| a_expr MINUS a_expr
+				{ $$ = cat3($1, $2, $3); }
+			| a_expr MULT a_expr
+				{ $$ = cat3($1, $2, $3); }
+			| a_expr DIV a_expr
+				{ $$ = cat3($1, $2, $3); }
+			| a_expr MOD a_expr
+				{ $$ = cat3($1, $2, $3); }
+			| a_expr POWER a_expr
+				{ $$ = cat3($1, $2, $3); }
+			| a_expr LESS a_expr
+				{ $$ = cat3($1, $2, $3); }
+                        | a_expr LESSEQUAL a_expr
+				{ $$ = cat3($1, $2, $3); }
+			| a_expr GREATER a_expr
+				{ $$ = cat3($1, $2, $3); }
+                        | a_expr GREATEREQUAL a_expr
+				{ $$ = cat3($1, $2, $3); }
+			| a_expr EQUAL a_expr
+				{ $$ = cat3($1, $2, $3); }
+                        | a_expr NOTEQUAL a_expr
+				{ $$ = cat3($1, $2, $3); }
 
 			| a_expr qual_Op a_expr				%prec Op
 				{ $$ = cat3($1, $2, $3); }
@@ -1424,13 +1482,13 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
                             $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
-			| a_expr IS OF '(' type_list ')'			%prec IS
+			| a_expr IS OF LRPAR type_list RRPAR			%prec IS
 				{
-                            $$ = cat6($1, $2, $3, "(", $5, ")");
+                            $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
-			| a_expr IS NOT OF '(' type_list ')'		%prec IS
+			| a_expr IS NOT OF LRPAR type_list RRPAR		%prec IS
 				{
-                            $$ = cat7($1, $2, $3, $4, "(", $6, ")");
+                            $$ = cat7($1, $2, $3, $4, $5, $6, $7);
 				}
 			/*
 			 *	Ideally we would not use hard-wired operators below but instead use
@@ -1465,9 +1523,9 @@ a_expr:		c_expr									{ $$ = $1; }
 // AA: We do not allow nested sub-queries to occur
 			| a_expr subquery_Op sub_type select_with_parens	%prec Op
 */
-			| a_expr subquery_Op sub_type '(' a_expr ')'		%prec Op
+			| a_expr subquery_Op sub_type LRPAR a_expr RRPAR		%prec Op
 				{
-                            $$ = cat6($1, $2, $3, "(", $5, ")");
+                            $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
 // AA: We do not allow nested sub-queries to occur
 //			| UNIQUE select_with_parens
@@ -1494,28 +1552,34 @@ b_expr:		c_expr
 				{ $$ = $1; }
 			| b_expr TYPECAST Typename
 				{ $$ = cat3($1, $2, $3); }
-			| '+' b_expr					%prec UMINUS
-				{ $$ = cat2("+", $2); }
-			| '-' b_expr					%prec UMINUS
-				{ $$ = cat2("-", $2); }
-			| b_expr '+' b_expr
-				{ $$ = cat3($1, "+", $3); }
-			| b_expr '-' b_expr
-				{ $$ = cat3($1, "-", $3); }
-			| b_expr '*' b_expr
-				{ $$ = cat3($1, "*", $3); }
-			| b_expr '/' b_expr
-				{ $$ = cat3($1, "/", $3); }
-			| b_expr '%' b_expr
-				{ $$ = cat3($1, "%", $3); }
-			| b_expr '^' b_expr
-				{ $$ = cat3($1, "^", $3); }
-			| b_expr '<' b_expr
-				{ $$ = cat3($1, "<", $3); }
-			| b_expr '>' b_expr
-				{ $$ = cat3($1, ">", $3); }
-			| b_expr '=' b_expr
-				{ $$ = cat3($1, "=", $3); }
+			| PLUS b_expr					%prec UMINUS
+				{ $$ = cat2($1, $2); }
+			| MINUS b_expr					%prec UMINUS
+				{ $$ = cat2($1, $2); }
+			| b_expr PLUS b_expr
+				{ $$ = cat3($1, $2, $3); }
+			| b_expr MINUS b_expr
+				{ $$ = cat3($1, $2, $3); }
+			| b_expr MULT b_expr
+				{ $$ = cat3($1, $2, $3); }
+			| b_expr DIV b_expr
+				{ $$ = cat3($1, $2, $3); }
+			| b_expr MOD b_expr
+				{ $$ = cat3($1, $2, $3); }
+			| b_expr POWER b_expr
+				{ $$ = cat3($1, $2, $3); }
+			| b_expr LESS b_expr
+				{ $$ = cat3($1, $2, $3); }
+                        | b_expr LESSEQUAL b_expr
+				{ $$ = cat3($1, $2, $3); }
+			| b_expr GREATER b_expr
+				{ $$ = cat3($1, $2, $3); }
+                        | b_expr GREATEREQUAL b_expr
+				{ $$ = cat3($1, $2, $3); }
+			| b_expr EQUAL b_expr
+				{ $$ = cat3($1, $2, $3); }
+                        | b_expr NOTEQUAL b_expr
+				{ $$ = cat3($1, $2, $3); }
 			| b_expr qual_Op b_expr				%prec Op
 				{ $$ = cat3($1, $2, $3); }
 			| qual_Op b_expr					%prec Op
@@ -1526,13 +1590,13 @@ b_expr:		c_expr
 				{ $$ = cat5($1, $2, $3, $4, $5); }
 			| b_expr IS NOT DISTINCT FROM b_expr	%prec IS
 				{ $$ = cat6($1, $2, $3, $4, $5, $6); }
-			| b_expr IS OF '(' type_list ')'		%prec IS
+			| b_expr IS OF LRPAR type_list RRPAR		%prec IS
 				{
-                                        $$ = cat6($1, $2, $3, "(", $5, ")");
+                                        $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
-			| b_expr IS NOT OF '(' type_list ')'	%prec IS
+			| b_expr IS NOT OF LRPAR type_list RRPAR	%prec IS
 				{
-                            $$ = cat7($1, $2, $3, $4, "(", $6, "(");
+                            $$ = cat7($1, $2, $3, $4, $5, $6, $7);
 				}
 			| b_expr IS DOCUMENT_P					%prec IS
 				{
@@ -1558,9 +1622,9 @@ c_expr:		columnref								{ $$ = $1; }
 				{
                             $$ = cat2($1, $2);
 				}
-			| '(' a_expr ')' opt_indirection
+			| LRPAR a_expr RRPAR opt_indirection
 				{
-                            $$ = cat4("(", $2, ")", $4);
+                            $$ = cat4($1, $2, $3, $4);
 				}
 			| case_expr
 				{ $$ = $1; }
@@ -1572,10 +1636,13 @@ c_expr:		columnref								{ $$ = $1; }
 			| EXISTS select_with_parens
 			| ARRAY select_with_parens
 */
+/*
+// AA: Disallow SQL array constructs. They conflict with RaSQL arrays.
 			| ARRAY array_expr
 				{
                             $$ = cat2($1, $2);
 				}
+*/
 			| row
 				{
                                         $$ = $1;
@@ -1590,43 +1657,43 @@ c_expr:		columnref								{ $$ = $1; }
  * (Note that many of the special SQL functions wouldn't actually make any
  * sense as functional index entries, but we ignore that consideration here.)
  */
-func_expr:	func_name '(' ')' over_clause
+func_expr:	func_name LRPAR RRPAR over_clause
 				{
-                                        $$ = cat4($1, "(", ")", $4);
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| func_name '(' expr_list ')' over_clause
+			| func_name LRPAR expr_list RRPAR over_clause
 				{
-                                        $$ = cat5($1, "(", $3, ")", $5);
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
-			| func_name '(' VARIADIC a_expr ')' over_clause
+			| func_name LRPAR VARIADIC a_expr RRPAR over_clause
 				{
-                                        $$ = cat6($1, "(", $3, $4, ")", $6);
+                                        $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
-			| func_name '(' expr_list ',' VARIADIC a_expr ')' over_clause
+			| func_name LRPAR expr_list COMMA VARIADIC a_expr RRPAR over_clause
 				{
-                                        $$ = cat8($1, "(", $3, ",", $5, $6, ")", $8);
+                                        $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
 				}
-			| func_name '(' ALL expr_list ')' over_clause
+			| func_name LRPAR ALL expr_list RRPAR over_clause
 				{
-                                        $$ = cat6($1, "(", $3, $4, ")", $6);
+                                        $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
-			| func_name '(' DISTINCT expr_list ')' over_clause
+			| func_name LRPAR DISTINCT expr_list RRPAR over_clause
 				{
-                                        $$ = cat6($1, "(", $3, $4, ")", $6);
+                                        $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
-			| func_name '(' '*' ')' over_clause
+			| func_name LRPAR MULT RRPAR over_clause
 				{
 					/*
 					 * We consider AGGREGATE(*) to invoke a parameterless
 					 * aggregate.  This does the right thing for COUNT(*),
 					 * and there are no other aggregates in SQL92 that accept
-					 * '*' as parameter.
+					 * MULT as parameter.
 					 *
 					 * The FuncCall node is also marked agg_star = true,
 					 * so that later processing can detect what the argument
 					 * really was.
 					 */
-                                        $$ = cat5($1, "(", "*", ")", $5);
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
 			| CURRENT_DATE
 				{
@@ -1655,13 +1722,13 @@ func_expr:	func_name '(' ')' over_clause
 					 */
 					$$ = $1;
 				}
-			| CURRENT_TIME '(' Iconst ')'
+			| CURRENT_TIME LRPAR Iconst RRPAR
 				{
 					/*
 					 * Translate as "'now'::text::timetz(n)".
 					 * See comments for CURRENT_DATE.
 					 */
-					$$ = cat4($1, "(", $3, ")");
+					$$ = cat4($1, $2, $3, $4);
 				}
 			| CURRENT_TIMESTAMP
 				{
@@ -1671,13 +1738,13 @@ func_expr:	func_name '(' ')' over_clause
 					 */
 					$$ = $1;
 				}
-			| CURRENT_TIMESTAMP '(' Iconst ')'
+			| CURRENT_TIMESTAMP LRPAR Iconst RRPAR
 				{
 					/*
 					 * Translate as "'now'::text::timestamptz(n)".
 					 * See comments for CURRENT_DATE.
 					 */
-                                       $$ = cat4($1, "(", $3, ")");
+                                       $$ = cat4($1, $2, $3, $4);
 				}
 			| LOCALTIME
 				{
@@ -1687,13 +1754,13 @@ func_expr:	func_name '(' ')' over_clause
 					 */
 					$$ = $1;
 				}
-			| LOCALTIME '(' Iconst ')'
+			| LOCALTIME LRPAR Iconst RRPAR
 				{
 					/*
 					 * Translate as "'now'::text::time(n)".
 					 * See comments for CURRENT_DATE.
 					 */
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
 			| LOCALTIMESTAMP
 				{
@@ -1703,13 +1770,13 @@ func_expr:	func_name '(' ')' over_clause
 					 */
                                         $$ = $1;
 				}
-			| LOCALTIMESTAMP '(' Iconst ')'
+			| LOCALTIMESTAMP LRPAR Iconst RRPAR
 				{
 					/*
 					 * Translate as "'now'::text::timestamp(n)".
 					 * See comments for CURRENT_DATE.
 					 */
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
 			| CURRENT_ROLE
 				{
@@ -1735,34 +1802,34 @@ func_expr:	func_name '(' ')' over_clause
 				{
 					$$ = $1;
 				}
-			| CAST '(' a_expr AS Typename ')'
-				{ $$ = cat6($1, "(", $3, $4, $5, ")"); }
-			| EXTRACT '(' extract_list ')'
+			| CAST LRPAR a_expr AS Typename RRPAR
+				{ $$ = cat6($1, $2, $3, $4, $5, $6); }
+			| EXTRACT LRPAR extract_list RRPAR
 				{
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| OVERLAY '(' overlay_list ')'
+			| OVERLAY LRPAR overlay_list RRPAR
 				{
 					/* overlay(A PLACING B FROM C FOR D) is converted to
 					 * substring(A, 1, C-1) || B || substring(A, C+1, C+D)
 					 * overlay(A PLACING B FROM C) is converted to
 					 * substring(A, 1, C-1) || B || substring(A, C+1, C+char_length(B))
 					 */
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| POSITION '(' position_list ')'
+			| POSITION LRPAR position_list RRPAR
 				{
 					/* position(A in B) is converted to position(B, A) */
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| SUBSTRING '(' substr_list ')'
+			| SUBSTRING LRPAR substr_list RRPAR
 				{
 					/* substring(A from B for C) is converted to
 					 * substring(A, B, C) - thomas 2000-11-28
 					 */
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| TREAT '(' a_expr AS Typename ')'
+			| TREAT LRPAR a_expr AS Typename RRPAR
 				{
 					/* TREAT(expr AS target) converts expr of a particular type to target,
 					 * which is defined to be a subtype of the original expression.
@@ -1770,86 +1837,86 @@ func_expr:	func_name '(' ')' over_clause
 					 * but let's make this a generally useful form allowing stronger
 					 * coercions than are handled by implicit casting.
 					 */
-                                        $$ = cat6($1, "(", $3, $4, $5, ")");
+                                        $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
-			| TRIM '(' BOTH trim_list ')'
+			| TRIM LRPAR BOTH trim_list RRPAR
 				{
 					/* various trim expressions are defined in SQL92
 					 * - thomas 1997-07-19
 					 */
-                                        $$ = cat5($1, "(", $3, $4, ")");
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
-			| TRIM '(' LEADING trim_list ')'
+			| TRIM LRPAR LEADING trim_list RRPAR
 				{
-                                        $$ = cat5($1, "(", $3, $4, ")");
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
-			| TRIM '(' TRAILING trim_list ')'
+			| TRIM LRPAR TRAILING trim_list RRPAR
 				{
-                                        $$ = cat5($1, "(", $3, $4, ")");
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
-			| TRIM '(' trim_list ')'
+			| TRIM LRPAR trim_list RRPAR
 				{
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| NULLIF '(' a_expr ',' a_expr ')'
+			| NULLIF LRPAR a_expr COMMA a_expr RRPAR
 				{
-                                        $$ = cat6($1, "(", $3, ",", $5, ")");
+                                        $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
-			| COALESCE '(' expr_list ')'
+			| COALESCE LRPAR expr_list RRPAR
 				{
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| GREATEST '(' expr_list ')'
+			| GREATEST LRPAR expr_list RRPAR
 				{
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| LEAST '(' expr_list ')'
+			| LEAST LRPAR expr_list RRPAR
 				{
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| XMLCONCAT '(' expr_list ')'
+			| XMLCONCAT LRPAR expr_list RRPAR
 				{
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| XMLELEMENT '(' NAME_P ColLabel ')'
+			| XMLELEMENT LRPAR NAME_P ColLabel RRPAR
 				{
-                                        $$ = cat5($1, "(", $3, $4, ")");
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
-			| XMLELEMENT '(' NAME_P ColLabel ',' xml_attributes ')'
+			| XMLELEMENT LRPAR NAME_P ColLabel COMMA xml_attributes RRPAR
 				{
-                                        $$ = cat7($1, "(", $3, $4, ",", $6, ")");
+                                        $$ = cat7($1, $2, $3, $4, $5, $6, $7);
 				}
-			| XMLELEMENT '(' NAME_P ColLabel ',' expr_list ')'
+			| XMLELEMENT LRPAR NAME_P ColLabel COMMA expr_list RRPAR
 				{
-                                        $$ = cat7($1, "(", $3, $4, ",", $6, ")");
+                                        $$ = cat7($1, $2, $3, $4, $5, $6, $7);
 				}
-			| XMLELEMENT '(' NAME_P ColLabel ',' xml_attributes ',' expr_list ')'
+			| XMLELEMENT LRPAR NAME_P ColLabel COMMA xml_attributes COMMA expr_list RRPAR
 				{
-                                        $$ = cat9($1, "(", $3, $4, ",", $6, ",", $8, ")");
+                                        $$ = cat9($1, $2, $3, $4, $5, $6, $7, $8, $9);
 				}
-			| XMLFOREST '(' xml_attribute_list ')'
+			| XMLFOREST LRPAR xml_attribute_list RRPAR
 				{
-                                        $$ = cat4($1, "(", $3, ")");
+                                        $$ = cat4($1, $2, $3, $4);
 				}
-			| XMLPARSE '(' document_or_content a_expr xml_whitespace_option ')'
+			| XMLPARSE LRPAR document_or_content a_expr xml_whitespace_option RRPAR
 				{
-                                        $$ = cat6($1, "(", $3, $4, $5, ")");
+                                        $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
-			| XMLPI '(' NAME_P ColLabel ')'
+			| XMLPI LRPAR NAME_P ColLabel RRPAR
 				{
-                                        $$ = cat5($1, "(", $3, $4, ")");
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
-			| XMLPI '(' NAME_P ColLabel ',' a_expr ')'
+			| XMLPI LRPAR NAME_P ColLabel COMMA a_expr RRPAR
 				{
-                                        $$ = cat7($1, "(", $3, $4, ",", $6, ")");
+                                        $$ = cat7($1, $2, $3, $4, $5, $6, $7);
 				}
-			| XMLROOT '(' a_expr ',' xml_root_version opt_xml_root_standalone ')'
+			| XMLROOT LRPAR a_expr COMMA xml_root_version opt_xml_root_standalone RRPAR
 				{
-                                        $$ = cat7($1, "(", $3, ",", $5, $6, ")");
+                                        $$ = cat7($1, $2, $3, $4, $5, $6, $7);
 				}
-			| XMLSERIALIZE '(' document_or_content a_expr AS SimpleTypename ')'
+			| XMLSERIALIZE LRPAR document_or_content a_expr AS SimpleTypename RRPAR
 				{
-                                        $$ = cat7($1, "(", $3, $4, $5, $6, ")");
+                                        $$ = cat7($1, $2, $3, $4, $5, $6, $7);
 				}
 		;
 
@@ -1862,21 +1929,21 @@ xml_root_version: VERSION_P a_expr
 				{ $$ = cat2($1, $2); }
 		;
 
-opt_xml_root_standalone: ',' STANDALONE_P YES_P
-				{ $$ = cat3(",", $2, $3); }
-			| ',' STANDALONE_P NO
-				{ $$ = cat3(",", $2, $3); }
-			| ',' STANDALONE_P NO VALUE_P
-				{ $$ = cat3(",", $2, $3); }
+opt_xml_root_standalone: COMMA STANDALONE_P YES_P
+				{ $$ = cat3($1, $2, $3); }
+			| COMMA STANDALONE_P NO
+				{ $$ = cat3($1, $2, $3); }
+			| COMMA STANDALONE_P NO VALUE_P
+				{ $$ = cat3($1, $2, $3); }
 			| /*EMPTY*/
 				{ $$ = NULL; }
 		;
 
-xml_attributes: XMLATTRIBUTES '(' xml_attribute_list ')'	{ $$ = cat4($1, "(", $3, ")"); }
+xml_attributes: XMLATTRIBUTES LRPAR xml_attribute_list RRPAR	{ $$ = cat4($1, $2, $3, $4); }
 		;
 
 xml_attribute_list:	xml_attribute_el					{ $$ = $1; }
-			| xml_attribute_list ',' xml_attribute_el	{ $$ = cat3($1, ",", $3); }
+			| xml_attribute_list COMMA xml_attribute_el	{ $$ = cat3($1, $2, $3); }
 		;
 
 xml_attribute_el: a_expr AS ColLabel
@@ -1921,9 +1988,9 @@ over_clause:
  * without conflicting with the parenthesized a_expr production.  Without the
  * ROW keyword, there must be more than one a_expr inside the parens.
  */
-row:		ROW '(' expr_list ')'					{ $$ = cat4($1, "(", $3, ")"); }
-			| ROW '(' ')'					{ $$ = NULL; }
-			| '(' expr_list ',' a_expr ')'			{ $$ = cat5("(", $2, ",", $4, ")"); }
+row:		ROW LRPAR expr_list RRPAR					{ $$ = cat4($1, $2, $3, $4); }
+			| ROW LRPAR RRPAR					{ $$ = NULL; }
+			| LRPAR expr_list COMMA a_expr RRPAR			{ $$ = cat5($1, $2, $3, $4, $5); }
 		;
 
 sub_type:	ANY										{ $$ = "ANY_SUBLINK"; }
@@ -1935,35 +2002,38 @@ all_Op:		Op										{ $$ = $1; }
 			| MathOp								{ $$ = $1; }
 		;
 
-MathOp:		 '+'									{ $$ = "+"; }
-			| '-'									{ $$ = "-"; }
-			| '*'									{ $$ = "*"; }
-			| '/'									{ $$ = "/"; }
-			| '%'									{ $$ = "%"; }
-			| '^'									{ $$ = "^"; }
-			| '<'									{ $$ = "<"; }
-			| '>'									{ $$ = ">"; }
-			| '='									{ $$ = "="; }
+MathOp:		 PLUS									{ $$ = $1; }
+			| MINUS									{ $$ = $1; }
+			| MULT									{ $$ = $1; }
+			| DIV									{ $$ = $1; }
+			| MOD									{ $$ = $1; }
+			| POWER									{ $$ = $1; }
+			| LESS									{ $$ = $1; }
+                        | LESSEQUAL								{ $$ = $1; }
+			| GREATER								{ $$ = $1; }
+                        | GREATEREQUAL								{ $$ = $1; }
+			| EQUAL									{ $$ = $1; }
+                        | NOTEQUAL								{ $$ = $1; }
 		;
 
 qual_Op:	Op
 					{ $$ = $1; }
-			| OPERATOR '(' any_operator ')'
-					{ $$ = cat4($1, "(", $3, ")"); }
+			| OPERATOR LRPAR any_operator RRPAR
+					{ $$ = cat4($1, $2, $3, $4); }
 		;
 
 qual_all_Op:
 			all_Op
 					{ $$ = $1; }
-			| OPERATOR '(' any_operator ')'
-					{ $$ = cat4($1, "(", $3, ")"); }
+			| OPERATOR LRPAR any_operator RRPAR
+					{ $$ = cat4($1, $2, $3, $4); }
 		;
 
 subquery_Op:
 			all_Op
 					{ $$ = $1; }
-			| OPERATOR '(' any_operator ')'
-					{ $$ = cat4($1, "(", $3, ")"); }
+			| OPERATOR LRPAR any_operator RRPAR
+					{ $$ = cat4($1, $2, $3, $4); }
 			| LIKE
                                         { $$ = $1; }
 			| NOT LIKE
@@ -1986,33 +2056,33 @@ expr_list:	a_expr
 				{
 					$$ = $1;
 				}
-			| expr_list ',' a_expr
+			| expr_list COMMA a_expr
 				{
-					$$ = cat3($1, ",", $3);
+					$$ = cat3($1, $2, $3);
 				}
 		;
 
 type_list:	Typename								{ $$ = $1; }
-			| type_list ',' Typename				{ $$ = cat3($1, ",", $3); }
+			| type_list COMMA Typename				{ $$ = cat3($1, $2, $3); }
 		;
 
-array_expr: '[' expr_list ']'
-				{
-                            $$ = cat3("[", $2, "]");
-				}
-			| '[' array_expr_list ']'
-				{
-                            $$ = cat3("[", $2, "]");
-				}
-			| '[' ']'
-				{
-					$$ = cat2("[", "]");
-				}
-		;
-
-array_expr_list: array_expr							{ $$ = $1; }
-			| array_expr_list ',' array_expr		{ $$ = cat3($1, ",", $3); }
-		;
+//array_expr: LEPAR expr_list REPAR
+//				{
+//                            $$ = cat3($1, $2, $3);
+//				}
+//			| LEPAR array_expr_list REPAR
+//				{
+//                            $$ = cat3($1, $2, $3);
+//				}
+//			| LEPAR REPAR
+//				{
+//					$$ = cat2($1, $2);
+//				}
+//		;
+//
+//array_expr_list: array_expr							{ $$ = $1; }
+//			| array_expr_list ',' array_expr		{ $$ = cat3($1, ",", $3); }
+//		;
 
 
 extract_list:
@@ -2129,7 +2199,7 @@ in_expr:
 /*                select_with_parens
 			|
 */
-                '(' expr_list ')'						{ $$ = cat3("(", $2, ")"); }
+                LRPAR expr_list RRPAR						{ $$ = cat3($1, $2, $3); }
 		;
 
 /*
@@ -2183,22 +2253,25 @@ columnref:	relation_name
 		;
 
 indirection_el:
-			'.' attr_name
+			DOT attr_name
 				{
-                                        $$ = cat2(".", $2);
+                                        $$ = cat2($1, $2);
 				}
-			| '.' '*'
+			| DOT MULT
 				{
-                                        $$ = cat2(".", "*");
+                                        $$ = cat2($1, $2);
 				}
-			| '[' a_expr ']'
+/*
+AA: Disallow syntax that would interfere with the RaSQL array
+			| LEPAR a_expr REPAR
 				{
-                                        $$ = cat3("[", $2, "]");
+                                        $$ = cat3($1, $2, $3);
 				}
-			| '[' a_expr ':' a_expr ']'
+			| LEPAR a_expr COLON a_expr REPAR
 				{
-                                        $$ = cat5("[", $2, ":", $4, "]");
+                                        $$ = cat5($1, $2, $3, $4, $5);
 				}
+*/
 		;
 
 indirection:
@@ -2231,10 +2304,12 @@ opt_asymmetric: ASYMMETRIC                                              { $$ = $
 
 target_list:
 			target_el								{ $$ = $1; }
-			| target_list ',' target_el				{ $$ = cat3($1, ",", $3); }
+			| target_list COMMA target_el				{ $$ = cat3($1, $2, $3); }
 		;
 
-target_el:	a_expr AS ColLabel
+target_el:	
+
+                        a_expr AS ColLabel
 				{
                                         $$ = cat3($1, $2, $3);
 				}
@@ -2254,10 +2329,24 @@ target_el:	a_expr AS ColLabel
 				{
                                         $$ = $1;
 				}
-			| '*'
+			| MULT
 				{
-                                        $$ = "*";
+                                        $$ = $1;
 				}
+
+/* AA: RaSQL expressions allowed in the SELECT clause */
+                        | mddExp                            { $$ = $1; }
+                        | trimExp                           { $$ = $1; }
+                        | reduceExp                         { $$ = $1; }
+                        | inductionExp                      { $$ = $1; }
+                        | functionExp                       { $$ = $1; }
+                        | integerExp                        { $$ = $1; }
+                        | condenseExp                       { $$ = $1; }
+                        | variable                          { $$ = $1; }
+                        | mintervalExp                      { $$ = $1; }
+                        | intervalExp                       { $$ = $1; }
+                        | generalLit                        { $$ = $1; }
+
 		;
 
 
@@ -2292,8 +2381,8 @@ qualified_name:
 
 name_list:	name
 					{ $$ = $1; }
-			| name_list ',' name
-					{ $$ = cat2($1, ","); }
+			| name_list COMMA name
+					{ $$ = cat3($1, $2, $3); }
 		;
 
 
@@ -2343,9 +2432,9 @@ AexprConst: Iconst
 				{
                                         $$ = cat2($1, $2);
                                 }
-			| func_name '(' expr_list ')' Sconst
+			| func_name LRPAR expr_list RRPAR Sconst
 				{
-                                        $$ = cat5($1, "(", $3, ")", $5);
+                                        $$ = cat5($1, $2, $3, $4, $5);
                                 }
 			| ConstTypename Sconst
 				{
@@ -2355,9 +2444,9 @@ AexprConst: Iconst
 				{
                                         $$ = cat3($1, $2, $3);
                                 }
-			| ConstInterval '(' Iconst ')' Sconst opt_interval
+			| ConstInterval LRPAR Iconst RRPAR Sconst opt_interval
 				{
-                                        $$ = cat6($1, "(", $3, ")", $5, $6);
+                                        $$ = cat6($1, $2, $3, $4, $5, $6);
                                 }
 			| TRUE_P
 				{
@@ -2473,7 +2562,7 @@ unreserved_keyword:
 			| CREATEDB
 			| CREATEROLE
 			| CREATEUSER
-			| CSV
+//			| CSV
 			| CURRENT_P
 			| CURSOR
 			| CYCLE
@@ -2869,18 +2958,18 @@ SpecialRuleRelation:
 				}
 		;
 
-attrs:      '.' attr_name
-				{ $$ = "."; }
-			| attrs '.' attr_name
-				{ $$ = cat3($1, ".", $3); }
+attrs:      DOT attr_name
+				{ $$ = cat2($1, $2); }
+			| attrs DOT attr_name
+				{ $$ = cat3($1, $2, $3); }
 			;
 
 
 any_operator:
             all_Op
 				{ $$ = $1; }
-			| ColId '.' any_operator
-				{ $$ = cat3($1, ".", $3); }
+			| ColId DOT any_operator
+				{ $$ = cat3($1, $2, $3); }
 			;
 
 /******************************** END POSTGRESQL *********************************/
@@ -2889,23 +2978,23 @@ any_operator:
 
 
 /******************************** START RASQL *********************************/
-selectExp: RASQL SELECT resultList FROM collectionList WHERE generalExp
-	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
-	}
-	| RASQL SELECT resultList FROM collectionList
-	{
-            $$ = cat4($1, $2, $3, $4);
-	};
-
-resultList: resultList COMMA generalExp
-	{
-	  $$ = $3;
-	}
-	| generalExp
-	{
-	  $$ = $1;
-	};
+//rasqlSelectExp: SELECT resultList FROM collectionList WHERE generalExp
+//	{
+//            $$ = cat6($1, $2, $3, $4, $5, $6);
+//	}
+//	| SELECT resultList FROM collectionList
+//	{
+//            $$ = cat4($1, $2, $3, $4);
+//	};
+//
+//resultList: resultList COMMA generalExp
+//	{
+//	  $$ = cat3($1, $2, $3);
+//	}
+//	| generalExp
+//	{
+//	  $$ = $1;
+//	};
 
 generalExp: mddExp                          { $$ = $1; }
 	| trimExp                           { $$ = $1; }
@@ -2977,11 +3066,11 @@ intervalExp: generalExp COLON generalExp
             $$ = cat3($1, $2, $3);
 	};
 
-condenseExp: CONDENSE condenseOpLit OVER condenseVariable IN generalExp WHERE generalExp USING generalExp
+condenseExp: CONDENSE condenseOpLit OVER condenseVariable IN_P generalExp WHERE generalExp USING generalExp
 	{
-            $$ = cat10($1, $2, $3, $4, $5, $6, $7, $8, $10);
+            $$ = cat10($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
 	}
-	| CONDENSE condenseOpLit OVER condenseVariable IN generalExp USING generalExp
+	| CONDENSE condenseOpLit OVER condenseVariable IN_P generalExp USING generalExp
 	{
             $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
 	};
@@ -3347,34 +3436,34 @@ castType: TBOOL			{ $$ = $1; }
 	| TUNSIG TSHORT	        { $$ = $1; }
 	| TUNSIG TLONG	        { $$ = $1; }
 
-collectionList: collectionList COMMA iteratedCollection
-	{
-    $$ = cat3($1, $2, $3);
-	}
-	| iteratedCollection
-	{
-            $$ = $1;
-	};
-
-iteratedCollection: namedCollection AS collectionIterator
-	{
-            $$ = cat3($1, $2, $3);
-	}
-	| namedCollection collectionIterator
-	{
-            $$ = cat2($1, $2);
-	}
-	| namedCollection
-	{
-            $$ = $1;
-	};
+//collectionList: collectionList COMMA iteratedCollection
+//	{
+//    $$ = cat3($1, $2, $3);
+//	}
+//	| iteratedCollection
+//	{
+//            $$ = $1;
+//	};
+//
+//iteratedCollection: namedCollection AS collectionIterator
+//	{
+//            $$ = cat3($1, $2, $3);
+//	}
+//	| namedCollection collectionIterator
+//	{
+//            $$ = cat2($1, $2);
+//	}
+//	| namedCollection
+//	{
+//            $$ = $1;
+//	};
 
 variable: Identifier
 	{
             $$ = $1;
 	};
 
-namedCollection: Identifier;
+//namedCollection: Identifier;
 
 collectionIterator: Identifier;
 
@@ -3526,7 +3615,7 @@ ivList: ivList COMMA iv
             $$ = $1;
 	};
 
-iv: marrayVariable IN generalExp
+iv: marrayVariable IN_P generalExp
 	{
     $$ = cat3($1, $2, $3);
 	};

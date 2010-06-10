@@ -25,7 +25,8 @@ $(LIB):
 
 ### Parser actually builds the parser program
 $(BIN): parser.c lexer.c $(LIB)
-	$(CC) $(CFLAGS) lexer.c parser.c $(LIBS) -o parser  
+	$(CC) $(CFLAGS) parser.c lexer.c $(LIBS) -o $(BIN)
+
 
 ### Generate the parser/lexer sources with Flex/Bison
 parser.c parser.h: parser.yy

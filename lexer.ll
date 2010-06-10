@@ -362,31 +362,32 @@ other			.
 
 
 
-"+"                                       { return PLUS; }
-"-"                                       { return MINUS; }
-"*"                                       { return MULT; }
-"/"                                       { return DIV; }
-"="                                       { return EQUAL; }
-"<"                                       { return LESS; }
-">"                                       { return GREATER; }
-"<="                                      { return LESSEQUAL; }
-">="                                      { return GREATEREQUAL; }
-"<>"                                      { return NOTEQUAL; }
-"!="                                      { return NOTEQUAL; }
-":"                                       { return COLON; }
-";"                                       { return SEMICOLON; }
-"["                                       { return LEPAR; }
-"]"                                       { return REPAR; }
-"("                                       { return LRPAR; }
-")"                                       { return RRPAR; }
-"{"                                       { return LCPAR; }
-"}"                                       { return RCPAR; }
-","                                       { return COMMA; }
-"."                                       { return DOT; }
-#MDD[0-9]+#                               { return MDDPARAM; }
+"+"                                       { yylval.str = "+"; return PLUS; }
+"-"                                       { yylval.str = "-"; return MINUS; }
+"*"                                       { yylval.str = "*"; return MULT; }
+"/"                                       { yylval.str = "/"; return DIV; }
+"%"                                       { yylval.str = "%"; return MOD; }
+"^"                                       { yylval.str = "^"; return POWER; }
+"="                                       { yylval.str = "="; return EQUAL; }
+"<"                                       { yylval.str = "<"; return LESS; }
+">"                                       { yylval.str = ">"; return GREATER; }
+"<="                                      { yylval.str = "<="; return LESSEQUAL; }
+">="                                      { yylval.str = ">="; return GREATEREQUAL; }
+"<>"                                      { yylval.str = "<>"; return NOTEQUAL; }
+"!="                                      { yylval.str = "!="; return NOTEQUAL; }
+":"                                       { yylval.str = ":"; return COLON; }
+";"                                       { yylval.str = ";"; return SEMICOLON; }
+"["                                       { yylval.str = "["; return LEPAR; }
+"]"                                       { yylval.str = "]"; return REPAR; }
+"("                                       { yylval.str = "("; return LRPAR; }
+")"                                       { yylval.str = ")"; return RRPAR; }
+"{"                                       { yylval.str = "{"; return LCPAR; }
+"}"                                       { yylval.str = "}"; return RCPAR; }
+","                                       { yylval.str = ","; return COMMA; }
+"."                                       { yylval.str = "."; return DOT; }
+#MDD[0-9]+#                               { yylval.str = "MDDParam"; return MDDPARAM; }
 "true"                                    { yylval.boolean = "true"; return BCONST; }
 "false"                                   { yylval.boolean = "false"; return BCONST; }
-"rasql"                                   { return RASQL; }
 
 
 
