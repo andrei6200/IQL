@@ -13,7 +13,7 @@
 #define SEPARATOR " "
 
 
-char blank[] = "NULL";
+char blank[] = " ";
 char output[MAXLENGTH];
 
 char* cat2(char* s1, char* s2)

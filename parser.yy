@@ -5,9 +5,8 @@
 
 #include "str.h"
 
-int yydebug=1;
-
 extern int yylex();
+extern void yyerror(const char* msg);
 
 /******************************** START POSTGRESQL *********************************/
 
@@ -24,7 +23,8 @@ extern int yylex();
 	} while (0)
 /******************************** END POSTGRESQL *********************************/
 
-char* parsetree;
+/* AA: The final HQL queries are stored here*/
+char* hqlQueries;
 
 %}
 
@@ -388,14 +388,14 @@ char* parsetree;
  *	bjm 1999/10/05
  */
 stmtblock:	stmtmulti
-                    { parsetree = $1; }
+                    { hqlQueries = $1; }
 		;
 
 /* the thrashing around here is to discard "empty" statements... */
 stmtmulti:	stmtmulti SEMICOLON stmt
 				{ if ($3 != NULL)
 					{
-					$$ = cat3($1, "\n", $3);
+					$$ = cat3($1, (char*)"\n", $3);
 					printf("\t*** Single statement (in a series): %s\n", $3);
 					}
 				  else
@@ -473,8 +473,8 @@ SelectStmt:     select_no_parens			%prec UMINUS
 		;
 
 select_with_parens:
-			LRPAR select_no_parens RRPAR			{ $$ = cat3("(", $2, ")"); }
-			| LRPAR select_with_parens RRPAR			{ $$ = cat3("(", $2, ")"); }
+			LRPAR select_no_parens RRPAR			{ $$ = cat3($1, $2, $3); }
+			| LRPAR select_with_parens RRPAR			{ $$ = cat3($1, $2, $3); }
 		;
 
 /*
@@ -616,12 +616,12 @@ OptTempTableName:
 				}
 		;
 
-opt_table:	TABLE									{ $$ = "TABLE"; }
+opt_table:	TABLE									{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-opt_all:	ALL										{ $$ = "ALL"; }
-			| DISTINCT								{ $$ = "DISTINCT"; }
+opt_all:	ALL										{ $$ = $1; }
+			| DISTINCT								{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
@@ -660,14 +660,14 @@ sortby:		a_expr USING qual_all_Op opt_nulls_order
 		;
 
 
-opt_asc_desc: ASC                           { $$ = "SORTBY_ASC"; }
-			| DESC                          { $$ = "SORTBY_DESC"; }
-			| /*EMPTY*/                     { $$ = "SORTBY_DEFAULT"; }
+opt_asc_desc: ASC                           { $$ = $1; }
+			| DESC                          { $$ = $1; }
+			| /*EMPTY*/                     { $$ = (char*) "SORTBY_DEFAULT"; }
 			;
 
-opt_nulls_order: NULLS_FIRST                { $$ = "SORTBY_NULLS_FIRST"; }
-				| NULLS_LAST                    { $$ = "SORTBY_NULLS_LAST"; }
-				| /*EMPTY*/                     { $$ = "SORTBY_NULLS_DEFAULT"; }
+opt_nulls_order: NULLS_FIRST                { $$ = (char*)"NULLS FIRST"; }
+				| NULLS_LAST                    { $$ = (char*)"NULLS LAST"; }
+				| /*EMPTY*/                     { $$ = (char*)"SORTBY_NULLS_DEFAULT"; }
 				;
 
 select_limit:
@@ -733,7 +733,7 @@ from_clause:
 
 from_list:
 			table_ref								{ $$ = $1; }
-			| from_list COMMA table_ref				{ $$ = cat3($1, ",", $3); }
+			| from_list COMMA table_ref				{ $$ = cat3($1, $2, $3); }
 		;
 
 /*
@@ -852,10 +852,10 @@ alias_clause:
 				}
 		;
 
-join_type:	FULL join_outer							{ $$ = "JOIN_FULL"; }
-			| LEFT join_outer						{ $$ = "JOIN_LEFT"; }
-			| RIGHT join_outer						{ $$ = "JOIN_RIGHT"; }
-			| INNER_P								{ $$ = "JOIN_INNER"; }
+join_type:	FULL join_outer							{ $$ = $1; }
+			| LEFT join_outer						{ $$ = $1; }
+			| RIGHT join_outer						{ $$ = $1; }
+			| INNER_P								{ $$ = $1; }
 		;
 
 /* OUTER is just noise... */
@@ -1094,7 +1094,7 @@ opt_float:	LRPAR Iconst RRPAR
 				}
 			| /*EMPTY*/
 				{
-					$$ = "empty";
+					$$ = (char*)"empty";
 				}
 		;
 
@@ -3625,13 +3625,5 @@ BooleanLit: BCONST  { $$ = $1;  }
 
 %%
 
+
 #include "str.c"
-
-extern int errorCount;
-
-int main()
-{
-	yyparse();
-        printf("\n\n\nPARSE TREE: \n%s\n", parsetree);
-	return errorCount;
-} 

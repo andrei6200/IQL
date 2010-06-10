@@ -495,7 +495,7 @@ other			.
 //					 nchar had better be a keyword! 
 					keyword = ScanKeywordLookup("nchar");
 					Assert(keyword != NULL);
-					yylval.keyword = keyword->name;
+					yylval.keyword = (char*) keyword->name;
 					return keyword->value;
 				}
 
@@ -552,9 +552,11 @@ other			.
 					return SCONST;
 				}
 <xus>{xusstop2} {
+                                        char tmp[] = " ";
 					BEGIN(INITIAL);
 					//yylval.str = litbuf_udeescape(yytext[yyleng-2]);
-					yylval.str = yytext[yyleng-2];
+                                        tmp[0] = yytext[yyleng-2];
+					yylval.str = strdup(tmp);
 					return SCONST;
 				}
 <xq,xe,xus>{xqdouble} {
@@ -684,7 +686,7 @@ other			.
 					if (literallen == 0)
 						yyerror("zero-length delimited identifier");
 //					ident = litbuf_udeescape('\\');
-                                        ident = '\\';
+                                        ident = "\\";
 //					if (literallen >= NAMEDATALEN)
 //						truncate_identifier(ident, literallen, true);
 					yylval.str = ident;
@@ -886,14 +888,14 @@ other			.
 					keyword = ScanKeywordLookup(yytext);
 					if (keyword != NULL)
 					{
-						yylval.keyword = keyword->name;
+						yylval.keyword = (char*) keyword->name;
 						return keyword->value;
 					}
                                         /* Is it a RaSQL keyword? */
                                         keyword2 = RasqlKeywordLookup(yytext);
                                         if (keyword2 != NULL)
                                         {
-                                            yylval.keyword = keyword2->name;
+                                            yylval.keyword = (char*) keyword2->name;
                                             return keyword2->value;
                                         }
 					/*

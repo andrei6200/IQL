@@ -1,6 +1,7 @@
 # START: Taken from PostgreSQL Makefile
-CC = colorgcc
-PGCFLAGS = -g -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -fno-strict-aliasing -fwrapv 
+CC = gcc
+CPP = g++
+PGCFLAGS= -g -O2 -Wall -Wpointer-arith -Wendif-labels -fno-strict-aliasing -fwrapv
 # END: Taken from PostgreSQL Makefile
 
 FLEX = flex
@@ -14,19 +15,29 @@ FLEXFLAGS = -CF
 YACCFLAGS = -d --report=itemset
 # YACCFLAGS = --verbose -d
 
-BIN=parser
-LIB=postgres/lib/libparse.a rasdaman/rasql/lib/librqlparse
+OBJ=lexer.o parser.o driver.o
+LIB=postgres/lib/libparse.a rasdaman/rasql/lib/librqlparse.a
 
-all: $(BIN)
+all: driver
 
-$(LIB):
+postgres/lib/libparse.a:
 	make -C postgres
+
+rasdaman/rasql/lib/librqlparse.a:
 	make -C rasdaman/rasql
 
-### Parser actually builds the parser program
-$(BIN): parser.c lexer.c $(LIB)
-	$(CC) $(CFLAGS) parser.c lexer.c $(LIBS) -o $(BIN)
+### Driver actually builds the parser driver program
+driver: parser.o lexer.o driver.o $(LIB)
+	$(CPP) driver.o parser.o lexer.o $(LIBS) -o driver
 
+parser.o: parser.c parser.h str.c str.h
+	$(CC) $(CFLAGS) parser.c $(LIBS) -c -o parser.o
+
+lexer.o: lexer.c
+	$(CC) $(CFLAGS) lexer.c $(LIBS) -c -o lexer.o
+
+driver.o: driver.cpp
+	$(CPP) $(CPPFLAGS) driver.cpp $(LIBS) -c -o driver.o
 
 ### Generate the parser/lexer sources with Flex/Bison
 parser.c parser.h: parser.yy
@@ -42,5 +53,5 @@ check:
 	$(VALGRIND) --leak-check=full ./teststr
 
 clean:
-	rm -f *~ *.o y.tab.* lex.yy.* parser *.hpp *.cpp parser.output parser.c parser.h lexer.c teststr
+	rm -f *~ *.o y.tab.* lex.yy.* *.hpp parser.output parser.c parser.h lexer.c teststr driver
 	make -C postgres clean
