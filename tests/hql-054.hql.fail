@@ -1,0 +1,4 @@
+SELECT P.lastName, count(P.*), 255 - Coll.red
+FROM Persons AS P, PhotoCollection AS Coll
+GROUP BY P.lastName, P.firstName
+HAVING count(P.firstName) > 1

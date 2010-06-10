@@ -1,0 +1,7 @@
+SELECT P.lastName, count(P.*),
+	MARRAY x IN [1:100],
+	       y IN [20:40]
+	VALUES Coll[x,y]
+FROM Persons AS P, PhotoCollection AS Coll
+GROUP BY P.lastName, P.firstName
+HAVING count(P.firstName) > 1

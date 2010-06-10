@@ -1,0 +1,5 @@
+SELECT P.lastName, count(P.*), Coll
+FROM Persons AS P, PhotoCollection AS Coll
+WHERE avg_cells(Coll) > 128
+GROUP BY P.lastName, P.firstName
+HAVING count(P.firstName) > 1

@@ -15,13 +15,13 @@ extern int yylex();
 #include <limits.h>
 
 /* Location tracking support --- simpler than bison's default */
-//#define YYLLOC_DEFAULT(Current, Rhs, N) \
-//	do { \
-//		if (N) \
-//			(Current) = (Rhs)[1]; \
-//		else \
-//			(Current) = (Rhs)[0]; \
-//	} while (0)
+#define YYLLOC_DEFAULT(Current, Rhs, N) \
+	do { \
+		if (N) \
+			(Current) = (Rhs)[1]; \
+		else \
+			(Current) = (Rhs)[0]; \
+	} while (0)
 /******************************** END POSTGRESQL *********************************/
 
 char* parsetree;
@@ -75,7 +75,7 @@ char* parsetree;
                 target_list
 
                 indirection opt_indirection
-                group_clause select_limit
+                select_limit
                 any_operator
                 TableFuncElementList opt_type_modifiers
 
@@ -98,7 +98,7 @@ char* parsetree;
 %type <node>	TableFuncElement
 %type <node>	where_clause
                 a_expr b_expr c_expr func_expr AexprConst indirection_el
-                columnref in_expr having_clause func_table
+                columnref in_expr func_table
 %type <list>	row type_list
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
@@ -537,30 +537,14 @@ select_clause:
  * However, this is not checked by the grammar; parse analysis must check it.
  */
 simple_select:
-// AA: We need to refactor opt_distinct to remove some shift/reduce conflicts
+// AA: HQL does not yet support duplicate elimination through "DISTINCT"
 //			SELECT opt_distinct target_list
                         SELECT target_list
 			into_clause from_clause where_clause
-// AA: We do not want to support SQL windows
-//			group_clause having_clause window_clause		
-			group_clause having_clause
+// AA: We do not want to support "GROUP BY", "HAVING", or SQL windows
+//			group_clause having_clause window_clause
                         {
-                            $$ = cat7($1, $2, $3, $4, $5, $6, $7);
-                        }
-                        |
-                        SELECT DISTINCT target_list into_clause from_clause where_clause group_clause having_clause
-                        {
-                            $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
-                        }
-                        |
-                        SELECT DISTINCT ON LRPAR expr_list RRPAR target_list into_clause from_clause where_clause group_clause having_clause
-                        {
-                            $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
-                        }
-                        |
-                        SELECT ALL target_list into_clause from_clause where_clause group_clause having_clause
-                        {
-                            $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
+                            $$ = cat5($1, $2, $3, $4, $5);
                         }
                         
 // AA: Disable VALUES clause, we do not want data to be input at run-time
@@ -695,10 +679,10 @@ select_limit:
 				{ $$ = cat2($1, $2); }
 			| OFFSET select_offset_value
 				{ $$ = cat2($1, $2); }
-			| LIMIT select_limit_value ',' select_offset_value
+			| LIMIT select_limit_value COMMA select_offset_value
 				{
 					/* Disabled because it was too confusing, bjm 2002-02-18 */
-                                        $$ = cat4($1, $2, ",", $4);
+                                        $$ = cat4($1, $2, $3, $4);
                                         // TODO: Report error
 				}
 			/* SQL:2008 syntax variants */
@@ -723,15 +707,15 @@ select_offset_value:
 		;
 
 
-group_clause:
-			GROUP_P BY expr_list					{ $$ = cat3($1, $2, $3); }
-			| /*EMPTY*/								{ $$ = NULL; }
-		;
-
-having_clause:
-			HAVING a_expr							{ $$ = cat2($1, $2); }
-			| /*EMPTY*/								{ $$ = NULL; }
-		;
+//group_clause:
+//			GROUP_P BY expr_list					{ $$ = cat3($1, $2, $3); }
+//			| /*EMPTY*/								{ $$ = NULL; }
+//		;
+//
+//having_clause:
+//			HAVING a_expr							{ $$ = cat2($1, $2); }
+//			| /*EMPTY*/								{ $$ = NULL; }
+//		;
 
 
 /*****************************************************************************
@@ -749,7 +733,7 @@ from_clause:
 
 from_list:
 			table_ref								{ $$ = $1; }
-			| from_list ',' table_ref				{ $$ = cat3($1, ",", $3); }
+			| from_list COMMA table_ref				{ $$ = cat3($1, ",", $3); }
 		;
 
 /*
@@ -2499,6 +2483,8 @@ ColLabel:	IDENT									{ $$ = $1; }
 			| col_name_keyword						{ $$ = strdup($1); }
 			| type_func_name_keyword				{ $$ = strdup($1); }
 			| reserved_keyword						{ $$ = strdup($1); }
+// AA: Include some RaSQL keywords here
+                        | OID                                                   { $$ = $1; }
 		;
 
 

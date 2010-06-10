@@ -1,0 +1,4 @@
+SELECT P.lastName, count(P.*), Coll [1:100, 200:500]
+FROM Persons AS P, PhotoCollection AS Coll
+GROUP BY P.lastName, P.firstName
+HAVING count(P.firstName) > 1
