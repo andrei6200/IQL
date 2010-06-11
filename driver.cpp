@@ -1,6 +1,22 @@
 #include <iostream>
+#include <cstdio>
 
+/* PostgreSQL includes and defines */
 #include <pqxx/pqxx>
+
+
+/* Rasdaman includes and defines */
+#define DEBUG_MAIN
+#include "debug/debug.hh"
+
+#ifdef EARLY_TEMPLATE
+#define __EXECUTABLE__
+#ifdef __GNUG__
+#include "raslib/template_inst.hh"
+#endif
+#endif
+#include "rasdaman.hh"
+
 
 extern "C"
 {
@@ -14,7 +30,7 @@ using namespace std;
 using namespace pqxx;
 
 
-void runQuery(char* query)
+void runSqlQuery(char* query)
 {
     connection C;
 
@@ -48,13 +64,87 @@ void runQuery(char* query)
     T.commit();
 }
 
+void runRasqlQuery(char* queryString)
+{
+    r_OQL_Query query(queryString);
+
+    r_Database database;
+    r_Transaction transaction;
+    r_Set< r_Ref_Any > result_set;
+    r_Set< r_Ref< r_GMarray > > *image_set;
+    r_Ref< r_GMarray > image;
+    r_Iterator< r_Ref_Any > iter;
+
+    database.set_servername( "localhost" );
+    database.set_useridentification( "rasguest", "rasguest" );
+    database.open( "RASBASE" );
+    transaction.begin( r_Transaction::read_only );
+
+    r_oql_execute(query, result_set);
+    cout << "Result has " << result_set.cardinality() << " objects... " << endl;
+
+    iter = result_set.create_iterator();
+
+    for(iter.reset();iter.not_done(); iter++ )
+    {
+        image = r_Ref<r_GMarray>(*iter);
+
+        /* Print metadata ... taken from RaSQL */
+        {
+                cout << "  Oid...................: " << result_set.get_oid() << endl;
+                cout << "  Type Structure........: "
+                     << ( result_set.get_type_structure() ? result_set.get_type_structure() : "<nn>" ) << endl;
+                cout << "  Type Schema...........: " << flush;
+                if( result_set.get_type_schema() )
+                        result_set.get_type_schema()->print_status( cout );
+                else
+                        cout << "(no name)" << flush;
+                cout << endl;
+                cout << "  Number of entries.....: " << result_set.cardinality() << endl;
+                cout << "  Element Type Schema...: " << flush;
+                if( result_set.get_element_type_schema() )
+                        result_set.get_element_type_schema()->print_status( cout );
+                else
+                        cout << "(no name)" << flush;
+                cout << endl;
+        }
+
+        // work with the image
+        // for example print its spatial domain
+        switch (result_set.get_element_type_schema()->type_id())
+        {
+            case r_Type::MARRAYTYPE:
+                cout << image->spatial_domain() << endl;
+                break;
+            default:
+                cout << "\n\n\nThe output result is *NOT* a MDD. So I cannot print any spatial domain :-)" << endl;
+                cout << "Output type is: " << result_set.get_element_type_schema()->type_id() << endl;
+                break;
+        }
+
+    }
+
+    transaction.commit();
+    database.close();
+
+}
+
 
 int main()
 {
 	yyparse();
-        cout << "\n\n\n" << "HQL QUERIES\n" << hqlQueries << endl << endl << flush;
 
-        runQuery(hqlQueries);
+        if (hqlQueries == NULL)
+        {
+            hqlQueries = " (nothing) ";
+            cout << "\n\n\n" << "HQL QUERIES\n" << hqlQueries << endl << endl << flush;
+            return 0;
+        }
+
+//        runSqlQuery("SELECT * FROM pg_database");
+//        runSqlQuery(hqlQueries);
+        runRasqlQuery(hqlQueries);
+
         
 	return errorCount;
 }

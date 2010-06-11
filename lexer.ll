@@ -101,7 +101,7 @@ void yyerror(const char *message);
 #include "parser.h"
 
 /* Include the rasdaman keyword lookup utilities */
-#include "rasql/include/rqlkeywords.h"
+#include "rqlkeywords.h"
 
 
 %}

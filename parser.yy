@@ -8,6 +8,9 @@
 extern int yylex();
 extern void yyerror(const char* msg);
 
+/* AA: The final HQL queries are stored here*/
+char* hqlQueries;
+
 /******************************** START POSTGRESQL *********************************/
 
 #include <ctype.h>
@@ -22,9 +25,6 @@ extern void yyerror(const char* msg);
 			(Current) = (Rhs)[0]; \
 	} while (0)
 /******************************** END POSTGRESQL *********************************/
-
-/* AA: The final HQL queries are stored here*/
-char* hqlQueries;
 
 %}
 
@@ -254,9 +254,7 @@ char* hqlQueries;
 %left		OR XOR
 %left		AND
 %right		NOT
-//%right        '='
 %right          EQUAL NOTEQUAL
-//%nonassoc	'<' '>'
 %nonassoc       LESS GREATER LESSEQUAL GREATEREQUAL
 %nonassoc	LIKE ILIKE SIMILAR
 %nonassoc	ESCAPE
@@ -279,21 +277,15 @@ char* hqlQueries;
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
 %nonassoc	IS NULL_P TRUE_P FALSE_P UNKNOWN /* sets precedence for IS NULL, etc */
-//%left		'+' '-'
 %left           PLUS MINUS
-//%left		'*' '/' '%'
 %left           MULT DIV MOD
-//%left           "^"
 %left		POWER
 /* Unary Operators */
 %left		AT ZONE			/* sets precedence for AT TIME ZONE */
 %right		UMINUS
-//%left		'[' ']'
 %left           LEPAR REPAR
-//%left		'(' ')'
 %left           LRPAR RRPAR
 %left		TYPECAST
-//%left		'.'
 %left           DOT SDOM
 /*
  * These might seem to be low-precedence, but actually they are not part
@@ -374,8 +366,6 @@ char* hqlQueries;
 
 %error-verbose
 %locations
-//%expect 0
-%debug
 
 
 %%
@@ -625,16 +615,6 @@ opt_all:	ALL										{ $$ = $1; }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-/* We use (NULL) as a placeholder to indicate that all target expressions
- * should be placed in the DISTINCT list during parsetree analysis.
- */
-//opt_distinct:
-//			DISTINCT								{ $$ = "DISTINCT"; }
-//			| DISTINCT ON LRPAR expr_list RRPAR			{ $$ = cat5($1, $2, "(", $4, ")"); }
-//			| ALL									{ $$ = "ALL"; }
-//			| /*EMPTY*/								{ $$ = NULL; }
-//		;
-
 opt_sort_clause:
 			sort_clause								{ $$ = $1;}
 			| /*EMPTY*/								{ $$ = NULL; }
@@ -705,17 +685,6 @@ select_limit_value:
 select_offset_value:
 			a_expr									{ $$ = $1; }
 		;
-
-
-//group_clause:
-//			GROUP_P BY expr_list					{ $$ = cat3($1, $2, $3); }
-//			| /*EMPTY*/								{ $$ = NULL; }
-//		;
-//
-//having_clause:
-//			HAVING a_expr							{ $$ = cat2($1, $2); }
-//			| /*EMPTY*/								{ $$ = NULL; }
-//		;
 
 
 /*****************************************************************************
@@ -810,7 +779,6 @@ joined_table:
 				}
 			| table_ref CROSS JOIN table_ref
 				{
-					/* CROSS JOIN is same as unqualified inner join */
                                         $$ = cat4($1, $2, $3, $4);
 				}
 			| table_ref join_type JOIN table_ref join_qual
@@ -819,7 +787,6 @@ joined_table:
 				}
 			| table_ref JOIN table_ref join_qual
 				{
-					/* letting join_type reduce to empty doesn't work */
                                         $$ = cat4($1, $2, $3, $4);
 				}
 			| table_ref NATURAL join_type JOIN table_ref
@@ -828,7 +795,6 @@ joined_table:
 				}
 			| table_ref NATURAL JOIN table_ref
 				{
-					/* letting join_type reduce to empty doesn't work */
                                         $$ = cat4($1, $2, $3, $4);
 				}
 		;
@@ -911,8 +877,6 @@ where_clause:
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-/* variant for UPDATE and DELETE */
-
 TableFuncElementList:
 			TableFuncElement
 				{
@@ -948,35 +912,17 @@ Typename:
                                         $$ = $1;
 				}
 //			| SETOF SimpleTypename opt_array_bounds
-//				{
-//					$$ = cat3($1, $2, $3);
-//				}
 //			/* SQL standard syntax, currently only one-dimensional */
 //			| SimpleTypename ARRAY LEPAR Iconst REPAR
-//				{
-//                                        $$ = cat5($1, $2, $3, $4, $5);
-//				}
 //			| SETOF SimpleTypename ARRAY LEPAR Iconst REPAR
-//				{
-//					$$ = cat6($1, $2, $3, $4, $5, $6);
-//				}
 //			| SimpleTypename ARRAY
-//				{
-//                                        $$ = cat2($1, $2);
-//				}
 //			| SETOF SimpleTypename ARRAY
-//				{
-//					$$ = cat3($1, $2, $3);
-//				}
 		;
 
 //opt_array_bounds:
 //			opt_array_bounds LEPAR REPAR
-//					{  $$ = cat3($1, $2, $3); }
 //			| opt_array_bounds LEPAR Iconst RRPAR
-//					{  $$ = cat4($1, $2, $3, $4); }
 //			| /*EMPTY*/
-//					{  $$ = NULL; }
 //		;
 
 SimpleTypename:
@@ -1086,10 +1032,6 @@ Numeric:	INT_P
 
 opt_float:	LRPAR Iconst RRPAR
 				{
-					/*
-					 * Check FLOAT() precision limits assuming IEEE floating
-					 * types - thomas 1997-09-18
-					 */
                                         $$ = cat3($1, $2, $3);
 				}
 			| /*EMPTY*/
@@ -1139,13 +1081,11 @@ BitWithLength:
 BitWithoutLength:
 			BIT VARYING
 				{
-					/* bit defaults to bit(1), varbit to no limit */
                                         $$ = cat2($1, $2);
 				}
                         |
                         BIT
 				{
-					/* bit defaults to bit(1), varbit to no limit */
                                         $$ = $1;
 				}
 		;
@@ -1198,7 +1138,7 @@ character:	CHARACTER opt_varying
 			| CHAR_P opt_varying
 										{ $$ = cat2($1, $2); }
 			| VARCHAR
-										{ $$ = "varchar"; }
+										{ $$ = $1; }
 			| NATIONAL CHARACTER opt_varying
 										{ $$ = cat3($1, $2, $3); }
 			| NATIONAL CHAR_P opt_varying
@@ -1209,9 +1149,9 @@ character:	CHARACTER opt_varying
 
 opt_varying:
 // AA: Disable the VARYING keyword. It introduces ambiguities in the grammar. 
-			VARYING									{ $$ = "TRUE"; }
+			VARYING					{ $$ = $1; }
 			|
-/*EMPTY*/								{ $$ = "FALSE"; }
+/*EMPTY*/								{ $$ = NULL; }
 		;
 
 opt_charset:
@@ -1249,9 +1189,9 @@ ConstInterval:
 		;
 
 opt_timezone:
-			WITH_TIME ZONE							{ $$ = "WITH TIMEZONE"; }
-			| WITHOUT TIME ZONE						{ $$ = "WITHOUT TIMEZONE"; }
-			| /*EMPTY*/							{ $$ = "EMPTY (WITHOUT TIMEZONE)"; }
+			WITH_TIME ZONE			{ $$ = "WITH TIMEZONE"; }
+			| WITHOUT TIME ZONE		{ $$ = "WITHOUT TIMEZONE"; }
+			| /*EMPTY*/                     { $$ = "EMPTY (WITHOUT TIMEZONE)"; }
 		;
 
 opt_interval:
@@ -1619,13 +1559,8 @@ c_expr:		columnref								{ $$ = $1; }
 			| select_with_parens			%prec UMINUS
 			| EXISTS select_with_parens
 			| ARRAY select_with_parens
-*/
-/*
 // AA: Disallow SQL array constructs. They conflict with RaSQL arrays.
 			| ARRAY array_expr
-				{
-                            $$ = cat2($1, $2);
-				}
 */
 			| row
 				{
@@ -1667,99 +1602,42 @@ func_expr:	func_name LRPAR RRPAR over_clause
 				}
 			| func_name LRPAR MULT RRPAR over_clause
 				{
-					/*
-					 * We consider AGGREGATE(*) to invoke a parameterless
-					 * aggregate.  This does the right thing for COUNT(*),
-					 * and there are no other aggregates in SQL92 that accept
-					 * MULT as parameter.
-					 *
-					 * The FuncCall node is also marked agg_star = true,
-					 * so that later processing can detect what the argument
-					 * really was.
-					 */
                                         $$ = cat5($1, $2, $3, $4, $5);
 				}
 			| CURRENT_DATE
 				{
-					/*
-					 * Translate as "'now'::text::date".
-					 *
-					 * We cannot use "'now'::date" because coerce_type() will
-					 * immediately reduce that to a constant representing
-					 * today's date.  We need to delay the conversion until
-					 * runtime, else the wrong things will happen when
-					 * CURRENT_DATE is used in a column default value or rule.
-					 *
-					 * This could be simplified if we had a way to generate
-					 * an expression tree representing runtime application
-					 * of type-input conversion functions.  (As of PG 7.3
-					 * that is actually possible, but not clear that we want
-					 * to rely on it.)
-					 */
                                         $$ = $1;
 				}
 			| CURRENT_TIME
 				{
-					/*
-					 * Translate as "'now'::text::timetz".
-					 * See comments for CURRENT_DATE.
-					 */
 					$$ = $1;
 				}
 			| CURRENT_TIME LRPAR Iconst RRPAR
 				{
-					/*
-					 * Translate as "'now'::text::timetz(n)".
-					 * See comments for CURRENT_DATE.
-					 */
 					$$ = cat4($1, $2, $3, $4);
 				}
 			| CURRENT_TIMESTAMP
 				{
-					/*
-					 * Translate as "now()", since we have a function that
-					 * does exactly what is needed.
-					 */
 					$$ = $1;
 				}
 			| CURRENT_TIMESTAMP LRPAR Iconst RRPAR
 				{
-					/*
-					 * Translate as "'now'::text::timestamptz(n)".
-					 * See comments for CURRENT_DATE.
-					 */
                                        $$ = cat4($1, $2, $3, $4);
 				}
 			| LOCALTIME
 				{
-					/*
-					 * Translate as "'now'::text::time".
-					 * See comments for CURRENT_DATE.
-					 */
 					$$ = $1;
 				}
 			| LOCALTIME LRPAR Iconst RRPAR
 				{
-					/*
-					 * Translate as "'now'::text::time(n)".
-					 * See comments for CURRENT_DATE.
-					 */
                                         $$ = cat4($1, $2, $3, $4);
 				}
 			| LOCALTIMESTAMP
 				{
-					/*
-					 * Translate as "'now'::text::timestamp".
-					 * See comments for CURRENT_DATE.
-					 */
                                         $$ = $1;
 				}
 			| LOCALTIMESTAMP LRPAR Iconst RRPAR
 				{
-					/*
-					 * Translate as "'now'::text::timestamp(n)".
-					 * See comments for CURRENT_DATE.
-					 */
                                         $$ = cat4($1, $2, $3, $4);
 				}
 			| CURRENT_ROLE
@@ -1794,40 +1672,22 @@ func_expr:	func_name LRPAR RRPAR over_clause
 				}
 			| OVERLAY LRPAR overlay_list RRPAR
 				{
-					/* overlay(A PLACING B FROM C FOR D) is converted to
-					 * substring(A, 1, C-1) || B || substring(A, C+1, C+D)
-					 * overlay(A PLACING B FROM C) is converted to
-					 * substring(A, 1, C-1) || B || substring(A, C+1, C+char_length(B))
-					 */
                                         $$ = cat4($1, $2, $3, $4);
 				}
 			| POSITION LRPAR position_list RRPAR
 				{
-					/* position(A in B) is converted to position(B, A) */
                                         $$ = cat4($1, $2, $3, $4);
 				}
 			| SUBSTRING LRPAR substr_list RRPAR
 				{
-					/* substring(A from B for C) is converted to
-					 * substring(A, B, C) - thomas 2000-11-28
-					 */
                                         $$ = cat4($1, $2, $3, $4);
 				}
 			| TREAT LRPAR a_expr AS Typename RRPAR
 				{
-					/* TREAT(expr AS target) converts expr of a particular type to target,
-					 * which is defined to be a subtype of the original expression.
-					 * In SQL99, this is intended for use with structured UDTs,
-					 * but let's make this a generally useful form allowing stronger
-					 * coercions than are handled by implicit casting.
-					 */
                                         $$ = cat6($1, $2, $3, $4, $5, $6);
 				}
 			| TRIM LRPAR BOTH trim_list RRPAR
 				{
-					/* various trim expressions are defined in SQL92
-					 * - thomas 1997-07-19
-					 */
                                         $$ = cat5($1, $2, $3, $4, $5);
 				}
 			| TRIM LRPAR LEADING trim_list RRPAR
@@ -1940,8 +1800,8 @@ xml_attribute_el: a_expr AS ColLabel
 				}
 		;
 
-document_or_content: DOCUMENT_P						{ $$ = "XMLOPTION_DOCUMENT"; }
-			| CONTENT_P					{ $$ = "XMLOPTION_CONTENT"; }
+document_or_content: DOCUMENT_P						{ $$ = $1; }
+			| CONTENT_P					{ $$ = $1; }
 		;
 
 xml_whitespace_option: PRESERVE WHITESPACE_P		{ $$ = "TRUE"; }
@@ -1977,9 +1837,9 @@ row:		ROW LRPAR expr_list RRPAR					{ $$ = cat4($1, $2, $3, $4); }
 			| LRPAR expr_list COMMA a_expr RRPAR			{ $$ = cat5($1, $2, $3, $4, $5); }
 		;
 
-sub_type:	ANY										{ $$ = "ANY_SUBLINK"; }
-			| SOME									{ $$ = "ANY_SUBLINK"; }
-			| ALL									{ $$ = "ALL_SUBLINK"; }
+sub_type:	ANY										{ $$ = $1; }
+			| SOME									{ $$ = $1; }
+			| ALL									{ $$ = $1; }
 		;
 
 all_Op:		Op										{ $$ = $1; }
@@ -2050,25 +1910,6 @@ type_list:	Typename								{ $$ = $1; }
 			| type_list COMMA Typename				{ $$ = cat3($1, $2, $3); }
 		;
 
-//array_expr: LEPAR expr_list REPAR
-//				{
-//                            $$ = cat3($1, $2, $3);
-//				}
-//			| LEPAR array_expr_list REPAR
-//				{
-//                            $$ = cat3($1, $2, $3);
-//				}
-//			| LEPAR REPAR
-//				{
-//					$$ = cat2($1, $2);
-//				}
-//		;
-//
-//array_expr_list: array_expr							{ $$ = $1; }
-//			| array_expr_list ',' array_expr		{ $$ = cat3($1, ",", $3); }
-//		;
-
-
 extract_list:
 			extract_arg FROM a_expr
 				{
@@ -2077,9 +1918,6 @@ extract_list:
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-/* Allow delimited string Sconst in extract_arg as an SQL extension.
- * - thomas 2001-04-12
- */
 extract_arg:
 			IDENT									{ $$ = $1; }
 			| YEAR_P								{ $$ = "year"; }
@@ -2147,15 +1985,6 @@ substr_list:
 				}
 			| a_expr substr_for
 				{
-					/*
-					 * Since there are no cases where this syntax allows
-					 * a textual FOR value, we forcibly cast the argument
-					 * to int4.  The possible matches in pg_proc are
-					 * substring(text,int4) and substring(text,text),
-					 * and we don't want the parser to choose the latter,
-					 * which it is likely to do if the second argument
-					 * is unknown or doesn't have an implicit cast to int4.
-					 */
 					$$ = cat2($1, $2);
 				}
 			| expr_list
@@ -2248,13 +2077,7 @@ indirection_el:
 /*
 AA: Disallow syntax that would interfere with the RaSQL array
 			| LEPAR a_expr REPAR
-				{
-                                        $$ = cat3($1, $2, $3);
-				}
 			| LEPAR a_expr COLON a_expr REPAR
-				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
-				}
 */
 		;
 
@@ -2964,23 +2787,6 @@ any_operator:
 
 
 /******************************** START RASQL *********************************/
-//rasqlSelectExp: SELECT resultList FROM collectionList WHERE generalExp
-//	{
-//            $$ = cat6($1, $2, $3, $4, $5, $6);
-//	}
-//	| SELECT resultList FROM collectionList
-//	{
-//            $$ = cat4($1, $2, $3, $4);
-//	};
-//
-//resultList: resultList COMMA generalExp
-//	{
-//	  $$ = cat3($1, $2, $3);
-//	}
-//	| generalExp
-//	{
-//	  $$ = $1;
-//	};
 
 generalExp: mddExp                          { $$ = $1; }
 	| trimExp                           { $$ = $1; }

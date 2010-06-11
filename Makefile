@@ -1,47 +1,80 @@
-# START: Taken from PostgreSQL Makefile
+#########################################################
+#							#
+#   Makefile for the Hybrid Query Language Processor	#
+#							#
+#########################################################
+
+
+#######################################
+##### Various applications needed #####
 CC = gcc
 CPP = g++
-PGCFLAGS= -g -O2 -Wall -Wpointer-arith -Wendif-labels -fno-strict-aliasing -fwrapv
-# END: Taken from PostgreSQL Makefile
-
 FLEX = flex
 YACC = bison
 VALGRIND = valgrind
 
-INCLUDES = -Ipostgres/include/  -Irasdaman/
-LIBS = -Lpostgres/lib/ -Lrasdaman/rasql/lib/ -lparse -lrqlparse -lpqxx
-CFLAGS = $(PGCFLAGS) $(INCLUDES) -D_GNU_SOURCE
+##### Home of Rasdaman installation #####
+RMANHOME = /var/lib/postgresql/installed/rasdaman.community
+
+##### Compilation flags for PostgreSQL, and Rasdaman respectively #####
+PGCFLAGS= -O2 -Wall -Wpointer-arith -Wendif-labels -fno-strict-aliasing -fwrapv -D_GNU_SOURCE
+RMANCFLAGS = -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG
+
+INCLUDES = -I./postgres/include/  -I$(RMANHOME)/include -I$(RMANHOME)/../../rasdaman.community/ -I./rasdaman/1hqlparser/include
+CFLAGS = $(PGCFLAGS) $(RMANCFLAGS) $(INCLUDES) -g
+CPPFLAGS = $(RMANCFLAGS)  $(INCLUDES) -g
+
+
+#############################
+##### Libraries section #####
+
+# SQL Grammar and RaSQL grammar libraries
+GRAMMAR_LIBS = -Lpostgres/lib/ -Lrasdaman/1hqlparser/lib/ -lparse -lrqlparse
+# PostgreSQL client support
+SQL_LIBS = -lpqxx
+# Rasdaman client support
+RASQL_LIBS = -L/usr/lib -L$(RMANHOME)/lib					\
+	-lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto 
+
+LIBS = $(GRAMMAR_LIBS) $(SQL_LIBS) $(RASQL_LIBS)
+
 FLEXFLAGS = -CF
 YACCFLAGS = -d --report=itemset
-# YACCFLAGS = --verbose -d
+
 
 OBJ=lexer.o parser.o driver.o
-LIB=postgres/lib/libparse.a rasdaman/rasql/lib/librqlparse.a
+LIB_PG=postgres/lib/libparse.a
+LIB_RMAN=rasdaman/1hqlparser/lib/librqlparse.a
+LIBTARGET=$(LIB_PG) $(LIB_RMAN)
+
+
+#########################
+##### Rules Section ##### 
 
 all: driver
 
-postgres/lib/libparse.a:
+$(LIB_PG):
 	make -C postgres
 
-rasdaman/rasql/lib/librqlparse.a:
-	make -C rasdaman/rasql
+$(LIB_RMAN):
+	make -C rasdaman/1hqlparser
 
 ### Driver actually builds the parser driver program
-driver: parser.o lexer.o driver.o $(LIB)
-	$(CPP) driver.o parser.o lexer.o $(LIBS) -o driver
-
-parser.o: parser.c parser.h str.c str.h
-	$(CC) $(CFLAGS) parser.c $(LIBS) -c -o parser.o
-
-lexer.o: lexer.c
-	$(CC) $(CFLAGS) lexer.c $(LIBS) -c -o lexer.o
+driver: parser.o lexer.o driver.o $(LIBTARGET)
+	$(CPP) $(CPPFLAGS) driver.o $(RASQL_LIBS) $(SQL_LIBS) parser.o lexer.o $(GRAMMAR_LIBS)   -o driver
 
 driver.o: driver.cpp
-	$(CPP) $(CPPFLAGS) driver.cpp $(LIBS) -c -o driver.o
+	$(CPP) $(CPPFLAGS) $(LIBS) -c driver.cpp   -o driver.o
+
+parser.o: parser.c parser.h str.c str.h
+	$(CC) $(CFLAGS) $(LIBS) -c parser.c   -o parser.o
+
+lexer.o: lexer.c
+	$(CC) $(CFLAGS) $(LIBS) -c lexer.c   -o lexer.o
 
 ### Generate the parser/lexer sources with Flex/Bison
 parser.c parser.h: parser.yy
-	$(YACC) $(YACCFLAGS) parser.yy  -o parser.c
+	$(YACC) $(YACCFLAGS) parser.yy   -o parser.c
 
 lexer.c: lexer.ll
 	$(FLEX) $(FLEXFLAGS) -o "lexer.c" lexer.ll
