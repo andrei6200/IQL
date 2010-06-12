@@ -4,12 +4,17 @@
 #include <string.h>
 
 #include "str.h"
+#include "HqlMain.hpp"
 
+extern "C"
+{
 extern int yylex();
 extern void yyerror(const char* msg);
+}
 
 /* AA: The final HQL queries are stored here*/
 char* hqlQueries;
+char* lastHqlQuery;
 
 /******************************** START POSTGRESQL *********************************/
 
@@ -386,24 +391,26 @@ stmtmulti:	stmtmulti SEMICOLON stmt
 				{ if ($3 != NULL)
 					{
 					$$ = cat3($1, (char*)"\n", $3);
-					printf("\t*** Single statement (in a series): %s\n", $3);
+                                        HqlMain::getInstance().executeHqlQuery($3);
+//					printf("\t*** Single statement (in a series): %s\n", $3);
 					}
 				  else
 				  {
 					$$ = $1;
-					printf("\t*** Empty statement (in a series). \n");
+//					printf("\t*** Empty statement (in a series). \n");
 					}
 				}
 			| stmt
 					{ if ($1 != NULL)
 					{
 						$$ = $1;
-						printf("\t*** Single unique statement: %s\n", $1);
+                                                HqlMain::getInstance().executeHqlQuery($1);
+//						printf("\t*** Single unique statement: %s\n", $1);
 						}
 					  else
 					  {
 						$$ = NULL;
-						printf("\t*** Single empty statement.\n");
+//						printf("\t*** Single empty statement.\n");
 					  }
 					}
 		;

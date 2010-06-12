@@ -39,7 +39,7 @@ RASQL_LIBS = -L/usr/lib -L$(RMANHOME)/lib					\
 LIBS = $(GRAMMAR_LIBS) $(SQL_LIBS) $(RASQL_LIBS)
 
 FLEXFLAGS = -CF
-YACCFLAGS = -d --report=itemset
+YACCFLAGS = -d
 
 
 OBJ=lexer.o parser.o driver.o
@@ -51,7 +51,7 @@ LIBTARGET=$(LIB_PG) $(LIB_RMAN)
 #########################
 ##### Rules Section ##### 
 
-all: driver
+all: hql
 
 $(LIB_PG):
 	make -C postgres
@@ -60,14 +60,18 @@ $(LIB_RMAN):
 	make -C rasdaman/1hqlparser
 
 ### Driver actually builds the parser driver program
-driver: parser.o lexer.o driver.o $(LIBTARGET)
-	$(CPP) $(CPPFLAGS) driver.o $(RASQL_LIBS) $(SQL_LIBS) parser.o lexer.o $(GRAMMAR_LIBS)   -o driver
+hql: parser.o lexer.o driver.o HqlMain.o $(LIBTARGET)
+	$(CPP) $(CPPFLAGS) driver.o HqlMain.o $(RASQL_LIBS) $(SQL_LIBS) parser.o lexer.o \
+		$(GRAMMAR_LIBS)  -o hql
 
 driver.o: driver.cpp
 	$(CPP) $(CPPFLAGS) $(LIBS) -c driver.cpp   -o driver.o
 
+HqlMain.o: HqlMain.cpp HqlMain.hpp
+	$(CPP) $(CPPFLAGS) $(LIBS) -c HqlMain.cpp   -o HqlMain.o
+
 parser.o: parser.c parser.h str.c str.h
-	$(CC) $(CFLAGS) $(LIBS) -c parser.c   -o parser.o
+	$(CPP) $(CFLAGS) $(LIBS) -c parser.c   -o parser.o
 
 lexer.o: lexer.c
 	$(CC) $(CFLAGS) $(LIBS) -c lexer.c   -o lexer.o
@@ -86,5 +90,5 @@ check:
 	$(VALGRIND) --leak-check=full ./teststr
 
 clean:
-	rm -f *~ *.o y.tab.* lex.yy.* *.hpp parser.output parser.c parser.h lexer.c teststr driver
+	rm -f *~ *.o y.tab.* lex.yy.* parser.output parser.c parser.h lexer.c teststr driver hql
 	make -C postgres clean

@@ -3,8 +3,8 @@
 ################################################################
 # Make the parser, if it is not already built
 pwd=`pwd`
-DRIVER="$pwd/driver"
-if [ $DRIVER ]
+DRIVER="$pwd/hql"
+if [ ! -e $DRIVER ]
 then
 	make
 fi
@@ -49,6 +49,7 @@ done
 
 
 ### Report results
+echo #############################
 echo
 echo
 echo "Passed tests: $passed"
