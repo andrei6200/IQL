@@ -3,3 +3,19 @@
 
 - Make lists of restrictions for grammar (take from thesis)
 	- Write tests for all of them
+
+
+
+TODO: 
+- Ambiguous queries
+    - can be matched by both RaSQL and SQL
+    - need to un-ambiguate based on table names
+
+
+- simple SQL queries
+- simple RaSQL queries
+- simple combinations of SQL + RaSQL
+    - always execute one SQL and one RaSQL query
+    - merge the results
+        - cartesian join :-s
+- complex combinations of SQL + RaSQL
