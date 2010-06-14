@@ -27,35 +27,34 @@
 
 /* Header file of this class */
 #include "HqlMain.hpp"
+#include "logger.hpp"
+
 
 using namespace pqxx;
 using namespace std;
 
+
 HqlMain HqlMain::instance;
+
 
 HqlMain& HqlMain::getInstance()
 {
     return instance;
 }
 
-
-void HqlMain::initLogging()
-{
-}
-
 HqlMain::HqlMain()
 {
-    initLogging();
+    INFO << "Initialization of HqlMain ... ";
     /* Initialization */
 
     /* Rasdaman tables */
     set<string> rasTables = getRasdamanCoverages();
     set<string>::iterator iter;
-    cout << rasTables.size() << " Rasdaman tables: " << endl;
+    DEBUG << rasTables.size() << " Rasdaman tables. ";
 
     /* Postgres tables */
     set<string> pgTables = getPostgresTables();
-    cout << pgTables.size() << " Postgres tables: " << endl;
+    DEBUG << pgTables.size() << " Postgres tables. ";
 
     /* Create the table dictionary */
     map<string, string> tableMap;
@@ -68,28 +67,33 @@ HqlMain::HqlMain()
             tableMap.insert(pair<string, string>(*iter, sql));
         else
         {
-            cout << "\n ERROR ! Table " << *iter << " is a coverage name in Rasdaman AND "
-                    << " a table in Postgres. Cannot continue. " << endl;
+            FATAL << "\n ERROR ! Table " << *iter << " is a coverage name in Rasdaman AND "
+                    << " a table in Postgres. Cannot continue. " ;
+            cerr << "\n ERROR ! Table " << *iter << " is a coverage name in Rasdaman AND "
+                    << " a table in Postgres. Cannot continue. " ;
             exit(1);
         }
 
     /* Print the Table dictionary */
     map<string, string>::iterator tuple;
-    cout << "Name dictionary : " << endl;
+    TRACE ;
+    TRACE << "Name dictionary : " ;
     for (tuple = tableMap.begin(); tuple != tableMap.end(); tuple ++)
-        cout << " - " << (*tuple).first << " -> " << (*tuple).second << endl;
-    cout << endl;
+        TRACE << " - " << (*tuple).first << " -> " << (*tuple).second ;
+    TRACE ;
 
-    cout << endl << " Initialization complete. " << endl;
+    INFO << " Initialization complete. ";
 }
 
 HqlMain::~HqlMain()
 {
+    TRACE << "Destroying Singleton instance of HqlMain.";
 }
 
 void HqlMain::executeHqlQuery(const char* msg)
 {
-    cout << "Found HQL query: " << msg << endl;
+    INFO << endl << "Found HQL query: " << msg;
+    cout << endl << "Found HQL query: " << msg;
 }
 
 set<string> HqlMain::getRasdamanCoverages()
@@ -125,9 +129,9 @@ set<string> HqlMain::runSqlQuery(connection_base& C, const char* queryString, in
 {
     set<string> resultSet;
 
-    cout << "Connected to database: " << C.dbname() << endl
-        << "Backend version: " << C.server_version() << endl
-        << "Protocol version: " << C.protocol_version() << endl;
+    DEBUG << "Connected to database: " << C.dbname();
+    DEBUG << "Backend version: " << C.server_version();
+    DEBUG << "Protocol version: " << C.protocol_version();
 
     // Begin a transaction acting on our current connection.  Give it a human-
     // readable name so the library can include it in error messages.
@@ -139,7 +143,7 @@ set<string> HqlMain::runSqlQuery(connection_base& C, const char* queryString, in
     // We're expecting to find some tables...
     if (R.empty())
     {
-        cout << "No tables found.  Cannot test.";
+        WARN << "No tables found.  Cannot test.";
         return resultSet;
     }
 
@@ -188,11 +192,11 @@ void HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* query
     try
     {
         r_oql_execute(query, result_set);   
-        cout << "Result has " << result_set.cardinality() << " objects... " << endl;
+        DEBUG << "Result has " << result_set.cardinality() << " objects... ";
     }
     catch (r_Error &e)
     {
-        cout << "ERROR: " << e.what() << endl;
+        DEBUG << "ERROR: " << e.what();
     }
 
     iter = result_set.create_iterator();
@@ -229,8 +233,10 @@ void HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* query
                 cout << image->spatial_domain() << endl;
                 break;
             default:
+                WARN << "\n\n\nThe output result is *NOT* a MDD. So I cannot print any spatial domain :-)";
+                DEBUG << "Output type is: " << result_set.get_element_type_schema()->type_id() << endl;
                 cout << "\n\n\nThe output result is *NOT* a MDD. So I cannot print any spatial domain :-)" << endl;
-                cout << "Output type is: " << result_set.get_element_type_schema()->type_id() << endl;
+                
                 break;
         }
 

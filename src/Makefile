@@ -63,8 +63,8 @@ $(LIB_RMAN):
 	make -C rasdaman
 
 ### Driver actually builds the parser driver program
-hql: grammar driver.o HqlMain.o 
-	$(CPP) $(CPPFLAGS) driver.o HqlMain.o $(RASQL_LIBS) $(SQL_LIBS)  \
+hql: grammar driver.o HqlMain.o logger.o
+	$(CPP) $(CPPFLAGS) driver.o HqlMain.o logger.o $(RASQL_LIBS) $(SQL_LIBS)  \
 	grammar/parser.o grammar/lexer.o $(GRAMMAR_LIBS) -o hql
 
 grammar: lib/libparse.a lib/librqlparse.a
@@ -76,10 +76,13 @@ lib/libparse.a: $(LIB_PG)
 lib/librqlparse.a: $(LIB_RMAN)
 	cp $(LIB_RMAN) $(HQLROOT)/lib/
 
-driver.o: driver.cpp
+driver.o: driver.cpp logger.hpp
 	$(CPP) $(CPPFLAGS) $(LIBS) -c driver.cpp   -o driver.o
 
-HqlMain.o: HqlMain.cpp HqlMain.hpp
+logger.o: logger.cpp logger.hpp
+	$(CPP) $(CPPFLAGS) $(LIBS) -c logger.cpp -o logger.o
+
+HqlMain.o: HqlMain.cpp HqlMain.hpp logger.hpp
 	$(CPP) $(CPPFLAGS) $(LIBS) -c HqlMain.cpp   -o HqlMain.o
 
 ### Tests

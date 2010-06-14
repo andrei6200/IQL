@@ -5,6 +5,7 @@
 #include <cstring>
 
 #include "HqlMain.hpp"
+#include "logger.hpp"
 
 extern "C"
 {
@@ -31,7 +32,7 @@ string readAllQueries()
 
 int main()
 {
-    cout << "Beginning ... " << endl;
+    TRACE << "Start of main()" << endl;
 
     /* First create an instance of the HqlMain class. */
     HqlMain hql = HqlMain::getInstance();
@@ -43,14 +44,15 @@ int main()
     string allQueries = readAllQueries();
 
     /* And let the user know that we are exiting the application... */
-    cout << endl << "Below is the complete string of parsed HQL queries:" << endl
-            << allQueries << endl << "Found " << errorCount << " error(s) " << endl
-            << "Will exit now..." << endl;
+    DEBUG << endl << "Below is the complete string of parsed HQL queries:";
+    DEBUG << allQueries;
+    DEBUG << "Found " << errorCount << " error(s) ";
 
 //   runSqlQuery("SELECT * FROM pg_database");
 //   runSqlQuery(hqlQueries);
 //    hql.runRasqlQuery(NULL, NULL, "SELECT png(rgb) from rgb");
 
+    TRACE << "End of main() ... " << endl;
 
     return errorCount;
 }

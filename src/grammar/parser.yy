@@ -5,6 +5,7 @@
 
 #include "str.h"
 #include "HqlMain.hpp"
+#include "logger.hpp"
 
 extern "C"
 {
@@ -391,6 +392,7 @@ stmtmulti:	stmtmulti SEMICOLON stmt
 				{ if ($3 != NULL)
 					{
 					$$ = cat3($1, (char*)"\n", $3);
+                                        DEBUG << "Parser matched query: " << $3 << endl;
                                         HqlMain::getInstance().executeHqlQuery($3);
 //					printf("\t*** Single statement (in a series): %s\n", $3);
 					}
@@ -403,6 +405,7 @@ stmtmulti:	stmtmulti SEMICOLON stmt
 			| stmt
 					{ if ($1 != NULL)
 					{
+                                                DEBUG << "Parser matched query: " << $1 << endl;
 						$$ = $1;
                                                 HqlMain::getInstance().executeHqlQuery($1);
 //						printf("\t*** Single unique statement: %s\n", $1);

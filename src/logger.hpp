@@ -1,0 +1,126 @@
+/* 
+ * File:   logger.hpp
+ * Author: andrei
+ *
+ * Created on June 14, 2010, 1:28 PM
+ */
+
+#ifndef LOGGER_HPP
+#define	LOGGER_HPP
+
+#include <fstream>
+#include <iomanip>
+
+#undef DEBUG
+
+enum verbosityLevelsEnum
+{
+    TRACE = 1,
+    DEBUG = 100,
+    INFO = 200,
+    WARN = 300,
+    ERROR = 400,
+    FATAL = 500
+};
+
+#define GLOBAL_LEVEL INFO
+
+
+template<typename Char, typename Traits = char_traits<Char> >
+        struct LOGGER
+{
+    typedef std::basic_ostream<Char, Traits> ostream_type;
+    typedef ostream_type & (*manip_type)(ostream_type&);
+
+    LOGGER(ostream_type & os) : os(os), level(GLOBAL_LEVEL)
+    {
+    }
+
+    LOGGER & operator<<(manip_type pfn)
+    {
+        /* Take verbosity level into account */
+        if (level > GLOBAL_LEVEL)
+            return *this;
+        
+        os << pfn;
+        return *this;
+    }
+
+    template<typename T >
+            LOGGER & operator<<(T const& t)
+    {
+        /* Take verbosity level into account */
+        if (level > GLOBAL_LEVEL)
+            return *this;
+        
+        os << t;
+        return *this;
+    }
+
+    inline LOGGER& setLevel(verbosityLevelsEnum newlevel, const char* strLevel)
+    {
+        level = newlevel;
+        /* Take verbosity level into account */
+        if (level > GLOBAL_LEVEL)
+        {
+            return *this;
+        }
+        os << std::endl << setw(8) << strLevel << " :  ";
+        return *this;
+    }
+
+    inline LOGGER& trace()
+    {
+        return setLevel(TRACE, "[TRACE]");
+    }
+
+    inline LOGGER& debug()
+    {
+        return setLevel(DEBUG, "[DEBUG]");
+    }
+    
+    inline LOGGER& info()
+    {
+        return setLevel(INFO, "[INFO]");
+    }
+
+    inline LOGGER& warn()
+    {
+        return setLevel(WARN, "[WARN]");
+    }
+
+    inline LOGGER& error()
+    {
+        return setLevel(ERROR, "[ERROR]");
+    }
+
+    inline LOGGER& fatal()
+    {
+        return setLevel(FATAL, "[FATAL]");
+    }
+
+private:
+    verbosityLevelsEnum level;
+    
+    static const int LENGTH = 24;
+
+    static char mydate[64];
+    static char fmt[20];
+
+    ostream_type & os;
+};
+
+
+
+extern ofstream _outputFile;
+extern LOGGER <char, char_traits < char > > LOG;
+
+#define TRACE   LOG.trace()
+#define DEBUG   LOG.debug()
+#define INFO    LOG.info()
+#define WARN    LOG.warn()
+#define ERROR   LOG.error()
+#define FATAL   LOG.fatal() << std::endl << std::endl
+
+
+#endif	/* LOGGER_HPP */

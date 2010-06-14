@@ -16,8 +16,6 @@
 #include <set>
 #include <string>
 
-#include "logging.hpp"
-
 class HqlMain
 {
 public:
@@ -31,7 +29,6 @@ private:
     static HqlMain instance;
     
     HqlMain();
-    void initLogging();
     
     std::set<std::string> getRasdamanCoverages();
     std::set<std::string> getPostgresTables();
