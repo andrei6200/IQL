@@ -6,7 +6,9 @@ pwd=`pwd`
 DRIVER="$pwd/hql"
 if [ ! -e $DRIVER ]
 then
+	set -e
 	make
+	set +e
 fi
 
 passed=0
