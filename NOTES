@@ -17,5 +17,5 @@ TODO:
 - simple combinations of SQL + RaSQL
     - always execute one SQL and one RaSQL query
     - merge the results
-        - cartesian join :-s
+        - cartesian product / join :-s
 - complex combinations of SQL + RaSQL

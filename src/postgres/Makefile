@@ -11,11 +11,11 @@ top_builddir = ..
 
 # ************************* AA: START - We need the following to be able to use this Makefile outside the PG sourcetree
 srcdir = .
-CC = colorgcc
+CC = g++
 OUTLIB = libparse.a
 
 # The following is taken from Postgresql Makefile
-CFLAGS = -Iinclude/ -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -fno-strict-aliasing -fwrapv -g
+CFLAGS = -Iinclude/ -O2 -Wall -Wpointer-arith -Wendif-labels -fno-strict-aliasing -fwrapv -g
 # ************************* AA: END - We need the following to be able to use this Makefile outside the PG sourcetree
 
 

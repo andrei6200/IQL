@@ -23,7 +23,9 @@ enum verbosityLevelsEnum
     FATAL = 500
 };
 
-#define GLOBAL_LEVEL INFO
+
+#include "config.hpp"
+
 
 
 template<typename Char, typename Traits = char_traits<Char> >
@@ -32,14 +34,14 @@ template<typename Char, typename Traits = char_traits<Char> >
     typedef std::basic_ostream<Char, Traits> ostream_type;
     typedef ostream_type & (*manip_type)(ostream_type&);
 
-    LOGGER(ostream_type & os) : os(os), level(GLOBAL_LEVEL)
+    LOGGER(ostream_type & os) : os(os), level(GLOBAL_LOGGING_LEVEL)
     {
     }
 
     LOGGER & operator<<(manip_type pfn)
     {
         /* Take verbosity level into account */
-        if (level > GLOBAL_LEVEL)
+        if (level < GLOBAL_LOGGING_LEVEL)
             return *this;
         
         os << pfn;
@@ -50,7 +52,7 @@ template<typename Char, typename Traits = char_traits<Char> >
             LOGGER & operator<<(T const& t)
     {
         /* Take verbosity level into account */
-        if (level > GLOBAL_LEVEL)
+        if (level < GLOBAL_LOGGING_LEVEL)
             return *this;
         
         os << t;
@@ -61,7 +63,7 @@ template<typename Char, typename Traits = char_traits<Char> >
     {
         level = newlevel;
         /* Take verbosity level into account */
-        if (level > GLOBAL_LEVEL)
+        if (level < GLOBAL_LOGGING_LEVEL)
         {
             return *this;
         }

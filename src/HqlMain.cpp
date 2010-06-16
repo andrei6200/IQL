@@ -28,6 +28,7 @@
 /* Header file of this class */
 #include "HqlMain.hpp"
 #include "logger.hpp"
+#include "grammar/structures.hpp"
 
 
 using namespace pqxx;
@@ -36,12 +37,15 @@ using namespace std;
 
 HqlMain HqlMain::instance;
 
-
+/* Return (and initialize if needed) the singleton instance of HqlMain. */
 HqlMain& HqlMain::getInstance()
 {
     return instance;
 }
 
+/* Private constructor.
+ * Queries the postgres and rasdaman databases for available tables.
+ */
 HqlMain::HqlMain()
 {
     INFO << "Initialization of HqlMain ... ";
@@ -50,11 +54,11 @@ HqlMain::HqlMain()
     /* Rasdaman tables */
     set<string> rasTables = getRasdamanCoverages();
     set<string>::iterator iter;
-    DEBUG << rasTables.size() << " Rasdaman tables. ";
+    DEBUG << "Found " << rasTables.size() << " Rasdaman tables. ";
 
     /* Postgres tables */
     set<string> pgTables = getPostgresTables();
-    DEBUG << pgTables.size() << " Postgres tables. ";
+    DEBUG << "Found " << pgTables.size() << " Postgres tables. ";
 
     /* Create the table dictionary */
     map<string, string> tableMap;
@@ -85,17 +89,44 @@ HqlMain::HqlMain()
     INFO << " Initialization complete. ";
 }
 
+/* Public destructor */
 HqlMain::~HqlMain()
 {
     TRACE << "Destroying Singleton instance of HqlMain.";
 }
 
+/*
+ * This function receives the a query string from the parser. It is responsable
+ * for the execution of the query, and for the delivery of the results to the
+ * user. 
+ */
 void HqlMain::executeHqlQuery(const char* msg)
 {
-    INFO << endl << "Found HQL query: " << msg;
-    cout << endl << "Found HQL query: " << msg;
+    INFO << "Received HQL query (string): " << msg;
+
+    cout << " ... ok" << endl;
+
+    INFO << "Finished execution of HQL query string: " << msg << endl;
 }
 
+/*
+ * This function receives a SelectStruct structure from the parser, and is
+ * responsable for the query execution and result delivery.
+ */
+void HqlMain::executeHqlQuery(selectStruct *select)
+{
+    INFO << "Received SELECT structure. ";
+    list<string>::const_iterator it;
+    for (it = select->what->begin(); it != select->what->end(); it ++)
+        DEBUG << " - SELECT " << *it;
+    DEBUG;
+    for (it = select->from->begin(); it != select->from->end(); it ++)
+        DEBUG << " - FROM " << *it;
+    DEBUG;
+    this->executeHqlQuery(select->query);
+}
+
+/* Returns the available Rasdaman collections as a set of strings. */
 set<string> HqlMain::getRasdamanCoverages()
 {
     const char query[] = "select mddcollname from RAS_MDDCOLLNAMES;";
@@ -108,7 +139,7 @@ set<string> HqlMain::getRasdamanCoverages()
     return tableSet;
 }
 
-
+/* Returns the available Postgres tables as a set of strings. */
 set<string> HqlMain::getPostgresTables()
 {
     const char query[] = "SELECT tablename FROM pg_tables where tablename "
@@ -123,15 +154,16 @@ set<string> HqlMain::getPostgresTables()
 }
 
 
-/* Run a SQL SELECT query on a given SQL database connection.
- Returns the set of values at column "outIndex" from the result table. */
+/* Execute a query on a predefined Postgres connection, and return the
+ * results at column "outIndex" as a set of strings.
+ */
 set<string> HqlMain::runSqlQuery(connection_base& C, const char* queryString, int outIndex)
 {
     set<string> resultSet;
 
     DEBUG << "Connected to database: " << C.dbname();
-    DEBUG << "Backend version: " << C.server_version();
-    DEBUG << "Protocol version: " << C.protocol_version();
+    TRACE << "Backend version: " << C.server_version();
+    TRACE << "Protocol version: " << C.protocol_version();
 
     // Begin a transaction acting on our current connection.  Give it a human-
     // readable name so the library can include it in error messages.

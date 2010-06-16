@@ -1,9 +1,10 @@
 SRC = ..
 
 CC = gcc
+CPP = g++
 OUTLIB = librqlparse.a
 
-CFLAGS = -Iinclude/ -I$(SRC) -O2 -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement -Wendif-labels -fno-strict-aliasing -fwrapv -g
+CFLAGS = -Iinclude/ -I$(SRC) -O2 -Wall -Wpointer-arith -fno-strict-aliasing -fwrapv -g
 
 OBJS= rqlkeywords.o rqlkwlookup.o
 
@@ -16,7 +17,7 @@ $(OUTLIB): $(OBJS)
 
 
 $(OBJS):  %.o: %.c include/rqlkwlist.h $(SRC)/grammar/parser.h
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CPP) -c $(CFLAGS) $< -o $@
 
 
 $(SRC)/grammar/parser.h:

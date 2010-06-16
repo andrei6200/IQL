@@ -90,4 +90,4 @@ clean:
 	make -C postgres clean
 	make -C rasdaman clean
 	make -C grammar clean
-	rm -rvf *~ *.o y.tab.* lex.yy.* parser.output parser.c parser.h lexer.c teststr driver hql
+	rm -rvf *~ *.o y.tab.* lex.yy.* parser.output parser.c parser.h lexer.c teststr driver hql program.log

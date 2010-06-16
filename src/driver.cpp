@@ -7,12 +7,12 @@
 #include "HqlMain.hpp"
 #include "logger.hpp"
 
-extern "C"
-{
+//extern "C"
+//{
     extern int errorCount;
-//    extern void yyparse();
+    extern void yyparse();
     extern char* hqlQueries;
-}
+//}
 
 extern void yyparse();
 
@@ -21,6 +21,7 @@ using namespace std;
 
 string readAllQueries()
 {
+    cout << PROMPT;
     yyparse();
     string result;
     if (hqlQueries == NULL || strlen(hqlQueries) == 0)

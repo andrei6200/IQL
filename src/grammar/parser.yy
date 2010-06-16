@@ -3,36 +3,44 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <list>
+#include <string>
+
 #include "str.h"
 #include "HqlMain.hpp"
 #include "logger.hpp"
 
-extern "C"
-{
+
+//extern
+//{
 extern int yylex();
 extern void yyerror(const char* msg);
-}
+//}
 
 /* AA: The final HQL queries are stored here*/
 char* hqlQueries;
-char* lastHqlQuery;
 
 /******************************** START POSTGRESQL *********************************/
 
 #include <ctype.h>
 #include <limits.h>
 
-/* Location tracking support --- simpler than bison's default */
-#define YYLLOC_DEFAULT(Current, Rhs, N) \
-	do { \
-		if (N) \
-			(Current) = (Rhs)[1]; \
-		else \
-			(Current) = (Rhs)[0]; \
-	} while (0)
+///* Location tracking support --- simpler than bison's default */
+//#define YYLLOC_DEFAULT(Current, Rhs, N) \
+//	do { \
+//		if (N) \
+//			(Current) = (Rhs)[1]; \
+//		else \
+//			(Current) = (Rhs)[0]; \
+//	} while (0)
 /******************************** END POSTGRESQL *********************************/
 
 %}
+
+%code requires
+{
+#include "structures.hpp"
+}
 
 /******************************** START POSTGRESQL *********************************/
 %union
@@ -55,13 +63,17 @@ char* lastHqlQuery;
         char*                           windef;
         char*                           jexpr;
         char*                           into;
+
+        selectStruct                   *select;
+        std::list<std::string>         *strlist;
 }
 
 
 
-%type <node>	stmt SelectStmt
-%type <node>	select_no_parens select_with_parens select_clause simple_select
-                opt_asymmetric
+%type <select>	stmt SelectStmt
+%type <select>	select_no_parens select_with_parens select_clause simple_select
+
+%type <node>    opt_asymmetric
 
 %type <ival>	opt_asc_desc opt_nulls_order
 
@@ -75,12 +87,12 @@ char* lastHqlQuery;
 
 %type <list>	stmtblock stmtmulti
 
-                sort_clause opt_sort_clause sortby_list
-                name_list from_clause from_list
+%type <list>	sort_clause opt_sort_clause sortby_list
+                name_list  
                 expr_list attrs
-                target_list
+%type <strlist> target_list from_clause from_list
 
-                indirection opt_indirection
+%type <list>	indirection opt_indirection
                 select_limit
                 any_operator
                 TableFuncElementList opt_type_modifiers
@@ -111,7 +123,7 @@ char* lastHqlQuery;
 %type <ival>	sub_type
 %type <alias>	alias_clause
 %type <sortby>	sortby
-%type <node>	table_ref
+%type <str>	table_ref
 %type <jexpr>	joined_table
 %type <range>	relation_expr
 %type <target>	target_el
@@ -389,38 +401,40 @@ stmtblock:	stmtmulti
 
 /* the thrashing around here is to discard "empty" statements... */
 stmtmulti:	stmtmulti SEMICOLON stmt
-				{ if ($3 != NULL)
+				{ if ($3 != NULL && $3->query != NULL)
 					{
-					$$ = cat3($1, (char*)"\n", $3);
-                                        DEBUG << "Parser matched query: " << $3 << endl;
+					$$ = cat3($1, (char*)"\n", $3->query);
+                                        DEBUG << "Parser matched query: " << $3->query << endl;
                                         HqlMain::getInstance().executeHqlQuery($3);
-//					printf("\t*** Single statement (in a series): %s\n", $3);
+                                        cout << PROMPT;
+//                                        delete $3;
 					}
 				  else
 				  {
 					$$ = $1;
-//					printf("\t*** Empty statement (in a series). \n");
 					}
 				}
 			| stmt
-					{ if ($1 != NULL)
+					{ if ($1 != NULL && $1->query != NULL)
 					{
-                                                DEBUG << "Parser matched query: " << $1 << endl;
-						$$ = $1;
+                                                DEBUG << "Parser matched query: " << $1->query << endl;
+						$$ = strdup($1->query);
                                                 HqlMain::getInstance().executeHqlQuery($1);
-//						printf("\t*** Single unique statement: %s\n", $1);
+                                                cout << PROMPT;
+//                                                delete $1;
 						}
 					  else
 					  {
 						$$ = NULL;
-//						printf("\t*** Single empty statement.\n");
 					  }
 					}
 		;
 
 stmt:	SelectStmt  { $$ = $1; }
         | // Empty
-                { $$ = NULL; }
+                {
+                    $$ = NULL;
+                }
 
 
 /*****************************************************************************
@@ -473,8 +487,16 @@ SelectStmt:     select_no_parens			%prec UMINUS
 		;
 
 select_with_parens:
-			LRPAR select_no_parens RRPAR			{ $$ = cat3($1, $2, $3); }
-			| LRPAR select_with_parens RRPAR			{ $$ = cat3($1, $2, $3); }
+			LRPAR select_no_parens RRPAR			
+                            {
+                                $$ = $2;
+                                $2->query = cat3($1, $2->query, $3);
+                            }
+			| LRPAR select_with_parens RRPAR
+                            {
+                                $$ = $2;
+                                $2->query = cat3($1, $2->query, $3);
+                            }
 		;
 
 /*
@@ -491,7 +513,8 @@ select_no_parens:
 			simple_select						{ $$ = $1; }
 			| select_clause sort_clause
 				{
-                            $$ = cat2($1, $2);
+                                    $$ = $1;
+                                    $$->query = cat2($1->query, $2);
 				}
 /*
 // AA: We do not want to support the locking clause FOR READ ONLY
@@ -499,6 +522,10 @@ select_no_parens:
 			| select_clause opt_sort_clause select_limit opt_for_locking_clause
 */
 			| select_clause opt_sort_clause select_limit
+                                {
+                                    $$ = $1;
+                                    $$->query = cat3($1->query, $2, $3);
+				}
 // AA: We do not want to support sql nested queries
 /*
 			| with_clause select_clause
@@ -544,7 +571,11 @@ simple_select:
 // AA: We do not want to support "GROUP BY", "HAVING", or SQL windows
 //			group_clause having_clause window_clause
                         {
-                            $$ = cat5($1, $2, $3, $4, $5);
+                            selectStruct *s = new selectStruct();
+                            s->from = $4;
+                            s->what = $2;
+                            s->query = cat5($1, (char*) "target_list", $3, (char*) "from_clause", $5);
+                            $$ = s;
                         }
                         
 // AA: Disable VALUES clause, we do not want data to be input at run-time
@@ -552,26 +583,38 @@ simple_select:
 			| TABLE relation_expr
 				{
                             /* same as SELECT * FROM relation_expr */
-                            $$ = cat2($1, $2);
+                            selectStruct *s = new selectStruct();
+                            s->from = new std::list<std::string>();
+                            s->from->push_front($2);
+                            s->what = new std::list<std::string>();
+                            s->what->push_front("*");
+                            s->query = cat2($1, $2);
+                            $$ = s;
 				}
 			| select_clause UNION opt_all select_clause
 				{
-                            $$ = cat4($1, $2, $3, $4);
+                            /* TODO: also include the second query in the struct */
+                            $$ = $1;
+                            $$->query = cat4($1->query, $2, $3, $4->query);
 				}
 			| select_clause INTERSECT opt_all select_clause
 				{
-                            $$ = cat4($1, $2, $3, $4);
+                            /* TODO: also include the second query in the struct */
+                            $$ = $1;
+                            $$->query = cat4($1->query, $2, $3, $4->query);
 				}
 			| select_clause EXCEPT opt_all select_clause
 				{
-                            $$ = cat4($1, $2, $3, $4);
+                            /* TODO: also include the second query in the struct */
+                            $$ = $1;
+                            $$->query = cat4($1->query, $2, $3, $4->query);
 				}
 		;
 
 into_clause:
 			INTO OptTempTableName
 				{
-    $$ = cat2($1, $2);
+                                $$ = cat2($1, $2);
 				}
 			| /*EMPTY*/
 				{ $$ = NULL; }
@@ -584,7 +627,7 @@ into_clause:
 OptTempTableName:
 			TEMPORARY opt_table qualified_name
 				{
-    $$ = cat3($1, $2, $3);
+                            $$ = cat3($1, $2, $3);
 				}
 			| TEMP opt_table qualified_name
 				{
@@ -706,13 +749,25 @@ select_offset_value:
  *****************************************************************************/
 
 from_clause:
-			FROM from_list							{ $$ = cat2($1, $2); }
-			| /*EMPTY*/								{ $$ = NULL; }
+			FROM from_list
+                            { 
+                                $$ = $2;
+                            }
+			| /*EMPTY*/
+                            { $$ = NULL; }
 		;
 
 from_list:
-			table_ref								{ $$ = $1; }
-			| from_list COMMA table_ref				{ $$ = cat3($1, $2, $3); }
+			table_ref
+                            {
+                                $$ = new list<string>();
+                                $$->push_front(string($1));
+                            }
+			| from_list COMMA table_ref
+                            {
+                                $$ = $1;
+                                $$->push_back(string($3));
+                            }
 		;
 
 /*
@@ -1199,9 +1254,9 @@ ConstInterval:
 		;
 
 opt_timezone:
-			WITH_TIME ZONE			{ $$ = "WITH TIMEZONE"; }
-			| WITHOUT TIME ZONE		{ $$ = "WITHOUT TIMEZONE"; }
-			| /*EMPTY*/                     { $$ = "EMPTY (WITHOUT TIMEZONE)"; }
+			WITH_TIME ZONE			{ $$ = (char*) "WITH TIMEZONE"; }
+			| WITHOUT TIME ZONE		{ $$ = (char*) "WITHOUT TIMEZONE"; }
+			| /*EMPTY*/                     { $$ = (char*) "EMPTY (WITHOUT TIMEZONE)"; }
 		;
 
 opt_interval:
@@ -1814,9 +1869,9 @@ document_or_content: DOCUMENT_P						{ $$ = $1; }
 			| CONTENT_P					{ $$ = $1; }
 		;
 
-xml_whitespace_option: PRESERVE WHITESPACE_P		{ $$ = "TRUE"; }
-			| STRIP_P WHITESPACE_P		{ $$ = "FALSE"; }
-			| /*EMPTY*/			{ $$ = "FALSE"; }
+xml_whitespace_option: PRESERVE WHITESPACE_P		{ $$ = (char*) "TRUE"; }
+			| STRIP_P WHITESPACE_P		{ $$ = (char*) "FALSE"; }
+			| /*EMPTY*/			{ $$ = (char*) "FALSE"; }
 		;
 
 
@@ -1930,12 +1985,12 @@ extract_list:
 
 extract_arg:
 			IDENT									{ $$ = $1; }
-			| YEAR_P								{ $$ = "year"; }
-			| MONTH_P								{ $$ = "month"; }
-			| DAY_P									{ $$ = "day"; }
-			| HOUR_P								{ $$ = "hour"; }
-			| MINUTE_P								{ $$ = "minute"; }
-			| SECOND_P								{ $$ = "second"; }
+			| YEAR_P								{ $$ = (char*) "year"; }
+			| MONTH_P								{ $$ = (char*) "month"; }
+			| DAY_P									{ $$ = (char*) "day"; }
+			| HOUR_P								{ $$ = (char*) "hour"; }
+			| MINUTE_P								{ $$ = (char*) "minute"; }
+			| SECOND_P								{ $$ = (char*) "second"; }
 			| Sconst								{ $$ = $1; }
 		;
 
@@ -2120,15 +2175,18 @@ opt_asymmetric: ASYMMETRIC                                              { $$ = $
  *****************************************************************************/
 
 target_list:
-			target_el								{ $$ = $1; }
-			| target_list COMMA target_el				{ $$ = cat3($1, $2, $3); }
+			target_el								
+                            { $$ = new list<string>(); $$->push_front(string($1)); }
+			| target_list COMMA target_el
+                            { $$ = $1; $$->push_back(string($3)); }
 		;
 
 target_el:	
 
                         a_expr AS ColLabel
 				{
-                                        $$ = cat3($1, $2, $3);
+//                                        $$ = cat3($1, $2, $3);
+                                        $$ = $1;
 				}
 			/*
 			 * We support omitting AS only for column labels that aren't
@@ -2140,7 +2198,8 @@ target_el:
 			 */
 			| a_expr IDENT
 				{
-                                        $$ = cat2($1, $2);
+//                                        $$ = cat2($1, $2);
+                                        $$ = $1;
 				}
 			| a_expr
 				{
@@ -2833,7 +2892,7 @@ mintervalExp: LEPAR spatialOpList REPAR
 
 spatialOpList:  // empty
 	{
-            $$ = "emptySpatialOpList";
+            $$ = (char*) "emptySpatialOpList";
 	}
 	| spatialOpList2
 	{

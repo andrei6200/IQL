@@ -61,7 +61,7 @@ parser.o: parser.c parser.h str.c str.h
 	$(CPP) $(CPPFLAGS) $(LIBS) -c parser.c   -o parser.o
 
 lexer.o: lexer.c
-	$(CC) $(CFLAGS) $(LIBS) -c lexer.c   -o lexer.o
+	$(CPP) $(CPPFLAGS) $(LIBS) -c lexer.c   -o lexer.o
 
 ### Generate the parser/lexer sources with Flex/Bison
 parser.c parser.h: parser.yy

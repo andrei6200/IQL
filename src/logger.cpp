@@ -13,12 +13,18 @@
 using namespace std;
 
 #include "logger.hpp"
+#include "config.hpp"
 
 /******************* CONFIGURATION START **********************/
 
-/* Output file */
-ofstream _outputFile("program.log", ofstream::app);
+/* Output file.
+ *
+ * You can redirect the log output to a standard stream (for example "cout")
+ * like the commented line below.
+ */
+ofstream _outputFile(LOGFILE_NAME, ofstream::app);
 //ofstream _outputFile(cout);
+
 
 /* Global LOG */
 LOGGER <char, char_traits < char > > LOG(_outputFile);
