@@ -14,6 +14,7 @@
 #include <pqxx/pqxx>
 
 #include <set>
+#include <vector>
 #include <string>
 
 #include "grammar/structures.hpp"
@@ -56,7 +57,7 @@ public:
     /* Execute a query on a predefined Postgres connection, and return the
      * results at column "outIndex" as a set of strings.
      */
-    std::set<std::string> runSqlQuery(pqxx::connection_base& C, const char* queryString, int outIndex);
+    std::vector< std::vector< std::string > > runSqlQuery(pqxx::connection_base& C, const char* queryString);
 
     /* Execute a Rasql query on a given Rasdaman database connection and transaction.
      * Prints some info about the query result.
@@ -74,12 +75,12 @@ private:
     HqlMain();
 
     /* Prints an SQL table in a human-readable form on stdout. */
-    void printSqlTable(std::set<std::string> sqlTable);
+    void printSqlTable(std::vector< std::vector< std::string > > sqlTable);
 
     /* Returns the available Rasdaman collections as a set of strings. */
-    std::set<std::string> getRasdamanCoverages();
+    std::vector<std::string> getRasdamanCoverages();
     /* Returns the available Postgres tables as a set of strings. */
-    std::set<std::string> getPostgresTables();
+    std::vector<std::string> getPostgresTables();
 
 
     /* The singleton instance. */

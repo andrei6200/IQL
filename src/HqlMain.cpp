@@ -57,12 +57,12 @@ HqlMain::HqlMain()
     pg_conn = new lazyconnection();
 
     /* Rasdaman tables */
-    set<string> rasTables = getRasdamanCoverages();
-    set<string>::iterator iter;
+    vector<string> rasTables = getRasdamanCoverages();
+    vector<string>::iterator iter;
     DEBUG << "Found " << rasTables.size() << " Rasdaman tables. ";
 
     /* Postgres tables */
-    set<string> pgTables = getPostgresTables();
+    vector<string> pgTables = getPostgresTables();
     DEBUG << "Found " << pgTables.size() << " Postgres tables. ";
 
     /* Create the table dictionary */
@@ -171,7 +171,7 @@ void HqlMain::executeHqlQuery(selectStruct *select)
             try
             {
                 DEBUG << "Executing SQL query ...";
-                set<string> sqlTable = runSqlQuery(*pg_conn, select->query, 0);
+                vector< vector< string > > sqlTable = runSqlQuery(*pg_conn, select->query);
                 printSqlTable(sqlTable);
                 status = "ok";
             }
@@ -208,31 +208,71 @@ void HqlMain::executeHqlQuery(selectStruct *select)
 
 
 /* Prints an SQL table in a human-readable form on stdout. */
-void HqlMain::printSqlTable(set<string> sqlTable)
+void HqlMain::printSqlTable(vector< vector < string > > sqlTable)
 {
-    set<string>::iterator it;
-    cout << "SQL Query results (" << sqlTable.size() << " rows):" << endl;
+    vector< vector< string > >::iterator it;
+    vector<string> row;
+    vector<string>::iterator val;
+    int i;
+
+    if (sqlTable.size() == 0)
+    {
+        cout << " ( no rows )" << endl;
+        return;
+    }
+
+    /* Find out the width of each table column: take the maximum length of
+     any value in that column. */
+    vector<int> widths(sqlTable[0].size());
+    for (i = 0; i < widths.size(); i++)
+        widths[i] = 0;
     for (it = sqlTable.begin(); it != sqlTable.end(); it ++)
-        cout << " * " << *it << endl;
+    {
+        row = *it;
+        for (i = 0, val = row.begin(); val != row.end(); val ++, i++)
+            if ((*val).length() > widths[i])
+                widths[i] = (*val).length();
+    }
+    DEBUG << "Here are the widths of the table columns: ";
+    for (int i = 0; i < widths.size(); i++)
+        DEBUG << widths[i];
+    DEBUG;
+    
+    /* Print the table contents */
+    cout << RESPONSE_PROMPT << "SQL Query results (" << sqlTable.size() << " rows):" << endl;
+    cout << RESPONSE_PROMPT;
+    for (it = sqlTable.begin(); it != sqlTable.end(); it ++)
+    {
+        row = *it;
+        cout << " | ";
+        for (i=0, val = row.begin(); val != row.end(); val ++, i++)
+            cout << setw(widths[i]) << *val << " | ";
+        cout << endl << RESPONSE_PROMPT;
+    }
     cout << endl;
 }
 
 
 /* Returns the available Rasdaman collections as a set of strings. */
-set<string> HqlMain::getRasdamanCoverages()
+vector<string> HqlMain::getRasdamanCoverages()
 {
     const char query[] = "select mddcollname from RAS_MDDCOLLNAMES;";
 
     /* Connect to the default rasdaman backend dabatase. */
     connection C("dbname=RASBASE");
 
-    set<string> tableSet = getInstance().runSqlQuery(C, query, 0);
+    vector< vector< string > > table = getInstance().runSqlQuery(C, query);
+    
+    vector< vector< string > >::iterator it;
+    vector<string> tableList;
+    for (it = table.begin(); it != table.end(); it ++)
+        tableList.push_back((*it)[0]);
 
-    return tableSet;
+    return tableList;
 }
 
 /* Returns the available Postgres tables as a set of strings. */
-set<string> HqlMain::getPostgresTables()
+vector<string> HqlMain::getPostgresTables()
 {
     const char query[] = "SELECT tablename FROM pg_tables where tablename "
             "not like 'pg_%' and tablename not like 'sql_%';";
@@ -240,18 +280,22 @@ set<string> HqlMain::getPostgresTables()
     /* Connect to the default SQL database.*/
     connection C;
 
-    set<string> tableSet = getInstance().runSqlQuery(C, query, 0);
+    vector< vector< string > > table = getInstance().runSqlQuery(C, query);
+    vector< vector< string > >::iterator it;
+    vector<string> tableList;
+    for (it = table.begin(); it != table.end(); it ++)
+        tableList.push_back((*it)[0]);
 
-    return tableSet;
+    return tableList;
 }
 
 /* Execute a query on a predefined Postgres connection, and return the
  * results at column "outIndex" as a set of strings.
  * NOTE: Throws an std::exception in case of error.
  */
-set<string> HqlMain::runSqlQuery(connection_base& C, const char* queryString, int outIndex)
+vector< vector< string > > HqlMain::runSqlQuery(connection_base& C, const char* queryString)
 {
-    set<string> resultSet;
+    vector< vector< string > > resultSet;
 
     DEBUG << "Connected to database: " << C.dbname();
     TRACE << "Backend version: " << C.server_version();
@@ -274,9 +318,15 @@ set<string> HqlMain::runSqlQuery(connection_base& C, const char* queryString, in
         return resultSet;
     }
 
+    vector<string> newrow;
     // Process each successive result tuple
-    for (result::const_iterator c = R.begin(); c != R.end(); ++c)
-        resultSet.insert(c[outIndex].as(string()));
+    for (result::const_iterator row = R.begin(); row != R.end(); ++row)
+    {
+        newrow.clear();
+        for (int col = 0; col < row.size(); col ++)
+            newrow.push_back(row[col].as(string()));
+        resultSet.push_back(newrow);
+    }
 
     T.abort();
 
