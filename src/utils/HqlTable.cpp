@@ -124,34 +124,35 @@ HqlTable::~HqlTable()
 /* Print the table contents to a specified stream. */
 void HqlTable::print(ostream &out)
 {
-    out << RESPONSE_PROMPT << "SQL Query results" << endl;
-    out << RESPONSE_PROMPT;
+    out << INDENT_PROMPT << "SQL Query results" << endl;
 
     if (rows > 0)
     {
+        out << INDENT_PROMPT;
         /* First print the column names */
         out << setw(widths[0]) << names[0];
         for (int i = 1; i < columns; i++)
             out << TABLE_COL_SEPARATOR << setw(widths[i]) << names[i];
-        out << endl << RESPONSE_PROMPT;
-        out << setw(widths[0]) << setfill(TABLE_HEADER_SEPARATOR) << TABLE_HEADER_SEPARATOR;
+        out << endl;
+        /* And the separator line ...*/
+        out << INDENT_PROMPT << setw(widths[0])
+            << setfill(TABLE_HEADER_SEPARATOR) << TABLE_HEADER_SEPARATOR;
         for (int i = 1; i < columns; i++)
             out << TABLE_HEADER_SEPARATOR << "+" << setw(widths[i])
-            << setfill(TABLE_HEADER_SEPARATOR) << TABLE_HEADER_SEPARATOR
+                << setfill(TABLE_HEADER_SEPARATOR) << TABLE_HEADER_SEPARATOR
                 << TABLE_HEADER_SEPARATOR;
-        out << endl << setfill(' ');
+        out << setfill(' ');
         /* Now print the actual data*/
         vector<string> row;
         for (int r = 1; r < rows; r++)
         {
+            out << endl;
             row = data[r];
-            out << RESPONSE_PROMPT;
-            out << setw(widths[0]) << row[0];
+            out << INDENT_PROMPT << setw(widths[0]) << row[0];
             for (int i = 1; i < row.size(); i++)
                 out << TABLE_COL_SEPARATOR << setw(widths[i]) << row[i];
-            out << endl;
         }
         out << endl;
     }
-    out << "( " << rows << " rows )" << endl;
+    out << INDENT_PROMPT << "( " << rows << " rows )" << endl;
 }

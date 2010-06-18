@@ -23,6 +23,7 @@
 /* Output Query prompter */
 #define QUERY_PROMPT        "> "
 #define RESPONSE_PROMPT     "---> "
+#define INDENT_PROMPT       "\t"
 
 
 #endif	/* CONFIG_HPP */
