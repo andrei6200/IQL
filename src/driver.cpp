@@ -5,7 +5,7 @@
 #include <cstring>
 
 #include "HqlMain.hpp"
-#include "logger.hpp"
+#include "utils/logger.hpp"
 #include "config.hpp"
 
 //extern "C"

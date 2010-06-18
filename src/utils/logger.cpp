@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#include "logger.hpp"
+#include "utils/logger.hpp"
 #include "config.hpp"
 
 /******************* CONFIGURATION START **********************/

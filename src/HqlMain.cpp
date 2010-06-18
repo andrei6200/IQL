@@ -27,9 +27,10 @@
 
 /* Header file of this class */
 #include "HqlMain.hpp"
-#include "logger.hpp"
+#include "utils/logger.hpp"
 #include "grammar/structures.hpp"
 #include "config.hpp"
+#include "utils/HqlTable.hpp"
 
 
 using namespace pqxx;
@@ -75,9 +76,9 @@ HqlMain::HqlMain()
             tableMap[*iter] = POSTGRES;
         else
         {
-            FATAL << "\n ERROR ! Table " << *iter << " is a coverage name in Rasdaman AND "
+            FATAL << "\n ERROR ! Table '" << *iter << "' is a coverage name in Rasdaman AND "
                     << " a table in Postgres. Cannot continue. ";
-            cerr << "\n ERROR ! Table " << *iter << " is a coverage name in Rasdaman AND "
+            cerr << "\n ERROR ! Table '" << *iter << "' is a coverage name in Rasdaman AND "
                     << " a table in Postgres. Cannot continue. ";
             exit(1);
         }
@@ -171,8 +172,8 @@ void HqlMain::executeHqlQuery(selectStruct *select)
             try
             {
                 DEBUG << "Executing SQL query ...";
-                vector< vector< string > > sqlTable = runSqlQuery(*pg_conn, select->query);
-                printSqlTable(sqlTable);
+                HqlTable table = runSqlQuery(*pg_conn, select->query);
+                table.print(cout);
                 status = "ok";
             }
             catch (exception &e)
@@ -207,52 +208,6 @@ void HqlMain::executeHqlQuery(selectStruct *select)
 }
 
 
-/* Prints an SQL table in a human-readable form on stdout. */
-void HqlMain::printSqlTable(vector< vector < string > > sqlTable)
-{
-    vector< vector< string > >::iterator it;
-    vector<string> row;
-    vector<string>::iterator val;
-    int i;
-
-    if (sqlTable.size() == 0)
-    {
-        cout << " ( no rows )" << endl;
-        return;
-    }
-
-    /* Find out the width of each table column: take the maximum length of
-     any value in that column. */
-    vector<int> widths(sqlTable[0].size());
-    for (i = 0; i < widths.size(); i++)
-        widths[i] = 0;
-    for (it = sqlTable.begin(); it != sqlTable.end(); it ++)
-    {
-        row = *it;
-        for (i = 0, val = row.begin(); val != row.end(); val ++, i++)
-            if ((*val).length() > widths[i])
-                widths[i] = (*val).length();
-    }
-    DEBUG << "Here are the widths of the table columns: ";
-    for (int i = 0; i < widths.size(); i++)
-        DEBUG << widths[i];
-    DEBUG;
-    
-    /* Print the table contents */
-    cout << RESPONSE_PROMPT << "SQL Query results (" << sqlTable.size() << " rows):" << endl;
-    cout << RESPONSE_PROMPT;
-    for (it = sqlTable.begin(); it != sqlTable.end(); it ++)
-    {
-        row = *it;
-        cout << " | ";
-        for (i=0, val = row.begin(); val != row.end(); val ++, i++)
-            cout << setw(widths[i]) << *val << " | ";
-        cout << endl << RESPONSE_PROMPT;
-    }
-    cout << endl;
-}
-
-
 /* Returns the available Rasdaman collections as a set of strings. */
 vector<string> HqlMain::getRasdamanCoverages()
 {
@@ -261,14 +216,15 @@ vector<string> HqlMain::getRasdamanCoverages()
     /* Connect to the default rasdaman backend dabatase. */
     connection C("dbname=RASBASE");
 
-    vector< vector< string > > table = getInstance().runSqlQuery(C, query);
-    
-    vector< vector< string > >::iterator it;
-    vector<string> tableList;
-    for (it = table.begin(); it != table.end(); it ++)
-        tableList.push_back((*it)[0]);
+    HqlTable table = getInstance().runSqlQuery(C, query);
 
-    return tableList;
+    vector<string> cov = table.getColumn(0);
+
+    TRACE << "Rasdaman collections: ";
+    for (int i = 0; i < cov.size(); i++)
+        TRACE << " * " << cov[i];
+
+    return cov;
 }
 
 /* Returns the available Postgres tables as a set of strings. */
@@ -280,23 +236,23 @@ vector<string> HqlMain::getPostgresTables()
     /* Connect to the default SQL database.*/
     connection C;
 
-    vector< vector< string > > table = getInstance().runSqlQuery(C, query);
-    vector< vector< string > >::iterator it;
-    vector<string> tableList;
-    for (it = table.begin(); it != table.end(); it ++)
-        tableList.push_back((*it)[0]);
+    HqlTable table = getInstance().runSqlQuery(C, query);
 
-    return tableList;
+    vector<string> names = table.getColumn(0);
+    
+    TRACE << "Postgres tables: ";
+    for (int i = 0; i < names.size(); i++)
+        TRACE << " * " << names[i];
+
+    return names;
 }
 
 /* Execute a query on a predefined Postgres connection, and return the
  * results at column "outIndex" as a set of strings.
  * NOTE: Throws an std::exception in case of error.
  */
-vector< vector< string > > HqlMain::runSqlQuery(connection_base& C, const char* queryString)
+HqlTable HqlMain::runSqlQuery(connection_base& C, const char* queryString)
 {
-    vector< vector< string > > resultSet;
-
     DEBUG << "Connected to database: " << C.dbname();
     TRACE << "Backend version: " << C.server_version();
     TRACE << "Protocol version: " << C.protocol_version();
@@ -315,23 +271,12 @@ vector< vector< string > > HqlMain::runSqlQuery(connection_base& C, const char* 
     if (R.empty())
     {
         WARN << "No rows in query result. ";
-        return resultSet;
-    }
-
-    vector<string> newrow;
-    // Process each successive result tuple
-    for (result::const_iterator row = R.begin(); row != R.end(); ++row)
-    {
-        newrow.clear();
-        for (int col = 0; col < row.size(); col ++)
-            newrow.push_back(row[col].as(string()));
-        resultSet.push_back(newrow);
+        return HqlTable();
     }
 
     T.abort();
 
-
-    return resultSet;
+    return HqlTable(R);
 }
 
 /* Run a Rasql query on a given rasdaman database and transaction. 
@@ -339,7 +284,7 @@ vector< vector< string > > HqlMain::runSqlQuery(connection_base& C, const char* 
  * destroyed at the end of the function execution. 
  * NOTE: Throws an (r_Error) exception if something goes wrong.
  */
-void HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString)
+r_Set< r_Ref_Any > HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString)
 {
     DEBUG << "Executing RaSQL query: " << queryString;
     r_OQL_Query query(queryString);
@@ -433,5 +378,7 @@ void HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* query
     }
 
     TRACE << "Finished executing RaSQL.";
+
+    return result_set;
 
 }

@@ -7,15 +7,19 @@
 
 
 TODO: 
-- Ambiguous queries
-    - can be matched by both RaSQL and SQL
-    - need to un-ambiguate based on table names
 
 
-- simple SQL queries
 - simple RaSQL queries
 - simple combinations of SQL + RaSQL
     - always execute one SQL and one RaSQL query
     - merge the results
         - cartesian product / join :-s
+- add the GROUP BY and HAVING clauses to the gramamr
 - complex combinations of SQL + RaSQL
+
+
+
+DONE
+- Ambiguous queries
+    - can be matched by both RaSQL and SQL
+    - need to un-ambiguate based on table names

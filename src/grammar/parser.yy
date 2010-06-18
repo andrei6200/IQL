@@ -8,7 +8,7 @@
 
 #include "str.h"
 #include "HqlMain.hpp"
-#include "logger.hpp"
+#include "utils/logger.hpp"
 
 
 extern int yylex();

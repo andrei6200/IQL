@@ -15,9 +15,9 @@
 
 #include <set>
 #include <vector>
-#include <string>
 
 #include "grammar/structures.hpp"
+#include "utils/HqlTable.hpp"
 
 
 
@@ -57,7 +57,7 @@ public:
     /* Execute a query on a predefined Postgres connection, and return the
      * results at column "outIndex" as a set of strings.
      */
-    std::vector< std::vector< std::string > > runSqlQuery(pqxx::connection_base& C, const char* queryString);
+    HqlTable runSqlQuery(pqxx::connection_base& C, const char* queryString);
 
     /* Execute a Rasql query on a given Rasdaman database connection and transaction.
      * Prints some info about the query result.
@@ -65,7 +65,7 @@ public:
      * "db" and "tr" may be NULL, in which case a DB connection is automatically
      * aquired and released after execution. 
      */
-    void runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString);
+    r_Set< r_Ref_Any > runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString);
 
 private:
     /*
@@ -73,9 +73,6 @@ private:
      * Queries the postgres and rasdaman databases for available tables.
      */
     HqlMain();
-
-    /* Prints an SQL table in a human-readable form on stdout. */
-    void printSqlTable(std::vector< std::vector< std::string > > sqlTable);
 
     /* Returns the available Rasdaman collections as a set of strings. */
     std::vector<std::string> getRasdamanCoverages();
