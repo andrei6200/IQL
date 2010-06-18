@@ -17,9 +17,20 @@
 #include <string>
 
 #include "grammar/structures.hpp"
+#include "errors.hpp"
 
-#define PROMPT "> "
 
+
+
+/* Enumeration of available DBMS systems */
+enum DbEnum
+{
+    POSTGRES = 0,
+    RASDAMAN = 1
+};
+
+
+/* Singleton class responsible for DB access. */
 class HqlMain
 {
 public:
@@ -30,8 +41,9 @@ public:
      * This function receives the a query string from the parser. It is responsable
      * for the execution of the query, and for the delivery of the results to the
      * user.
+     * Returns the status as a string.
      */
-    void executeHqlQuery(const char* msg);
+    std::string executeHqlQuery(const char* msg);
 
     /*
      * This function receives a SelectStruct structure from the parser, and is
@@ -56,9 +68,6 @@ public:
     void runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString);
 
 private:
-    /* The singleton instance. */
-    static HqlMain instance;
-
     /* Private constructor.
      * Queries the postgres and rasdaman databases for available tables.
      */
@@ -69,6 +78,15 @@ private:
     /* Returns the available Postgres tables as a set of strings. */
     std::set<std::string> getPostgresTables();
 
+
+    /* The singleton instance. */
+    static HqlMain instance;
+
+    /* Name Dictionary for available tables */
+    std::map<std::string, int> tableMap;
+
+    /* Connection to Postgres */
+    static pqxx::connection_base *pg_conn;
 };
 
 

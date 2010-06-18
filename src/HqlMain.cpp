@@ -30,12 +30,16 @@
 #include "logger.hpp"
 #include "grammar/structures.hpp"
 
+/* Query prompter */
+#define PROMPT "> "
+
 
 using namespace pqxx;
 using namespace std;
 
 
 HqlMain HqlMain::instance;
+connection_base* HqlMain::pg_conn = NULL;
 
 /* Return (and initialize if needed) the singleton instance of HqlMain. */
 HqlMain& HqlMain::getInstance()
@@ -51,6 +55,9 @@ HqlMain::HqlMain()
     INFO << "Initialization of HqlMain ... ";
     /* Initialization */
 
+    /* Init database connections */
+    pg_conn = new lazyconnection();
+
     /* Rasdaman tables */
     set<string> rasTables = getRasdamanCoverages();
     set<string>::iterator iter;
@@ -61,30 +68,29 @@ HqlMain::HqlMain()
     DEBUG << "Found " << pgTables.size() << " Postgres tables. ";
 
     /* Create the table dictionary */
-    map<string, string> tableMap;
-    string rql = "Rasdaman";
-    string sql = "Postgres";
-    for (iter = rasTables.begin(); iter != rasTables.end(); iter ++ )
-        tableMap.insert(pair<string, string>(*iter, rql));
-    for (iter = pgTables.begin(); iter != pgTables.end(); iter ++)
+    DbEnum rql = RASDAMAN;
+    DbEnum sql = POSTGRES;
+    for (iter = rasTables.begin(); iter != rasTables.end(); iter++)
+        tableMap[*iter] = RASDAMAN;
+    for (iter = pgTables.begin(); iter != pgTables.end(); iter++)
         if (tableMap.count(*iter) == 0)
-            tableMap.insert(pair<string, string>(*iter, sql));
+            tableMap[*iter] = POSTGRES;
         else
         {
             FATAL << "\n ERROR ! Table " << *iter << " is a coverage name in Rasdaman AND "
-                    << " a table in Postgres. Cannot continue. " ;
+                    << " a table in Postgres. Cannot continue. ";
             cerr << "\n ERROR ! Table " << *iter << " is a coverage name in Rasdaman AND "
-                    << " a table in Postgres. Cannot continue. " ;
+                    << " a table in Postgres. Cannot continue. ";
             exit(1);
         }
 
     /* Print the Table dictionary */
-    map<string, string>::iterator tuple;
-    TRACE ;
-    TRACE << "Name dictionary : " ;
-    for (tuple = tableMap.begin(); tuple != tableMap.end(); tuple ++)
-        TRACE << " - " << (*tuple).first << " -> " << (*tuple).second ;
-    TRACE ;
+    map<string, int>::const_iterator tuple;
+    TRACE;
+    TRACE << "Name dictionary : ";
+    for (tuple = tableMap.begin(); tuple != tableMap.end(); tuple++)
+        TRACE << " - " << (*tuple).first << " -> " << (*tuple).second;
+    TRACE;
 
     INFO << " Initialization complete. ";
 }
@@ -93,20 +99,30 @@ HqlMain::HqlMain()
 HqlMain::~HqlMain()
 {
     TRACE << "Destroying Singleton instance of HqlMain.";
+
+    if (pg_conn != NULL)
+    {
+        TRACE << "Deleting the Postgres connection ..." << flush;
+        delete pg_conn;
+        pg_conn = NULL;
+    }
+
+    TRACE << "HqlMain fields have been destroyed.";
 }
 
 /*
  * This function receives the a query string from the parser. It is responsable
  * for the execution of the query, and for the delivery of the results to the
- * user. 
+ * user.
+ * Returns the status as a string.
  */
-void HqlMain::executeHqlQuery(const char* msg)
+string HqlMain::executeHqlQuery(const char* msg)
 {
     INFO << "Received HQL query (string): " << msg;
 
-    cout << " ... ok" << endl;
-
     INFO << "Finished execution of HQL query string: " << msg << endl;
+
+    return string("   ok ...");
 }
 
 /*
@@ -116,14 +132,63 @@ void HqlMain::executeHqlQuery(const char* msg)
 void HqlMain::executeHqlQuery(selectStruct *select)
 {
     INFO << "Received SELECT structure. ";
+    string status;
+
+    /* Debugging output */
     list<string>::const_iterator it;
-    for (it = select->what->begin(); it != select->what->end(); it ++)
+    for (it = select->what->begin(); it != select->what->end(); it++)
         DEBUG << " - SELECT " << *it;
     DEBUG;
-    for (it = select->from->begin(); it != select->from->end(); it ++)
+    for (it = select->from->begin(); it != select->from->end(); it++)
         DEBUG << " - FROM " << *it;
     DEBUG;
-    this->executeHqlQuery(select->query);
+
+    /* Find out what data sources are involved in this query: PG or RMAN ? */
+    TRACE;
+    int rman = 0;
+    int pg = 0;
+    bool error = false;
+    for (it = select->from->begin(); it != select->from->end(); it++)
+        if (tableMap.count(*it) == 1)
+        {
+            if (tableMap[*it] == RASDAMAN)
+                rman++;
+            else
+                pg++;
+        }
+        else
+        {
+            ERROR << "Table '" << *it << "' does not exist in Postgres nor in Rasdaman !";
+            INFO << "Skipping this query...";
+            status = "non-existing table ...";
+            error = true;
+        }
+    DEBUG << " Found " << rman << " Rasdaman tables in query.";
+    DEBUG << " Found " << pg << " Postgres tables in query.";
+
+    if (error == false)
+    {
+        /* FIXME: Currently I only execute only RMAN or only PG queries. */
+        if (rman == 0)
+        {
+            DEBUG << "Executing SQL query ...";
+            runSqlQuery(*pg_conn, select->query, 0);
+            status = "ok";
+        }
+        if (pg == 0)
+        {
+            DEBUG << "Executing RaSQL query ...";
+            runRasqlQuery(NULL, NULL, select->query);
+            status = "ok";
+        }
+    }
+
+    //    /* Dummy method call. */
+    //    status = this->executeHqlQuery(select->query);
+
+    cout << "\t" << status << endl;
+
+    cout << PROMPT;
 }
 
 /* Returns the available Rasdaman collections as a set of strings. */
@@ -135,7 +200,7 @@ set<string> HqlMain::getRasdamanCoverages()
     connection C("dbname=RASBASE");
 
     set<string> tableSet = getInstance().runSqlQuery(C, query, 0);
-    
+
     return tableSet;
 }
 
@@ -143,8 +208,8 @@ set<string> HqlMain::getRasdamanCoverages()
 set<string> HqlMain::getPostgresTables()
 {
     const char query[] = "SELECT tablename FROM pg_tables where tablename "
-                         "not like 'pg_%' and tablename not like 'sql_%';";
-    
+            "not like 'pg_%' and tablename not like 'sql_%';";
+
     /* Connect to the default SQL database.*/
     connection C;
 
@@ -152,7 +217,6 @@ set<string> HqlMain::getPostgresTables()
 
     return tableSet;
 }
-
 
 /* Execute a query on a predefined Postgres connection, and return the
  * results at column "outIndex" as a set of strings.
@@ -165,25 +229,37 @@ set<string> HqlMain::runSqlQuery(connection_base& C, const char* queryString, in
     TRACE << "Backend version: " << C.server_version();
     TRACE << "Protocol version: " << C.protocol_version();
 
-    // Begin a transaction acting on our current connection.  Give it a human-
-    // readable name so the library can include it in error messages.
-    nontransaction T(C, "sqlQuery");
+    TRACE;
+    TRACE << "Executing SQL query: " << queryString;
 
-    // Perform a query on the database, storing result tuples in R.
-    result R( T.exec(queryString) );
-
-    // We're expecting to find some tables...
-    if (R.empty())
+    try
     {
-        WARN << "No tables found.  Cannot test.";
+        // Begin a transaction acting on our current connection.  Give it a human-
+        // readable name so the library can include it in error messages.
+        nontransaction T(C, "sqlQuery");
+
+        // Perform a query on the database, storing result tuples in R.
+        result R(T.exec(queryString));
+
+        // We're expecting to find some tables...
+        if (R.empty())
+        {
+            WARN << "No rows in query result. ";
+            return resultSet;
+        }
+
+        // Process each successive result tuple
+        for (result::const_iterator c = R.begin(); c != R.end(); ++c)
+            resultSet.insert(c[outIndex].as(string()));
+
+        T.abort();
+    }
+    catch (const exception &e)
+    {
+        ERROR << e.what() << endl;
         return resultSet;
     }
 
-    // Process each successive result tuple
-    for (result::const_iterator c = R.begin(); c != R.end(); ++c)
-        resultSet.insert(c[0].as(string()));
-
-    T.abort();
 
     return resultSet;
 }
@@ -193,6 +269,7 @@ set<string> HqlMain::runSqlQuery(connection_base& C, const char* queryString, in
  * destroyed at the end of the function execution. */
 void HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString)
 {
+    DEBUG << "Executing RaSQL query: " << queryString;
     r_OQL_Query query(queryString);
 
     /* Initialize the database connection and transaction */
@@ -202,16 +279,18 @@ void HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* query
     database = db;
     if (db == NULL)
     {
+        TRACE << "Connecting to database ...";
         database = new r_Database();
-        database->set_servername( "localhost" );
-        database->set_useridentification( "rasguest", "rasguest" );
-        database->open( "RASBASE" );
+        database->set_servername("localhost");
+        database->set_useridentification("rasguest", "rasguest");
+        database->open("RASBASE");
     }
     transaction = tr;
     if (tr == NULL)
     {
+        TRACE << "Opening transaction ...";
         transaction = new r_Transaction();
-        transaction->begin( r_Transaction::read_only );
+        transaction->begin(r_Transaction::read_only);
     }
 
 
@@ -223,53 +302,55 @@ void HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* query
     /* Execute the actual query. */
     try
     {
-        r_oql_execute(query, result_set);   
+        TRACE << "Executing RaSQL ...";
+        r_oql_execute(query, result_set);
+        TRACE << "RaSQL execution ended. ";
         DEBUG << "Result has " << result_set.cardinality() << " objects... ";
     }
     catch (r_Error &e)
     {
-        DEBUG << "ERROR: " << e.what();
+        ERROR << "ERROR: " << e.what();
     }
 
     iter = result_set.create_iterator();
 
-    for(iter.reset();iter.not_done(); iter++ )
+    for (iter.reset(); iter.not_done(); iter++)
     {
-        image = r_Ref<r_GMarray>(*iter);
+        image = r_Ref<r_GMarray > (*iter);
 
         /* Print metadata ... taken from RaSQL */
         {
-                cout << "  Oid...................: " << result_set.get_oid() << endl;
-                cout << "  Type Structure........: "
-                     << ( result_set.get_type_structure() ? result_set.get_type_structure() : "<nn>" ) << endl;
-                cout << "  Type Schema...........: " << flush;
-                if( result_set.get_type_schema() )
-                        result_set.get_type_schema()->print_status( cout );
-                else
-                        cout << "(no name)" << flush;
-                cout << endl;
-                cout << "  Number of entries.....: " << result_set.cardinality() << endl;
-                cout << "  Element Type Schema...: " << flush;
-                if( result_set.get_element_type_schema() )
-                        result_set.get_element_type_schema()->print_status( cout );
-                else
-                        cout << "(no name)" << flush;
-                cout << endl;
+            cout << "  Oid...................: " << result_set.get_oid() << endl;
+            cout << "  Type Structure........: "
+                    << (result_set.get_type_structure() ? result_set.get_type_structure() : "<nn>") << endl;
+            cout << "  Type Schema...........: " << flush;
+            if (result_set.get_type_schema())
+                result_set.get_type_schema()->print_status(cout);
+            else
+                cout << "(no name)" << flush;
+            cout << endl;
+            cout << "  Number of entries.....: " << result_set.cardinality() << endl;
+            cout << "  Element Type Schema...: " << flush;
+            if (result_set.get_element_type_schema())
+                result_set.get_element_type_schema()->print_status(cout);
+            else
+                cout << "(no name)" << flush;
+            cout << endl;
         }
 
         // work with the result image
         // for example print its spatial domain
         switch (result_set.get_element_type_schema()->type_id())
         {
-            case r_Type::MARRAYTYPE:
-                cout << image->spatial_domain() << endl;
-                break;
-            default:
-                WARN << "\n\n\nThe output result is *NOT* a MDD. So I cannot print any spatial domain :-)";
-                DEBUG << "Output type is: " << result_set.get_element_type_schema()->type_id() << endl;
-                cout << "\n\n\nThe output result is *NOT* a MDD. So I cannot print any spatial domain :-)" << endl;
-                
-                break;
+        case r_Type::MARRAYTYPE:
+            cout << image->spatial_domain() << endl;
+            break;
+        default:
+            WARN << "\n\n\nThe output result is *NOT* a MDD. So I cannot print any spatial domain :-)";
+            DEBUG << "Output type is: " << result_set.get_element_type_schema()->type_id() << endl;
+            cout << "\n\n\nThe output result is *NOT* a MDD. So I cannot print any spatial domain :-)" << endl;
+
+            break;
         }
 
     }
@@ -285,5 +366,7 @@ void HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* query
         database->close();
         delete database;
     }
+
+    TRACE << "Finished executing RaSQL.";
 
 }

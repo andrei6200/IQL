@@ -17,6 +17,9 @@ extern int yylex();
 extern void yyerror(const char* msg);
 //}
 
+/* Helper functions */
+char* list2string(std::list<std::string>);
+
 /* AA: The final HQL queries are stored here*/
 char* hqlQueries;
 
@@ -406,8 +409,6 @@ stmtmulti:	stmtmulti SEMICOLON stmt
 					$$ = cat3($1, (char*)"\n", $3->query);
                                         DEBUG << "Parser matched query: " << $3->query << endl;
                                         HqlMain::getInstance().executeHqlQuery($3);
-                                        cout << PROMPT;
-//                                        delete $3;
 					}
 				  else
 				  {
@@ -420,8 +421,6 @@ stmtmulti:	stmtmulti SEMICOLON stmt
                                                 DEBUG << "Parser matched query: " << $1->query << endl;
 						$$ = strdup($1->query);
                                                 HqlMain::getInstance().executeHqlQuery($1);
-                                                cout << PROMPT;
-//                                                delete $1;
 						}
 					  else
 					  {
@@ -574,7 +573,7 @@ simple_select:
                             selectStruct *s = new selectStruct();
                             s->from = $4;
                             s->what = $2;
-                            s->query = cat5($1, (char*) "target_list", $3, (char*) "from_clause", $5);
+                            s->query = cat6($1, list2string(*$2), $3, "from", list2string(*$4), $5);
                             $$ = s;
                         }
                         
@@ -3501,4 +3500,20 @@ BooleanLit: BCONST  { $$ = $1;  }
 %%
 
 
+
+
 #include "str.c"
+
+
+using namespace std;
+
+char* list2string(list<string> l)
+{
+    string out;
+    list<string>::iterator it;
+    it = l.begin();
+    out = *it;
+    for (it ++; it != l.end(); it++)
+        out += ", " + *it;
+    return (char*) out.c_str();
+}

@@ -45,7 +45,8 @@ int main()
     string allQueries = readAllQueries();
 
     /* And let the user know that we are exiting the application... */
-    DEBUG << endl << "Below is the complete string of parsed HQL queries:";
+    DEBUG << endl;
+    DEBUG << "Below is the complete string of parsed HQL queries:";
     DEBUG << allQueries;
     DEBUG << "Found " << errorCount << " error(s) ";
 

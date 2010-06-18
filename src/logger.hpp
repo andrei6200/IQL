@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <cstring>
 
 #undef DEBUG
 
@@ -23,18 +24,23 @@ enum verbosityLevelsEnum
     FATAL = 500
 };
 
-
 #include "config.hpp"
 
+#define STRLENGTH 20
 
+static time_t rawtime;
+static char timestr[STRLENGTH];
 
 template<typename Char, typename Traits = char_traits<Char> >
-        struct LOGGER
+        class LOGGER
 {
+
+public:
     typedef std::basic_ostream<Char, Traits> ostream_type;
     typedef ostream_type & (*manip_type)(ostream_type&);
 
-    LOGGER(ostream_type & os) : os(os), level(GLOBAL_LOGGING_LEVEL)
+    LOGGER(ostream_type & os) :
+        os(os), level(GLOBAL_LOGGING_LEVEL)
     {
     }
 
@@ -64,51 +70,48 @@ template<typename Char, typename Traits = char_traits<Char> >
         level = newlevel;
         /* Take verbosity level into account */
         if (level < GLOBAL_LOGGING_LEVEL)
-        {
             return *this;
-        }
-        os << std::endl << setw(8) << strLevel << " :  ";
+        /* Write time as a string. */
+        time(&rawtime);
+        
+        strftime(timestr, STRLENGTH, "%x %X", localtime(&rawtime));
+        os << std::endl << "[ " << timestr << " ]" << setw(8) << strLevel << " - ";
         return *this;
     }
 
     inline LOGGER& trace()
     {
-        return setLevel(TRACE, "[TRACE]");
+        return setLevel(TRACE, "TRACE");
     }
 
     inline LOGGER& debug()
     {
-        return setLevel(DEBUG, "[DEBUG]");
+        return setLevel(DEBUG, "DEBUG");
     }
     
     inline LOGGER& info()
     {
-        return setLevel(INFO, "[INFO]");
+        return setLevel(INFO, "INFO");
     }
 
     inline LOGGER& warn()
     {
-        return setLevel(WARN, "[WARN]");
+        return setLevel(WARN, "WARN");
     }
 
     inline LOGGER& error()
     {
-        return setLevel(ERROR, "[ERROR]");
+        return setLevel(ERROR, "ERROR");
     }
 
     inline LOGGER& fatal()
     {
-        return setLevel(FATAL, "[FATAL]");
+        return setLevel(FATAL, "FATAL");
     }
 
 private:
     verbosityLevelsEnum level;
     
-    static const int LENGTH = 24;
-
-    static char mydate[64];
-    static char fmt[20];
-
     ostream_type & os;
 };
 
