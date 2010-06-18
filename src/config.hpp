@@ -21,7 +21,8 @@
 
 
 /* Output Query prompter */
-#define PROMPT  "> "
+#define QUERY_PROMPT        "> "
+#define RESPONSE_PROMPT     "---> "
 
 
 #endif	/* CONFIG_HPP */

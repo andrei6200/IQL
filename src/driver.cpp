@@ -22,7 +22,7 @@ using namespace std;
 
 string readAllQueries()
 {
-    cout << PROMPT;
+    cout << QUERY_PROMPT;
     yyparse();
     string result;
     if (hqlQueries == NULL || strlen(hqlQueries) == 0)

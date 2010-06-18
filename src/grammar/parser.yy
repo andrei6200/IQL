@@ -11,11 +11,8 @@
 #include "logger.hpp"
 
 
-//extern
-//{
 extern int yylex();
 extern void yyerror(const char* msg);
-//}
 
 /* Helper functions */
 char* list2string(std::list<std::string>);
@@ -567,7 +564,8 @@ simple_select:
 //			SELECT opt_distinct target_list
                         SELECT target_list
 			into_clause from_clause where_clause
-// AA: We do not want to support "GROUP BY", "HAVING", or SQL windows
+//                        group_clause having_clause
+// AA: We do not want to support r SQL windows
 //			group_clause having_clause window_clause
                         {
                             selectStruct *s = new selectStruct();

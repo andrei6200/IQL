@@ -29,6 +29,7 @@
 #include "HqlMain.hpp"
 #include "logger.hpp"
 #include "grammar/structures.hpp"
+#include "config.hpp"
 
 
 using namespace pqxx;
@@ -135,10 +136,8 @@ void HqlMain::executeHqlQuery(selectStruct *select)
     list<string>::const_iterator it;
     for (it = select->what->begin(); it != select->what->end(); it++)
         DEBUG << " - SELECT " << *it;
-    DEBUG;
     for (it = select->from->begin(); it != select->from->end(); it++)
         DEBUG << " - FROM " << *it;
-    DEBUG;
 
     /* Find out what data sources are involved in this query: PG or RMAN ? */
     TRACE;
@@ -157,7 +156,7 @@ void HqlMain::executeHqlQuery(selectStruct *select)
         {
             ERROR << "Table '" << *it << "' does not exist in Postgres nor in Rasdaman !";
             INFO << "Skipping this query...";
-            status = "non-existing table ...";
+            status = "non-existing table ('" + *it + "') ...";
             error = true;
         }
     DEBUG << " Found " << rman << " Rasdaman tables in query.";
@@ -168,25 +167,56 @@ void HqlMain::executeHqlQuery(selectStruct *select)
         /* FIXME: Currently I only execute only RMAN or only PG queries. */
         if (rman == 0)
         {
-            DEBUG << "Executing SQL query ...";
-            runSqlQuery(*pg_conn, select->query, 0);
-            status = "ok";
+            cout << RESPONSE_PROMPT << "Executing as Postgres query... " << endl;
+            try
+            {
+                DEBUG << "Executing SQL query ...";
+                set<string> sqlTable = runSqlQuery(*pg_conn, select->query, 0);
+                printSqlTable(sqlTable);
+                status = "ok";
+            }
+            catch (exception &e)
+            {
+                ERROR << "Query execution error: " << e.what();
+                status = string("failed... ") + e.what();
+            }
         }
         if (pg == 0)
         {
-            DEBUG << "Executing RaSQL query ...";
-            runRasqlQuery(NULL, NULL, select->query);
-            status = "ok";
+            cout << RESPONSE_PROMPT << "Executing as Rasdaman query... " << endl;
+            try
+            {
+                DEBUG << "Executing RaSQL query ...";
+                runRasqlQuery(NULL, NULL, select->query);
+                status = "ok";
+            }
+            catch (r_Error &e)
+            {
+                ERROR << "Query execution error: " << e.what();
+                status = string("failed... ") + e.what();
+            }
         }
     }
 
     //    /* Dummy method call. */
     //    status = this->executeHqlQuery(select->query);
 
-    cout << "\t" << status << endl;
+    cout << RESPONSE_PROMPT << status << endl;
 
-    cout << PROMPT;
+    cout << QUERY_PROMPT;
 }
+
+
+/* Prints an SQL table in a human-readable form on stdout. */
+void HqlMain::printSqlTable(set<string> sqlTable)
+{
+    set<string>::iterator it;
+    cout << "SQL Query results (" << sqlTable.size() << " rows):" << endl;
+    for (it = sqlTable.begin(); it != sqlTable.end(); it ++)
+        cout << " * " << *it << endl;
+    cout << endl;
+}
+
 
 /* Returns the available Rasdaman collections as a set of strings. */
 set<string> HqlMain::getRasdamanCoverages()
@@ -217,6 +247,7 @@ set<string> HqlMain::getPostgresTables()
 
 /* Execute a query on a predefined Postgres connection, and return the
  * results at column "outIndex" as a set of strings.
+ * NOTE: Throws an std::exception in case of error.
  */
 set<string> HqlMain::runSqlQuery(connection_base& C, const char* queryString, int outIndex)
 {
@@ -229,33 +260,25 @@ set<string> HqlMain::runSqlQuery(connection_base& C, const char* queryString, in
     TRACE;
     TRACE << "Executing SQL query: " << queryString;
 
-    try
+    // Begin a transaction acting on our current connection.  Give it a human-
+    // readable name so the library can include it in error messages.
+    nontransaction T(C, "sqlQuery");
+
+    // Perform a query on the database, storing result tuples in R.
+    result R(T.exec(queryString));
+
+    // We're expecting to find some tables...
+    if (R.empty())
     {
-        // Begin a transaction acting on our current connection.  Give it a human-
-        // readable name so the library can include it in error messages.
-        nontransaction T(C, "sqlQuery");
-
-        // Perform a query on the database, storing result tuples in R.
-        result R(T.exec(queryString));
-
-        // We're expecting to find some tables...
-        if (R.empty())
-        {
-            WARN << "No rows in query result. ";
-            return resultSet;
-        }
-
-        // Process each successive result tuple
-        for (result::const_iterator c = R.begin(); c != R.end(); ++c)
-            resultSet.insert(c[outIndex].as(string()));
-
-        T.abort();
-    }
-    catch (const exception &e)
-    {
-        ERROR << e.what() << endl;
+        WARN << "No rows in query result. ";
         return resultSet;
     }
+
+    // Process each successive result tuple
+    for (result::const_iterator c = R.begin(); c != R.end(); ++c)
+        resultSet.insert(c[outIndex].as(string()));
+
+    T.abort();
 
 
     return resultSet;
@@ -263,7 +286,9 @@ set<string> HqlMain::runSqlQuery(connection_base& C, const char* queryString, in
 
 /* Run a Rasql query on a given rasdaman database and transaction. 
  * If the database and/or transaction pointers are NULL, they are created and 
- * destroyed at the end of the function execution. */
+ * destroyed at the end of the function execution. 
+ * NOTE: Throws an (r_Error) exception if something goes wrong.
+ */
 void HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString)
 {
     DEBUG << "Executing RaSQL query: " << queryString;
@@ -297,17 +322,10 @@ void HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* query
     r_Iterator< r_Ref_Any > iter;
 
     /* Execute the actual query. */
-    try
-    {
-        TRACE << "Executing RaSQL ...";
-        r_oql_execute(query, result_set);
-        TRACE << "RaSQL execution ended. ";
-        DEBUG << "Result has " << result_set.cardinality() << " objects... ";
-    }
-    catch (r_Error &e)
-    {
-        ERROR << "ERROR: " << e.what();
-    }
+    TRACE << "Executing RaSQL ...";
+    r_oql_execute(query, result_set);
+    TRACE << "RaSQL execution ended. ";
+    DEBUG << "Result has " << result_set.cardinality() << " objects... ";
 
     iter = result_set.create_iterator();
 

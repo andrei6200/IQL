@@ -75,7 +75,7 @@ public:
         time(&rawtime);
         
         strftime(timestr, STRLENGTH, "%x %X", localtime(&rawtime));
-        os << std::endl << "[ " << timestr << " ]" << std::setw(8) << strLevel << " - ";
+        os << std::endl << "[ " << timestr << " ]" << std::setw(8) << strLevel << " :  ";
         return *this;
     }
 

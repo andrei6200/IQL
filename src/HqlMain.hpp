@@ -67,10 +67,14 @@ public:
     void runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString);
 
 private:
-    /* Private constructor.
+    /*
+     * Private constructor.
      * Queries the postgres and rasdaman databases for available tables.
      */
     HqlMain();
+
+    /* Prints an SQL table in a human-readable form on stdout. */
+    void printSqlTable(std::set<std::string> sqlTable);
 
     /* Returns the available Rasdaman collections as a set of strings. */
     std::set<std::string> getRasdamanCoverages();
