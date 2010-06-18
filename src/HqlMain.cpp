@@ -30,9 +30,6 @@
 #include "logger.hpp"
 #include "grammar/structures.hpp"
 
-/* Query prompter */
-#define PROMPT "> "
-
 
 using namespace pqxx;
 using namespace std;

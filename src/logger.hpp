@@ -75,7 +75,7 @@ public:
         time(&rawtime);
         
         strftime(timestr, STRLENGTH, "%x %X", localtime(&rawtime));
-        os << std::endl << "[ " << timestr << " ]" << setw(8) << strLevel << " - ";
+        os << std::endl << "[ " << timestr << " ]" << std::setw(8) << strLevel << " - ";
         return *this;
     }
 
@@ -117,7 +117,7 @@ private:
 
 
 
-extern ofstream _outputFile;
+extern std::ofstream _outputFile;
 extern LOGGER <char, char_traits < char > > LOG;
 
 #define TRACE   LOG.trace()

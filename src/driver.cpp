@@ -6,6 +6,7 @@
 
 #include "HqlMain.hpp"
 #include "logger.hpp"
+#include "config.hpp"
 
 //extern "C"
 //{

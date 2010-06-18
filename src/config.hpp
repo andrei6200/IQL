@@ -20,5 +20,9 @@
 #define LOGFILE_NAME "program.log"
 
 
+/* Output Query prompter */
+#define PROMPT  "> "
+
+
 #endif	/* CONFIG_HPP */
 
