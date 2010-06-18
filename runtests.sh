@@ -3,7 +3,7 @@
 ################################################################
 # Make the parser, if it is not already built
 pwd=`pwd`
-DRIVER="$pwd/hql"
+DRIVER="$pwd/src/hql"
 if [ ! -e $DRIVER ]
 then
 	set -e

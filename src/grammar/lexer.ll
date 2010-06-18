@@ -368,32 +368,32 @@ other			.
 
 
 
-"+"                                       { yylval.str = "+"; return PLUS; }
-"-"                                       { yylval.str = "-"; return MINUS; }
-"*"                                       { yylval.str = "*"; return MULT; }
-"/"                                       { yylval.str = "/"; return DIV; }
-"%"                                       { yylval.str = "%"; return MOD; }
-"^"                                       { yylval.str = "^"; return POWER; }
-"="                                       { yylval.str = "="; return EQUAL; }
-"<"                                       { yylval.str = "<"; return LESS; }
-">"                                       { yylval.str = ">"; return GREATER; }
-"<="                                      { yylval.str = "<="; return LESSEQUAL; }
-">="                                      { yylval.str = ">="; return GREATEREQUAL; }
-"<>"                                      { yylval.str = "<>"; return NOTEQUAL; }
-"!="                                      { yylval.str = "!="; return NOTEQUAL; }
-":"                                       { yylval.str = ":"; return COLON; }
-";"                                       { yylval.str = ";"; return SEMICOLON; }
-"["                                       { yylval.str = "["; return LEPAR; }
-"]"                                       { yylval.str = "]"; return REPAR; }
-"("                                       { yylval.str = "("; return LRPAR; }
-")"                                       { yylval.str = ")"; return RRPAR; }
-"{"                                       { yylval.str = "{"; return LCPAR; }
-"}"                                       { yylval.str = "}"; return RCPAR; }
-","                                       { yylval.str = ","; return COMMA; }
-"."                                       { yylval.str = "."; return DOT; }
-#MDD[0-9]+#                               { yylval.str = "MDDParam"; return MDDPARAM; }
-"true"                                    { yylval.boolean = "true"; return BCONST; }
-"false"                                   { yylval.boolean = "false"; return BCONST; }
+"+"                                       { yylval.str = (char*) "+"; return PLUS; }
+"-"                                       { yylval.str = (char*) "-"; return MINUS; }
+"*"                                       { yylval.str = (char*) "*"; return MULT; }
+"/"                                       { yylval.str = (char*) "/"; return DIV; }
+"%"                                       { yylval.str = (char*) "%"; return MOD; }
+"^"                                       { yylval.str = (char*) "^"; return POWER; }
+"="                                       { yylval.str = (char*) "="; return EQUAL; }
+"<"                                       { yylval.str = (char*) "<"; return LESS; }
+">"                                       { yylval.str = (char*) ">"; return GREATER; }
+"<="                                      { yylval.str = (char*) "<="; return LESSEQUAL; }
+">="                                      { yylval.str = (char*) ">="; return GREATEREQUAL; }
+"<>"                                      { yylval.str = (char*) "<>"; return NOTEQUAL; }
+"!="                                      { yylval.str = (char*) "!="; return NOTEQUAL; }
+":"                                       { yylval.str = (char*) ":"; return COLON; }
+";"                                       { yylval.str = (char*) ";"; return SEMICOLON; }
+"["                                       { yylval.str = (char*) "["; return LEPAR; }
+"]"                                       { yylval.str = (char*) "]"; return REPAR; }
+"("                                       { yylval.str = (char*) "("; return LRPAR; }
+")"                                       { yylval.str = (char*) ")"; return RRPAR; }
+"{"                                       { yylval.str = (char*) "{"; return LCPAR; }
+"}"                                       { yylval.str = (char*) "}"; return RCPAR; }
+","                                       { yylval.str = (char*) ","; return COMMA; }
+"."                                       { yylval.str = (char*) "."; return DOT; }
+#MDD[0-9]+#                               { yylval.str = (char*) "MDDParam"; return MDDPARAM; }
+"true"                                    { yylval.boolean = (char*) "true"; return BCONST; }
+"false"                                   { yylval.boolean = (char*) "false"; return BCONST; }
 
 
 
@@ -554,7 +554,7 @@ other			.
 					yyless(1);
 					BEGIN(INITIAL);
 //					yylval.str = litbuf_udeescape('\\');
-					yylval.str = "\\";
+					yylval.str = (char*) "\\";
 					return SCONST;
 				}
 <xus>{xusstop2} {
@@ -692,7 +692,7 @@ other			.
 					if (literallen == 0)
 						yyerror("zero-length delimited identifier");
 //					ident = litbuf_udeescape('\\');
-                                        ident = "\\";
+                                        ident = (char*) "\\";
 //					if (literallen >= NAMEDATALEN)
 //						truncate_identifier(ident, literallen, true);
 					yylval.str = ident;

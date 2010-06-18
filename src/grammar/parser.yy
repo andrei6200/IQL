@@ -571,7 +571,7 @@ simple_select:
                             selectStruct *s = new selectStruct();
                             s->from = $4;
                             s->what = $2;
-                            s->query = cat6($1, list2string(*$2), $3, "from", list2string(*$4), $5);
+                            s->query = cat6($1, list2string(*$2), $3, (char*) "from", list2string(*$4), $5);
                             $$ = s;
                         }
                         
@@ -780,7 +780,8 @@ table_ref:	relation_expr
 				}
 			| relation_expr alias_clause
 				{
-                                        $$ = cat2($1, $2);
+//                                        $$ = cat2($1, $2);
+                                        $$ = $1;
 				}
 			| func_table
 				{
