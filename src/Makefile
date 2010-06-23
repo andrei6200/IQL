@@ -36,8 +36,8 @@ GRAMMAR_LIBS = -L$(HQLROOT)/lib -lparse -lrqlparse
 # PostgreSQL client support
 SQL_LIBS = -lpqxx
 # Rasdaman client support
-RASQL_LIBS = -L/usr/lib -L$(RMANINSTALL)/lib					\
-	-lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto 
+RASQL_LIBS = -L$(RMANINSTALL)/lib -L/usr/lib					\
+	-lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto
 
 
 LIBS = $(GRAMMAR_LIBS) $(SQL_LIBS) $(RASQL_LIBS)
@@ -65,14 +65,17 @@ $(LIB_RMAN):
 
 ### Driver actually builds the parser driver program
 hql: grammar utils driver.o HqlMain.o 
-	$(CPP) $(CPPFLAGS) driver.o HqlMain.o utils/HqlTable.o utils/logger.o 		\
-	$(RASQL_LIBS) $(SQL_LIBS) grammar/parser.o grammar/lexer.o $(GRAMMAR_LIBS) 	\
+	$(CPP) $(CPPFLAGS) driver.o HqlMain.o		\
+	utils/HqlTable.o				\
+	$(RASQL_LIBS) $(SQL_LIBS)			\
+	grammar/parser.o grammar/lexer.o		\
+	$(GRAMMAR_LIBS)					\
 	-o hql
 
 grammar: lib/libparse.a lib/librqlparse.a
 	make -C grammar
 
-utils: utils/HqlTable.o utils/logger.o
+utils: utils/HqlTable.o
 	make -C utils
 
 lib/libparse.a: $(LIB_PG)
@@ -81,10 +84,10 @@ lib/libparse.a: $(LIB_PG)
 lib/librqlparse.a: $(LIB_RMAN)
 	cp $(LIB_RMAN) $(HQLROOT)/lib/
 
-driver.o: utils driver.cpp 
+driver.o: driver.cpp
 	$(CPP) $(CPPFLAGS) $(LIBS) -c driver.cpp   -o driver.o
 
-HqlMain.o: utils HqlMain.cpp HqlMain.hpp
+HqlMain.o: HqlMain.cpp HqlMain.hpp utils/HqlTable.hpp
 	$(CPP) $(CPPFLAGS) $(LIBS) -c HqlMain.cpp   -o HqlMain.o
 
 ### Tests

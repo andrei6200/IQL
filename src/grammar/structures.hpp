@@ -14,12 +14,15 @@
 #include <list>
 #include <string>
 
+
+/* SELECT statement. */
 class selectStruct
 {
 public:
-    std::list<std::string> *from;
-    std::list<std::string> *what;
-    char *query;
+    std::list<std::string> *from;   // FROM which tables?
+    std::list<std::string> *what;   // Which columns to select? 
+
+    char *query;                    // query string
 
     selectStruct(): from(NULL), what(NULL), query(NULL)
     {
@@ -35,5 +38,13 @@ public:
             delete query;
     }
 } ;
+
+/* Reference to a SQL table / RaSQL collection */
+class tableRefStruct
+{
+    std::string *tname; // table name
+    std::string *alias; // table AS alias 
+    bool all;           // SELECT *
+};
 
 #endif	/* STRUCTURES_HPP */

@@ -25,6 +25,23 @@
 #define RESPONSE_PROMPT     "---> "
 #define INDENT_PROMPT       "\t"
 
+/* Rasdaman connection */
+/************* KAHLUA ***************/
+//#define RASDAMAN_SERVER    "kahlua.eecs.jacobs-university.de"
+//#define RASDAMAN_PORT       9001
+//#define RASDAMAN_DATABASE   "RASSERVICE"
+//#define RASDAMAN_USERNAME   "rasguest"
+//#define RASDAMAN_PASSWORD   "rasguest"
+
+/************* LOCALHOST *************/
+#define RASDAMAN_SERVER    "localhost"
+#define RASDAMAN_PORT       7001
+#define RASDAMAN_DATABASE   "RASBASE"
+#define RASDAMAN_USERNAME   "rasguest"
+#define RASDAMAN_PASSWORD   "rasguest"
+
+/* Postgresql connection defaults */
+#define POSTGRES_CONN_OPTS  ""
 
 #endif	/* CONFIG_HPP */
 

@@ -54,18 +54,17 @@ public:
     /* Public destructor. */
     ~HqlMain();
 
-    /* Execute a query on a predefined Postgres connection, and return the
-     * results at column "outIndex" as a set of strings.
+    /* Execute a query on a predefined Postgres connection, and return the results.
      */
     HqlTable runSqlQuery(pqxx::connection_base& C, const char* queryString);
 
     /* Execute a Rasql query on a given Rasdaman database connection and transaction.
-     * Prints some info about the query result.
+     * Prints some info about the query result. Returns the results as a HqlTable.
      *
      * "db" and "tr" may be NULL, in which case a DB connection is automatically
      * aquired and released after execution. 
      */
-    r_Set< r_Ref_Any > runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString);
+    HqlTable runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString);
 
 private:
     /*
@@ -88,6 +87,10 @@ private:
 
     /* Connection to Postgres */
     static pqxx::connection_base *pg_conn;
+
+    /* Connection and transaction to Rasdaman */
+    static r_Database *rman_db;
+    static r_Transaction *rman_tr;
 };
 
 

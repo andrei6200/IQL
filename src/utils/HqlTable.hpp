@@ -11,17 +11,32 @@
 #include <pqxx/pqxx>
 #include "rasdaman.hh"
 
+#include "utils/logger.hpp"
+
 class HqlTable
 {
 public:
-    /* Emtpy constructor */
-    HqlTable();
+    /* Constructor from RaSQL result type (uses global variable for info) */
+    HqlTable(/* r_Set< r_Ref_Any > rasqlResult */);
+
 //    /* Constructor with data and column names */
 //    HqlTable(std::vector<std::vector<std::string> > data, std::vector<std::string> names);
-    /* Constructor from SQL result type */
-    HqlTable(pqxx::result sqlResult);
+
+//    /* Constructor from SQL result type */
+//    HqlTable(pqxx::result sqlResult);
+
+    /* Import data from Rasdaman to the current table */
+    void importFromRasql();
+
+    /* Import data from Postgres to the current table. */
+    void importFromSql(pqxx::result sqlResult);
+
+//    /* Constructor from RaSQL result type */
+//    HqlTable(r_Set<r_Ref_Any> rasqlResult);
+
 //    /* Copy constructor */
 //    HqlTable(const HqlTable& orig);
+
     /* Destructor */
     virtual ~HqlTable();
 
@@ -30,7 +45,7 @@ public:
 
     /* Display this table to stdout */
     void print(std::ostream& out);
-    
+
 private:
     /* The column names */
     std::vector<std::string> names;
@@ -49,5 +64,7 @@ private:
 
 #define TABLE_COL_SEPARATOR     " | "
 #define TABLE_HEADER_SEPARATOR  '-'
+
+#define DEFAULT_OUTFILE_MASK "hql_%d"
 
 #endif	/* HQLTABLE_HPP */
