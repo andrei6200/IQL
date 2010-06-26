@@ -55,13 +55,10 @@ LIBTARGET=$(LIB_PG) $(LIB_RMAN)
 #########################
 ##### Rules Section ##### 
 
-all: logger.o HqlTable.o
+all: HqlTable.o
 
 HqlTable.o: HqlTable.cpp HqlTable.hpp
-	$(CPP) $(CPPFLAGS) $(LIBS) -c HqlTable.cpp   -o HqlTable.o
-
-logger.o: logger.cpp logger.hpp
-	$(CPP) $(CPPFLAGS) $(LIBS) -c logger.cpp   -o logger.o
+	$(CPP) $(CPPFLAGS) $(LIBS) -c HqlTable.cpp  -o HqlTable.o
 
 clean:
 	rm -rvf *~ *.o

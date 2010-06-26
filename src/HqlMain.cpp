@@ -47,10 +47,9 @@ using namespace std;
 HqlMain HqlMain::instance;
 connection_base* HqlMain::pg_conn = NULL;
 r_Database* HqlMain::rman_db = NULL;
-r_Transaction* HqlMain::rman_tr = NULL;
 
 /* Define the output of Rasql globally, because of bug in r_Set<r_Ref_Any> destructor */
-r_Set< r_Ref_Any > globalRasqlResultSet;
+//r_Set< r_Ref_Any > globalRasqlResultSet;
 
 /* Return (and initialize if needed) the singleton instance of HqlMain. */
 HqlMain& HqlMain::getInstance()
@@ -80,10 +79,6 @@ HqlMain::HqlMain()
     rman_db->set_servername(RASDAMAN_SERVER, RASDAMAN_PORT);
     rman_db->set_useridentification(RASDAMAN_USERNAME, RASDAMAN_PASSWORD);
     rman_db->open(RASDAMAN_DATABASE);
-    TRACE << "Opening Rasdaman transaction ...";
-    rman_tr = new r_Transaction();
-    rman_tr->begin(r_Transaction::read_only);
-    TRACE << "Successfully connected to rasdaman !";
 
     /* Rasdaman tables */
     vector<string> rasTables = getRasdamanCoverages();
@@ -132,14 +127,6 @@ HqlMain::~HqlMain()
         TRACE << "Deleting the Postgres connection ..." << flush;
         delete pg_conn;
         pg_conn = NULL;
-    }
-
-    if (rman_tr != NULL)
-    {
-        rman_tr->abort();
-        TRACE << "Deleting the Rasdaman transaction ..." << flush;
-        delete rman_tr;
-        rman_tr = NULL;
     }
 
     if (rman_db != NULL)
@@ -232,7 +219,7 @@ void HqlMain::executeHqlQuery(selectStruct *select)
                 try
                 {
                     DEBUG << "Executing RaSQL query ...";
-                    HqlTable table = runRasqlQuery(rman_db, rman_tr, select->query);
+                    HqlTable table = runRasqlQuery(rman_db, select->query);
                     table.print(cout);
                     status = "ok";
                 }
@@ -342,56 +329,45 @@ HqlTable HqlMain::runSqlQuery(connection_base& C, const char* queryString)
 /* Run a Rasql query on a given rasdaman database and transaction.
  * NOTE: Throws an (r_Error) exception if something goes wrong.
  */
-HqlTable HqlMain::runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString)
+HqlTable HqlMain::runRasqlQuery(r_Database *db, const char* queryString)
 {
+    TRACE << "Opening Rasdaman transaction ...";
+    r_Transaction *rman_tr = new r_Transaction();
+    rman_tr->begin(r_Transaction::read_write);
+    TRACE << "Successfully connected to rasdaman !";
+
     DEBUG << "Executing RaSQL query: " << queryString;
     r_OQL_Query query(queryString);
 
     /* The RaSQL result set is now declared globally, following trick in RaSQL app. */
-//    r_Set< r_Ref_Any > result_set;
+    r_Set< r_Ref_Any > result_set;
     r_Set< r_Ref< r_GMarray > > *image_set;
     r_Ref< r_GMarray > image;
     r_Iterator< r_Ref_Any > iter;
 
+    // Clear the results from the previous query
+    TRACE << "Previous query had " << result_set.cardinality() << " results.";
+    TRACE << "Clearing results from previous query. ";
+    TRACE << "Global result set now has " << result_set.cardinality() << " results.";
+
     /* Execute the actual query. */
     TRACE << "Executing RaSQL ...";
-    globalRasqlResultSet.remove_all();
-    r_oql_execute(query, globalRasqlResultSet);
+    r_oql_execute(query, result_set);
     TRACE << "RaSQL execution ended. ";
-    DEBUG << "Result has " << globalRasqlResultSet.cardinality() << " objects... ";
-    //
-    //    iter = globalRasqlResultSet.create_iterator();
-    //
-    //    for (iter.reset(); iter.not_done(); iter++)
-    //    {
-    //        image = r_Ref<r_GMarray > (*iter);
-    //        r_Ref<r_Point> point(*iter);
-    //
-    //        /* Print metadata ... taken from RaSQL */
-    //        {
-    //            cout << "  Oid...................: " << globalRasqlResultSet.get_oid() << endl;
-    //            cout << "  Type Structure........: "
-    //                    << (globalRasqlResultSet.get_type_structure() ? globalRasqlResultSet.get_type_structure() : "<nn>") << endl;
-    //            cout << "  Type Schema...........: " << flush;
-    //            if (globalRasqlResultSet.get_type_schema())
-    //                globalRasqlResultSet.get_type_schema()->print_status(cout);
-    //            else
-    //                cout << "(no name)" << flush;
-    //            cout << endl;
-    //            cout << "  Number of entries.....: " << globalRasqlResultSet.cardinality() << endl;
-    //            cout << "  Element Type Schema...: " << flush;
-    //            if (globalRasqlResultSet.get_element_type_schema())
-    //                globalRasqlResultSet.get_element_type_schema()->print_status(cout);
-    //            else
-    //                cout << "(no name)" << flush;
-    //            cout << endl;
-    //        }
-    //    }
+    DEBUG << "Result has " << result_set.cardinality() << " objects... ";
 
     TRACE << "Finished executing RaSQL.";
 
-    /* This constructor uses globalRasqlResultSet for info */
     HqlTable table;
-    table.importFromRasql();
+    table.importFromRasql(&result_set);
+
+    /* Close the transaction (after processing of data) */
+    TRACE << "Aborting current Rasdaman transaction ...";
+    rman_tr->commit();
+    delete rman_tr;
+    rman_tr = NULL;
+    TRACE << "Rasdaman transaction closed.";
+
+    /* Return the data. */
     return table;
 }

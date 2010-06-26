@@ -32,20 +32,17 @@
 using namespace std;
 using namespace pqxx;
 
-HqlTable::HqlTable() : rows(0), columns(0), pg_result(NULL), rman_result(NULL)
+HqlTable::HqlTable() : rows(0), columns(0)
 {
 }
 
 
-extern r_Set<r_Ref_Any> globalRasqlResultSet;
-
-
 /* Import data from the result of a RaSQL query. */
-void HqlTable::importFromRasql(/*r_Set<r_Ref_Any> resultSet*/)
+void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
 {
     INFO << "Building HqlTable from Rasql result ...";
 
-    rows = globalRasqlResultSet.cardinality();
+    rows = resultSet->cardinality();
     columns = 1;
 
     string colname = "rasql_output";
@@ -54,18 +51,14 @@ void HqlTable::importFromRasql(/*r_Set<r_Ref_Any> resultSet*/)
     widths = vector<int>();
     widths.push_back(colname.length());
 
-//    rows = columns = 0;
-    rman_result = NULL;
-    pg_result = NULL;
-
     vector<string> row;
 
-    r_Iterator< r_Ref_Any > iter = globalRasqlResultSet.create_iterator();
+    r_Iterator< r_Ref_Any > iter = resultSet->create_iterator();
     // iter.not_done() seems to behave wrongly on empty set, therefore this additional check -- PB 2003-aug-16
-    for (int i = 1; i <= globalRasqlResultSet.cardinality() && iter.not_done(); iter++, i++)
+    for (int i = 1; i <= resultSet->cardinality() && iter.not_done(); iter++, i++)
     {
         stringstream cell (stringstream::out);
-        switch (globalRasqlResultSet.get_element_type_schema()->type_id())
+        switch (resultSet->get_element_type_schema()->type_id())
         {
             case r_Type::MARRAYTYPE:
             {
@@ -154,12 +147,10 @@ void HqlTable::importFromRasql(/*r_Set<r_Ref_Any> resultSet*/)
     } // for(...)
 }
 
+
 /* Import data from the result of an SQL query. */
 void HqlTable::importFromSql(result sqlResult)
 {
-    pg_result = &sqlResult;
-    rman_result = NULL;
-
     rows = sqlResult.size();
     columns = sqlResult.columns();
 
@@ -194,21 +185,6 @@ void HqlTable::importFromSql(result sqlResult)
         data.push_back(row);
     }
 }
-
-/*
- * The default constructor assumes RaSQL data is available !
- * NOTE: This constructor does not use the argument !
- * It fetches data from the global variable "globalRasqlResultSet"
- */
-//HqlTable::HqlTable(/* r_Set< r_Ref_Any > rasqlResult */)
-//{
-//
-//}
-//
-//HqlTable::HqlTable(result sqlResult)
-//{
-//
-//}
 
 vector<string> HqlTable::getColumn(int index)
 {
@@ -255,16 +231,6 @@ vector<string> HqlTable::getColumn(int index)
 
 HqlTable::~HqlTable()
 {
-    //    if (pg_result)
-    //    {
-    //        delete pg_result;
-    //        pg_result = NULL;
-    //    }
-    //    if (rman_result)
-    //    {
-    //        delete rman_result;
-    //        rman_result = NULL;
-    //    }
 }
 
 /* Print the table contents to a specified stream. */

@@ -26,7 +26,7 @@ public:
 //    HqlTable(pqxx::result sqlResult);
 
     /* Import data from Rasdaman to the current table */
-    void importFromRasql();
+    void importFromRasql(r_Set<r_Ref_Any> *resultSet);
 
     /* Import data from Postgres to the current table. */
     void importFromSql(pqxx::result sqlResult);
@@ -56,10 +56,6 @@ private:
 
     /* Counters */
     int columns, rows;
-
-    /* The pqxx::result object, if available */
-    pqxx::result *pg_result;
-    r_Set<r_Ref_Any> *rman_result;
 };
 
 #define TABLE_COL_SEPARATOR     " | "

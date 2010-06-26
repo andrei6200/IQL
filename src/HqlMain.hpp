@@ -64,7 +64,7 @@ public:
      * "db" and "tr" may be NULL, in which case a DB connection is automatically
      * aquired and released after execution. 
      */
-    HqlTable runRasqlQuery(r_Database *db, r_Transaction *tr, const char* queryString);
+    HqlTable runRasqlQuery(r_Database *db, const char* queryString);
 
 private:
     /*
@@ -90,7 +90,6 @@ private:
 
     /* Connection and transaction to Rasdaman */
     static r_Database *rman_db;
-    static r_Transaction *rman_tr;
 };
 
 
