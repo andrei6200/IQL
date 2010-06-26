@@ -5,6 +5,7 @@
 #########################################################
 
 HQLROOT = ../..
+include $(HQLROOT)/Makefile.globals
 SRC = ..
 
 #######################################
@@ -57,7 +58,7 @@ LIBTARGET=$(LIB_PG) $(LIB_RMAN)
 
 all: parser.o lexer.o
 
-parser.o: parser.c parser.h str.c str.h structures.hpp
+parser.o: parser.c parser.h str.c str.h 
 	$(CPP) $(CPPFLAGS) $(LIBS) -c parser.c   -o parser.o
 
 lexer.o: lexer.c

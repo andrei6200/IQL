@@ -1,10 +1,9 @@
+HQLROOT = ../..
 SRC = ..
+include $(HQLROOT)/Makefile.globals
 
-CC = gcc
-CPP = g++
+
 OUTLIB = librqlparse.a
-
-CFLAGS = -Iinclude/ -I$(SRC) -O2 -Wall -Wpointer-arith -fno-strict-aliasing -fwrapv -g
 
 OBJS= rqlkeywords.o rqlkwlookup.o
 
@@ -17,7 +16,7 @@ $(OUTLIB): $(OBJS)
 
 
 $(OBJS):  %.o: %.c include/rqlkwlist.h $(SRC)/grammar/parser.h
-	$(CPP) -c $(CFLAGS) $< -o $@
+	$(CPP) -c $(CPPFLAGS) $< -o $@
 
 
 $(SRC)/grammar/parser.h:

@@ -8,8 +8,6 @@
 
 TODO: 
 
-
-- simple RaSQL queries
 - simple combinations of SQL + RaSQL
     - always execute one SQL and one RaSQL query
     - merge the results
@@ -20,6 +18,7 @@ TODO:
 
 
 DONE
+- simple RaSQL queries
 - Ambiguous queries
     - can be matched by both RaSQL and SQL
     - need to un-ambiguate based on table names

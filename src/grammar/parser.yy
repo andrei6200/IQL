@@ -9,13 +9,11 @@
 #include "str.h"
 #include "HqlMain.hpp"
 #include "utils/logger.hpp"
+#include "querytree/QueryTree.hpp"
 
 
 extern int yylex();
 extern void yyerror(const char* msg);
-
-/* Helper functions */
-char* list2string(std::list<tableRefStruct*>);
 
 /* AA: The final HQL queries are stored here*/
 char* hqlQueries;
@@ -39,7 +37,7 @@ char* hqlQueries;
 
 %code requires
 {
-#include "structures.hpp"
+#include "querytree/QueryTree.hpp"
 }
 
 /******************************** START POSTGRESQL *********************************/
@@ -64,9 +62,10 @@ char* hqlQueries;
         char*                           jexpr;
         char*                           into;
 
-        selectStruct                    *select;
-        std::list<tableRefStruct*>      *strlist;
-        tableRefStruct                  *tableRef;
+        QtSelect                        *select;
+        QtList                          *nodelist;
+        QtReference                     *tableRef;
+        QtSource                        *source;
 }
 
 
@@ -91,7 +90,7 @@ char* hqlQueries;
 %type <list>	sort_clause opt_sort_clause sortby_list
                 name_list  
                 expr_list attrs
-%type <strlist> target_list from_clause from_list
+%type <nodelist> target_list from_clause from_list
 
 %type <list>	indirection opt_indirection
                 select_limit
@@ -124,8 +123,8 @@ char* hqlQueries;
 %type <ival>	sub_type
 %type <alias>	alias_clause
 %type <sortby>	sortby
-%type <tableRef>	table_ref
-%type <tableRef>	joined_table
+%type <source>	table_ref
+%type <source>	joined_table
 %type <range>	relation_expr
 %type <tableRef>	target_el
 
@@ -402,10 +401,10 @@ stmtblock:	stmtmulti
 
 /* the thrashing around here is to discard "empty" statements... */
 stmtmulti:	stmtmulti SEMICOLON stmt
-				{ if ($3 != NULL && $3->query != NULL)
+				{ if ($3 != NULL)
 					{
 					$$ = cat3($1, (char*)"\n", $3->query);
-                                        DEBUG << "Parser matched query: " << $3->query << endl;
+                                        DEBUG << "Parser matched query: " << $3->toString() << endl;
                                         HqlMain::getInstance().executeHqlQuery($3);
 					}
 				  else
@@ -414,10 +413,10 @@ stmtmulti:	stmtmulti SEMICOLON stmt
 					}
 				}
 			| stmt
-					{ if ($1 != NULL && $1->query != NULL)
+					{ if ($1 != NULL)
 					{
-                                                DEBUG << "Parser matched query: " << $1->query << endl;
-						$$ = strdup($1->query);
+                                                DEBUG << "Parser matched query: " << $1->toString() << endl;
+						$$ = (char*) $1->toString().c_str();
                                                 HqlMain::getInstance().executeHqlQuery($1);
 						}
 					  else
@@ -569,17 +568,8 @@ simple_select:
 // AA: We do not want to support r SQL windows
 //			group_clause having_clause window_clause
                         {
-                            selectStruct *s = new selectStruct();
-                            s->from = $4;
-                            s->what = $2;
-                            s->query =
-                                    cat6($1,
-                                    list2string(*$2), 
-                                    $3,
-                                    (char*) "from",
-                                    list2string(*$4),
-                                    $5);
-                            $$ = s;
+                            QtSelect *select = new QtSelect(*$2, *$4);
+                            $$ = select;
                         }
                         
 // AA: Disable VALUES clause, we do not want data to be input at run-time
@@ -587,19 +577,14 @@ simple_select:
 			| TABLE relation_expr
 				{
                             /* same as SELECT * FROM relation_expr */
-                            selectStruct *s = new selectStruct();
+                            QtSelect *select = new QtSelect();
+                            QtSource src($2);
+                            select->from.add(&src);
+                            QtReference ref("*");
+                            select->what.add(&ref);
+                            select->query = cat2($1, $2);
 
-                            s->from = new std::list<tableRefStruct*>();
-                            tableRefStruct *tableRef = new tableRefStruct($2);
-                            s->from->push_front(tableRef);
-
-                            s->what = new std::list<tableRefStruct*>();
-                            tableRef = new tableRefStruct((char*)"*");
-                            s->what->push_front(tableRef);
-
-                            s->query = cat2($1, $2);
-
-                            $$ = s;
+                            $$ = select;
 				}
 			| select_clause UNION opt_all select_clause
 				{
@@ -770,13 +755,13 @@ from_clause:
 from_list:
 			table_ref
                             {
-                                $$ = new list<tableRefStruct*>();
-                                $$->push_front($1);
+                                $$ = new QtList();
+                                $$->add($1);
                             }
 			| from_list COMMA table_ref
                             {
                                 $$ = $1;
-                                $$->push_back($3);
+                                $$->add($3);
                             }
 		;
 
@@ -789,31 +774,31 @@ from_list:
  */
 table_ref:	relation_expr
 				{
-					$$ = new tableRefStruct($1);
+					$$ = new QtSource($1);
 				}
 			| relation_expr alias_clause
 				{
-                                        $$ = new tableRefStruct($1, $2);
+                                        $$ = new QtSource($1, $2);
 				}
 			| func_table
 				{
-                                        $$ = new tableRefStruct($1);
+                                        $$ = new QtSource($1);
 				}
 			| func_table alias_clause
 				{
-                                        $$ = new tableRefStruct($1, $2);
+                                        $$ = new QtSource($1, $2);
 				}
 			| func_table AS LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = new tableRefStruct($1);
+                                        $$ = new QtSource($1);
 				}
 			| func_table AS ColId LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = new tableRefStruct($1, $2);
+                                        $$ = new QtSource($1, $2);
 				}
 			| func_table ColId LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = new tableRefStruct($1, $2);
+                                        $$ = new QtSource($1, $2);
 				}
 // AA: We do not allow subqueries in the FROM clause
 /*			| select_with_parens
@@ -2194,17 +2179,15 @@ opt_asymmetric: ASYMMETRIC                                              { $$ = $
 
 target_list:
 			target_el								
-                            { $$ = new list<tableRefStruct*>(); $$->push_front($1); }
+                            { $$ = new QtList(); $$->add($1); }
 			| target_list COMMA target_el
-                            { $$ = $1; $$->push_back($3); }
+                            { $$ = $1; $$->add($3); }
 		;
 
 target_el:	
-
                         a_expr AS ColLabel
 				{
-//                                        $$ = cat3($1, $2, $3);
-                                        $$ = new tableRefStruct($1, $3);
+                                        $$ = new QtReference($1, $3);
 				}
 			/*
 			 * We support omitting AS only for column labels that aren't
@@ -2216,31 +2199,29 @@ target_el:
 			 */
 			| a_expr IDENT
 				{
-//                                        $$ = cat2($1, $2);
-                                        $$ = new tableRefStruct($1, $2);
+                                        $$ = new QtReference($1, $2);
 				}
 			| a_expr
 				{
-                                        $$ = new tableRefStruct($1);
+                                        $$ = new QtReference($1);
 				}
 			| MULT
 				{
-                                        $$ = new tableRefStruct($1);
+                                        $$ = new QtReference($1);
 				}
 
 /* AA: RaSQL expressions allowed in the SELECT clause */
-                        | mddExp                            { $$ = new tableRefStruct($1); }
-                        | trimExp                           { $$ = new tableRefStruct($1); }
-                        | reduceExp                         { $$ = new tableRefStruct($1); }
-                        | inductionExp                      { $$ = new tableRefStruct($1); }
-                        | functionExp                       { $$ = new tableRefStruct($1); }
-                        | integerExp                        { $$ = new tableRefStruct($1); }
-                        | condenseExp                       { $$ = new tableRefStruct($1); }
-                        | variable                          { $$ = new tableRefStruct($1); }
-                        | mintervalExp                      { $$ = new tableRefStruct($1); }
-                        | intervalExp                       { $$ = new tableRefStruct($1); }
-                        | generalLit                        { $$ = new tableRefStruct($1); }
-
+                        | mddExp                            { $$ = new QtReference($1); }
+                        | trimExp                           { $$ = new QtReference($1); }
+                        | reduceExp                         { $$ = new QtReference($1); }
+                        | inductionExp                      { $$ = new QtReference($1); }
+                        | functionExp                       { $$ = new QtReference($1); }
+                        | integerExp                        { $$ = new QtReference($1); }
+                        | condenseExp                       { $$ = new QtReference($1); }
+                        | variable                          { $$ = new QtReference($1); }
+                        | mintervalExp                      { $$ = new QtReference($1); }
+                        | intervalExp                       { $$ = new QtReference($1); }
+                        | generalLit                        { $$ = new QtReference($1); }
 		;
 
 
@@ -3522,17 +3503,3 @@ BooleanLit: BCONST  { $$ = $1;  }
 
 
 #include "str.c"
-
-
-using namespace std;
-
-char* list2string(list<tableRefStruct*> l)
-{
-    string out;
-    list<tableRefStruct*>::iterator it;
-    it = l.begin();
-    out = (*it)->total;
-    for (it ++; it != l.end(); it++)
-        out += ", " + (*it)->total;
-    return (char*) out.c_str();
-}

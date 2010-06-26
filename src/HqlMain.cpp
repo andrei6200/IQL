@@ -28,7 +28,7 @@
 /* Header file of this class */
 #include "HqlMain.hpp"
 #include "utils/logger.hpp"
-#include "grammar/structures.hpp"
+#include "querytree/QueryTree.hpp"
 #include "config.hpp"
 #include "utils/HqlTable.hpp"
 
@@ -141,131 +141,43 @@ HqlMain::~HqlMain()
 }
 
 /*
- * This function receives the a query string from the parser. It is responsable
- * for the execution of the query, and for the delivery of the results to the
- * user.
- * Returns the status as a string.
- */
-string HqlMain::executeHqlQuery(const char* msg)
-{
-    INFO << "Received HQL query (string): " << msg;
-
-    INFO << "Finished execution of HQL query string: " << msg << endl;
-
-    return string("   ok ...");
-}
-
-/*
  * This function receives a SelectStruct structure from the parser, and is
  * responsable for the query execution and result delivery.
  */
-void HqlMain::executeHqlQuery(selectStruct *select)
+void HqlMain::executeHqlQuery(QtSelect *select)
 {
     INFO << "Received SELECT structure. ";
     string status;
 
     /* Debugging output */
-    list<tableRefStruct*>::const_iterator it;
-    for (it = select->what->begin(); it != select->what->end(); it++)
-        DEBUG << " - SELECT " << (*it)->tname;
-    for (it = select->from->begin(); it != select->from->end(); it++)
-    {
-        DEBUG << " - FROM " << (*it)->tname;
-        if ((*it)->alias != NULL)
-            DEBUG << "       AS " << *((*it)->alias);
-    }
+    DEBUG << "SELECT " << select->what.toString();
+    DEBUG << "FROM " << select->from.toString();
 
-    /* Find out what data sources are involved in this query: PG or RMAN ? */
-    TRACE;
-    int rman = 0;
-    int pg = 0;
-    bool error = false;
-    list<tableRefStruct*> *from = select->from;
-    for (it = from->begin(); it != from->end(); it++)
+    try
     {
-        string name = (*it)->tname;
-        if (tableMap.count(name) == 1)
-        {
-            (*it)->source = tableMap[name];
-            if (tableMap[name] == RASDAMAN)
-                rman++;
-            else
-                pg++;
-        }
+        /* Analyze data sources */
+        select->setupDbSource();
+        /* Execute the hybrid query, based on information about data sources. */
+        HqlTable* table = select->execute();
+        /* Print output */
+        if (table)
+            table->print(cout);
         else
-        {
-            ERROR << "Table '" << name << "' does not exist in Postgres nor in Rasdaman !";
-            INFO << "Skipping this query...";
-            status = "non-existing table ('" + name + "') ...";
-            error = true;
-        }
+            throw string("NULL result table.");
     }
-    DEBUG << " Found " << rman << " Rasdaman tables in query.";
-    DEBUG << " Found " << pg << " Postgres tables in query.";
-
-    if (error == false)
+    /* Error handling */
+    catch (string str)
     {
-        /* FIXME: Currently I only execute only RMAN or only PG queries. */
-        if (rman == 0 && pg > 0)
-        {
-            /* The whole query is a SQL query... */
-            cout << RESPONSE_PROMPT << "Executing as Postgres query... " << endl;
-            try
-            {
-                DEBUG << "Executing SQL query ...";
-                HqlTable table = runSqlQuery(*pg_conn, select->query);
-                table.print(cout);
-                status = "ok";
-            }
-            catch (exception &e)
-            {
-                ERROR << "Query execution error: " << e.what();
-                status = string("failed... ") + e.what();
-            }
-        }
-        if (pg == 0 && rman > 0)
-        {
-            /* The whole query is a RaSQL query ... */
-            cout << RESPONSE_PROMPT << "Executing as Rasdaman query... " << endl;
-            try
-            {
-                DEBUG << "Executing RaSQL query ...";
-                HqlTable table = runRasqlQuery(rman_db, select->query);
-                table.print(cout);
-                status = "ok";
-            }
-            catch (r_Error &e)
-            {
-                ERROR << "Query execution error: " << e.what();
-                status = string("failed... ") + e.what();
-            }
-        }
-
-        /* Now we come to the more interesting case: RaSQL *and* SQL query. */
-        if (rman > 0 && pg > 0)
-        {
-            cout << RESPONSE_PROMPT << "DELAYED ... Executing mixed queries "
-                    "is not yet implemented ..." << endl;
-            status = string("failed");
-        }
+        ERROR << str;
+        status = string("failed ... ") + str;
+    }
+    catch (exception e)
+    {
+        ERROR << "Query execution exception: " << e.what();
+        status = string("failed ... ") + e.what();
     }
 
-    //    /* Dummy method call. */
-    //    status = this->executeHqlQuery(select->query);
-
-//    try
-//    {
-//        DEBUG << "Executing RaSQL query ...";
-//        HqlTable table = runRasqlQuery(rman_db, rman_tr, select->query);
-//        table.print(cout);
-//        status = "ok";
-//    }
-//    catch (r_Error &e)
-//    {
-//        ERROR << "Query execution error: " << e.what();
-//        status = string("failed... ") + e.what();
-//    }
-
+    /* And display the query execution status*/
     cout << RESPONSE_PROMPT << status << endl;
 
     cout << QUERY_PROMPT;
@@ -308,6 +220,16 @@ vector<string> HqlMain::getPostgresTables()
         TRACE << " * " << names[i];
 
     return names;
+}
+
+HqlTable HqlMain::runSqlQuery(string query)
+{
+    return runSqlQuery(*pg_conn, (const char*) query.c_str());
+}
+
+HqlTable HqlMain::runRasqlQuery(string query)
+{
+    return runRasqlQuery(rman_db, (const char*) query.c_str());
 }
 
 /* Execute a query on a predefined Postgres connection, and return the

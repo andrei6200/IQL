@@ -5,51 +5,16 @@
 #########################################################
 
 HQLROOT = ..
+include $(HQLROOT)/Makefile.globals
 SRC=.
-
-#######################################
-##### Various applications needed #####
-CC = gcc
-CPP = g++
-FLEX = flex
-YACC = bison
-VALGRIND = valgrind
-
-##### Home of Rasdaman installation #####
-RMANINSTALL = /var/lib/postgresql/installed/rasdaman.community
-RMANSRC = /var/lib/postgresql/rasdaman.community
-
-##### Compilation flags for PostgreSQL, and Rasdaman respectively #####
-PGCFLAGS= -O2 -Wall -Wpointer-arith -Wendif-labels -fno-strict-aliasing -fwrapv -D_GNU_SOURCE
-RMANCFLAGS = -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG
-
-INCLUDES = -I./postgres/include/ -I./rasdaman/include -I$(RMANINSTALL)/include -I$(RMANSRC) -I$(SRC)
-CFLAGS = $(PGCFLAGS) $(RMANCFLAGS) $(INCLUDES) -g
-CPPFLAGS = $(RMANCFLAGS)  $(INCLUDES) -g
-
-
-#############################
-##### Libraries section #####
-
-# SQL Grammar and RaSQL grammar libraries
-GRAMMAR_LIBS = -L$(HQLROOT)/lib -lparse -lrqlparse
-# PostgreSQL client support
-SQL_LIBS = -lpqxx
-# Rasdaman client support
-RASQL_LIBS = -L$(RMANINSTALL)/lib -L/usr/lib					\
-	-lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto
-
-
-LIBS = $(GRAMMAR_LIBS) $(SQL_LIBS) $(RASQL_LIBS)
-
-FLEXFLAGS = -CF
-YACCFLAGS = -d
 
 
 OBJ=grammar/lexer.o grammar/parser.o driver.o
+
 LIB_PG=postgres/libparse.a
 LIB_RMAN=rasdaman/librqlparse.a
-LIBTARGET=$(LIB_PG) $(LIB_RMAN)
+LIB_QT=querytree/libquerytree.a
+LIBTARGET=$(LIB_PG) $(LIB_RMAN) $(LIB_QT)
 
 
 #########################
@@ -63,8 +28,11 @@ $(LIB_PG):
 $(LIB_RMAN):
 	make -C rasdaman
 
+$(LIB_QT):
+	make -C querytree
+
 ### Driver actually builds the parser driver program
-hql: grammar utils driver.o HqlMain.o 
+hql: grammar utils driver.o HqlMain.o querytree
 	$(CPP) $(CPPFLAGS) driver.o HqlMain.o		\
 	utils/HqlTable.o				\
 	$(RASQL_LIBS) $(SQL_LIBS)			\
@@ -75,6 +43,9 @@ hql: grammar utils driver.o HqlMain.o
 grammar: lib/libparse.a lib/librqlparse.a
 	make -C grammar
 
+querytree: lib/libquerytree.a
+	cp $(LIB_QT) $(HQLROOT)/lib/
+
 utils: utils/HqlTable.o
 	make -C utils
 
@@ -84,15 +55,18 @@ lib/libparse.a: $(LIB_PG)
 lib/librqlparse.a: $(LIB_RMAN)
 	cp $(LIB_RMAN) $(HQLROOT)/lib/
 
+lib/libquerytree.a: $(LIB_QT)
+	make -C querytree
+
 driver.o: driver.cpp
 	$(CPP) $(CPPFLAGS) $(LIBS) -c driver.cpp   -o driver.o
 
 HqlMain.o: HqlMain.cpp HqlMain.hpp utils/HqlTable.hpp
 	$(CPP) $(CPPFLAGS) $(LIBS) -c HqlMain.cpp   -o HqlMain.o
 
-### Tests
 clean:
 	make -C postgres clean
 	make -C rasdaman clean
 	make -C grammar clean
+	make -C querytree clean
 	rm -rvf *~ *.o y.tab.* lex.yy.* parser.output parser.c parser.h lexer.c teststr driver hql program.log

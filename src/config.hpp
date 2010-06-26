@@ -13,7 +13,7 @@
 
 /* Default Log Level. Can be one of TRACE, DEBUG, INFO, WARN, ERROR, and FATAL. */
 //#define GLOBAL_LOGGING_LEVEL INFO
-#define GLOBAL_LOGGING_LEVEL TRACE
+#define GLOBAL_LOGGING_LEVEL TRACE_LVL
 
 /* The name of the logfile (if the log is directed to a file, of course).
  See "logger.cpp" if you want to redirect the log output. */

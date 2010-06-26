@@ -13,15 +13,21 @@
 #include <cstring>
 
 #undef DEBUG
+#undef TRACE
+#undef INFO
+#undef WARN
+#undef ERROR
+#undef FATAL
+#undef LOG
 
 enum verbosityLevelsEnum
 {
-    TRACE = 1,
-    DEBUG = 100,
-    INFO = 200,
-    WARN = 300,
-    ERROR = 400,
-    FATAL = 500
+    TRACE_LVL = 1,
+    DEBUG_LVL = 100,
+    INFO_LVL = 200,
+    WARN_LVL = 300,
+    ERROR_LVL = 400,
+    FATAL_LVL = 500
 };
 
 #include "config.hpp"
@@ -81,32 +87,32 @@ public:
 
     inline LOGGER& trace()
     {
-        return setLevel(TRACE, "TRACE");
+        return setLevel(TRACE_LVL, "TRACE");
     }
 
     inline LOGGER& debug()
     {
-        return setLevel(DEBUG, "DEBUG");
+        return setLevel(DEBUG_LVL, "DEBUG");
     }
     
     inline LOGGER& info()
     {
-        return setLevel(INFO, "INFO");
+        return setLevel(INFO_LVL, "INFO");
     }
 
     inline LOGGER& warn()
     {
-        return setLevel(WARN, "WARN");
+        return setLevel(WARN_LVL, "WARN");
     }
 
     inline LOGGER& error()
     {
-        return setLevel(ERROR, "ERROR");
+        return setLevel(ERROR_LVL, "ERROR");
     }
 
     inline LOGGER& fatal()
     {
-        return setLevel(FATAL, "FATAL");
+        return setLevel(FATAL_LVL, "FATAL");
     }
 
 private:
