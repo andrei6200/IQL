@@ -80,3 +80,15 @@ DbEnum QtList::setupDbSource()
     TRACE << "QtList :: source system: " << db_source;
     return db_source;
 }
+
+int QtList::length()
+{
+    return data.size();
+}
+
+QtNode* QtList::get(int index)
+{
+    if (index < 0 || index >= data.size())
+        return NULL;
+    return data[index];
+}

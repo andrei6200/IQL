@@ -146,12 +146,9 @@ HqlMain::~HqlMain()
  */
 void HqlMain::executeHqlQuery(QtSelect *select)
 {
-    INFO << "Received SELECT structure. ";
+    INFO << "Received SELECT structure: ";
+    DEBUG << select->toString();
     string status;
-
-    /* Debugging output */
-    DEBUG << "SELECT " << select->what.toString();
-    DEBUG << "FROM " << select->from.toString();
 
     try
     {

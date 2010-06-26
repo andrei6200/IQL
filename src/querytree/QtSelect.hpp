@@ -31,7 +31,12 @@ public:
     DbEnum setupDbSource();
 
     std::string toString();
-public:
+
+    /* Returns true if this structure can be evaluated with exactly two queries,
+     one RaSQL and one SQL query. */
+    bool mixedQueryIsSimple();
+    
+private:
     QtList what;
     QtList from;
 };

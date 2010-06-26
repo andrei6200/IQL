@@ -577,11 +577,14 @@ simple_select:
 			| TABLE relation_expr
 				{
                             /* same as SELECT * FROM relation_expr */
-                            QtSelect *select = new QtSelect();
+                            
+                            QtList from;
                             QtSource src($2);
-                            select->from.add(&src);
+                            from.add(&src);
+                            QtList what;
                             QtReference ref("*");
-                            select->what.add(&ref);
+                            what.add(&ref);
+                            QtSelect *select = new QtSelect(from, what);
                             select->query = cat2($1, $2);
 
                             $$ = select;

@@ -60,6 +60,12 @@ HqlTable* QtSelect::execute()
     case MIXED:
         cout << RESPONSE_PROMPT << "Executing mixed query ..." << endl;
         TRACE << "Executing mixed query: " << toString();
+        if (mixedQueryIsSimple())
+        {
+            TRACE << "Mixed query is simple";
+        }
+        else
+            TRACE << "Mixed query is complicated.";
         break;
     default:
         cout << RESPONSE_PROMPT << "Cannot execute query, unknown data source. " << endl;
@@ -74,4 +80,19 @@ std::string QtSelect::toString()
     string out = string("SELECT ") + what.toString() +
                  string(" FROM ") + from.toString();
     return out;
+}
+
+/* Returns true if the current Hql query contains a simple mixture of RaSQl and SQL.
+ In case this is not a mixed query, this function returns false. */
+bool QtSelect::mixedQueryIsSimple()
+{
+    if (db_source != MIXED)
+        return false;
+    for (int i = 0; i < from.length(); i++)
+    {
+        DbEnum db = from.get(i)->setupDbSource();
+        if (db == MIXED || db == UNKNOWN_DB)
+            return false;
+    }
+    return true;
 }

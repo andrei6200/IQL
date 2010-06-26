@@ -23,6 +23,9 @@ public:
     std::string toString();
 
     DbEnum setupDbSource();
+
+    int length();
+    QtNode* get(int index);
 private:
     std::vector<QtNode*> data;
 };

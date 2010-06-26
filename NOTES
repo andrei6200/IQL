@@ -8,6 +8,11 @@
 
 TODO: 
 
+- Change the data model of QtSelect:
+    - "what" depends on another node "from":
+        - select -> what    -> from
+                 -> what2   -> from2
+
 - simple combinations of SQL + RaSQL
     - always execute one SQL and one RaSQL query
     - merge the results
