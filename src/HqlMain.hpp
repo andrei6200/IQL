@@ -20,16 +20,6 @@
 #include "utils/HqlTable.hpp"
 
 
-
-
-/* Enumeration of available DBMS systems */
-enum DbEnum
-{
-    POSTGRES = 0,
-    RASDAMAN = 1
-};
-
-
 /* Singleton class responsible for DB access. */
 class HqlMain
 {
@@ -83,7 +73,7 @@ private:
     static HqlMain instance;
 
     /* Name Dictionary for available tables */
-    std::map<std::string, int> tableMap;
+    std::map<std::string, DbEnum> tableMap;
 
     /* Connection to Postgres */
     static pqxx::connection_base *pg_conn;

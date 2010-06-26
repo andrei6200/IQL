@@ -57,7 +57,7 @@ LIBTARGET=$(LIB_PG) $(LIB_RMAN)
 
 all: parser.o lexer.o
 
-parser.o: parser.c parser.h str.c str.h
+parser.o: parser.c parser.h str.c str.h structures.hpp
 	$(CPP) $(CPPFLAGS) $(LIBS) -c parser.c   -o parser.o
 
 lexer.o: lexer.c

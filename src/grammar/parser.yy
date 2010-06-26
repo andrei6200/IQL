@@ -15,7 +15,7 @@ extern int yylex();
 extern void yyerror(const char* msg);
 
 /* Helper functions */
-char* list2string(std::list<std::string>);
+char* list2string(std::list<tableRefStruct*>);
 
 /* AA: The final HQL queries are stored here*/
 char* hqlQueries;
@@ -64,8 +64,9 @@ char* hqlQueries;
         char*                           jexpr;
         char*                           into;
 
-        selectStruct                   *select;
-        std::list<std::string>         *strlist;
+        selectStruct                    *select;
+        std::list<tableRefStruct*>      *strlist;
+        tableRefStruct                  *tableRef;
 }
 
 
@@ -123,10 +124,10 @@ char* hqlQueries;
 %type <ival>	sub_type
 %type <alias>	alias_clause
 %type <sortby>	sortby
-%type <str>	table_ref
-%type <jexpr>	joined_table
+%type <tableRef>	table_ref
+%type <tableRef>	joined_table
 %type <range>	relation_expr
-%type <target>	target_el
+%type <tableRef>	target_el
 
 %type <typnam>	Typename SimpleTypename ConstTypename
                 GenericType Numeric opt_float
@@ -571,7 +572,13 @@ simple_select:
                             selectStruct *s = new selectStruct();
                             s->from = $4;
                             s->what = $2;
-                            s->query = cat6($1, list2string(*$2), $3, (char*) "from", list2string(*$4), $5);
+                            s->query =
+                                    cat6($1,
+                                    list2string(*$2), 
+                                    $3,
+                                    (char*) "from",
+                                    list2string(*$4),
+                                    $5);
                             $$ = s;
                         }
                         
@@ -581,11 +588,17 @@ simple_select:
 				{
                             /* same as SELECT * FROM relation_expr */
                             selectStruct *s = new selectStruct();
-                            s->from = new std::list<std::string>();
-                            s->from->push_front($2);
-                            s->what = new std::list<std::string>();
-                            s->what->push_front("*");
+
+                            s->from = new std::list<tableRefStruct*>();
+                            tableRefStruct *tableRef = new tableRefStruct($2);
+                            s->from->push_front(tableRef);
+
+                            s->what = new std::list<tableRefStruct*>();
+                            tableRef = new tableRefStruct((char*)"*");
+                            s->what->push_front(tableRef);
+
                             s->query = cat2($1, $2);
+
                             $$ = s;
 				}
 			| select_clause UNION opt_all select_clause
@@ -757,13 +770,13 @@ from_clause:
 from_list:
 			table_ref
                             {
-                                $$ = new list<string>();
-                                $$->push_front(string($1));
+                                $$ = new list<tableRefStruct*>();
+                                $$->push_front($1);
                             }
 			| from_list COMMA table_ref
                             {
                                 $$ = $1;
-                                $$->push_back(string($3));
+                                $$->push_back($3);
                             }
 		;
 
@@ -776,32 +789,31 @@ from_list:
  */
 table_ref:	relation_expr
 				{
-					$$ = $1;
+					$$ = new tableRefStruct($1);
 				}
 			| relation_expr alias_clause
 				{
-//                                        $$ = cat2($1, $2);
-                                        $$ = $1;
+                                        $$ = new tableRefStruct($1, $2);
 				}
 			| func_table
 				{
-                                        $$ = $1;
+                                        $$ = new tableRefStruct($1);
 				}
 			| func_table alias_clause
 				{
-                                        $$ = cat2($1, $2);
+                                        $$ = new tableRefStruct($1, $2);
 				}
 			| func_table AS LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new tableRefStruct($1);
 				}
 			| func_table AS ColId LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = cat6($1, $2, $3, $4, $5, $6);
+                                        $$ = new tableRefStruct($1, $2);
 				}
 			| func_table ColId LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new tableRefStruct($1, $2);
 				}
 // AA: We do not allow subqueries in the FROM clause
 /*			| select_with_parens
@@ -809,11 +821,13 @@ table_ref:	relation_expr
  */
 			| joined_table
 				{
+                            /* TODO: Create nested structure for joined table */
 					$$ = $1;
 				}
 			| LRPAR joined_table RRPAR alias_clause
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                            /* TODO: Create nested structure for joined table */
+                                        $$ = $2;
 				}
 		;
 
@@ -835,45 +849,51 @@ table_ref:	relation_expr
  * in common. We'll collect columns during the later transformations.
  */
 
+/* TODO: Create nested structure for joined table */
 joined_table:
 			LRPAR joined_table RRPAR
 				{
-                                    $$ = cat3($1, $2, $3);
+                                    $$ = $2;
 				}
 			| table_ref CROSS JOIN table_ref
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                            /* TODO: Also consider the second table in the join */
+                                        $$ = $1;
 				}
 			| table_ref join_type JOIN table_ref join_qual
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                            /* TODO: Also consider the second table in the join */
+                                        $$ = $1;
 				}
 			| table_ref JOIN table_ref join_qual
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                            /* TODO: Also consider the second table in the join */
+                                        $$ = $1;
 				}
 			| table_ref NATURAL join_type JOIN table_ref
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                            /* TODO: Also consider the second table in the join */
+                                        $$ = $1;
 				}
 			| table_ref NATURAL JOIN table_ref
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                            /* TODO: Also consider the second table in the join */
+                                        $$ = $1;
 				}
 		;
 
 alias_clause:
 			AS ColId LRPAR name_list RRPAR
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = $2;
 				}
 			| AS ColId
 				{
-                                        $$ = cat2($1, $2);
+                                        $$ = $2;
 				}
 			| ColId LRPAR name_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = $1;
 				}
 			| ColId
 				{
@@ -2174,9 +2194,9 @@ opt_asymmetric: ASYMMETRIC                                              { $$ = $
 
 target_list:
 			target_el								
-                            { $$ = new list<string>(); $$->push_front(string($1)); }
+                            { $$ = new list<tableRefStruct*>(); $$->push_front($1); }
 			| target_list COMMA target_el
-                            { $$ = $1; $$->push_back(string($3)); }
+                            { $$ = $1; $$->push_back($3); }
 		;
 
 target_el:	
@@ -2184,7 +2204,7 @@ target_el:
                         a_expr AS ColLabel
 				{
 //                                        $$ = cat3($1, $2, $3);
-                                        $$ = $1;
+                                        $$ = new tableRefStruct($1, $3);
 				}
 			/*
 			 * We support omitting AS only for column labels that aren't
@@ -2197,29 +2217,29 @@ target_el:
 			| a_expr IDENT
 				{
 //                                        $$ = cat2($1, $2);
-                                        $$ = $1;
+                                        $$ = new tableRefStruct($1, $2);
 				}
 			| a_expr
 				{
-                                        $$ = $1;
+                                        $$ = new tableRefStruct($1);
 				}
 			| MULT
 				{
-                                        $$ = $1;
+                                        $$ = new tableRefStruct($1);
 				}
 
 /* AA: RaSQL expressions allowed in the SELECT clause */
-                        | mddExp                            { $$ = $1; }
-                        | trimExp                           { $$ = $1; }
-                        | reduceExp                         { $$ = $1; }
-                        | inductionExp                      { $$ = $1; }
-                        | functionExp                       { $$ = $1; }
-                        | integerExp                        { $$ = $1; }
-                        | condenseExp                       { $$ = $1; }
-                        | variable                          { $$ = $1; }
-                        | mintervalExp                      { $$ = $1; }
-                        | intervalExp                       { $$ = $1; }
-                        | generalLit                        { $$ = $1; }
+                        | mddExp                            { $$ = new tableRefStruct($1); }
+                        | trimExp                           { $$ = new tableRefStruct($1); }
+                        | reduceExp                         { $$ = new tableRefStruct($1); }
+                        | inductionExp                      { $$ = new tableRefStruct($1); }
+                        | functionExp                       { $$ = new tableRefStruct($1); }
+                        | integerExp                        { $$ = new tableRefStruct($1); }
+                        | condenseExp                       { $$ = new tableRefStruct($1); }
+                        | variable                          { $$ = new tableRefStruct($1); }
+                        | mintervalExp                      { $$ = new tableRefStruct($1); }
+                        | intervalExp                       { $$ = new tableRefStruct($1); }
+                        | generalLit                        { $$ = new tableRefStruct($1); }
 
 		;
 
@@ -3506,13 +3526,13 @@ BooleanLit: BCONST  { $$ = $1;  }
 
 using namespace std;
 
-char* list2string(list<string> l)
+char* list2string(list<tableRefStruct*> l)
 {
     string out;
-    list<string>::iterator it;
+    list<tableRefStruct*>::iterator it;
     it = l.begin();
-    out = *it;
+    out = (*it)->total;
     for (it ++; it != l.end(); it++)
-        out += ", " + *it;
+        out += ", " + (*it)->total;
     return (char*) out.c_str();
 }

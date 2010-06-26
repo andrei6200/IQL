@@ -107,7 +107,7 @@ HqlMain::HqlMain()
         }
 
     /* Print the Table dictionary */
-    map<string, int>::const_iterator tuple;
+    map<string, DbEnum>::const_iterator tuple;
     TRACE;
     TRACE << "Name dictionary : ";
     for (tuple = tableMap.begin(); tuple != tableMap.end(); tuple++)
@@ -165,71 +165,90 @@ void HqlMain::executeHqlQuery(selectStruct *select)
     string status;
 
     /* Debugging output */
-    list<string>::const_iterator it;
+    list<tableRefStruct*>::const_iterator it;
     for (it = select->what->begin(); it != select->what->end(); it++)
-        DEBUG << " - SELECT " << *it;
+        DEBUG << " - SELECT " << (*it)->tname;
     for (it = select->from->begin(); it != select->from->end(); it++)
-        DEBUG << " - FROM " << *it;
+    {
+        DEBUG << " - FROM " << (*it)->tname;
+        if ((*it)->alias != NULL)
+            DEBUG << "       AS " << *((*it)->alias);
+    }
 
-        /* Find out what data sources are involved in this query: PG or RMAN ? */
-        TRACE;
-        int rman = 0;
-        int pg = 0;
-        bool error = false;
-        for (it = select->from->begin(); it != select->from->end(); it++)
-            if (tableMap.count(*it) == 1)
-            {
-                if (tableMap[*it] == RASDAMAN)
-                    rman++;
-                else
-                    pg++;
-            }
-            else
-            {
-                ERROR << "Table '" << *it << "' does not exist in Postgres nor in Rasdaman !";
-                INFO << "Skipping this query...";
-                status = "non-existing table ('" + *it + "') ...";
-                error = true;
-            }
-        DEBUG << " Found " << rman << " Rasdaman tables in query.";
-        DEBUG << " Found " << pg << " Postgres tables in query.";
-    
-        if (error == false)
+    /* Find out what data sources are involved in this query: PG or RMAN ? */
+    TRACE;
+    int rman = 0;
+    int pg = 0;
+    bool error = false;
+    list<tableRefStruct*> *from = select->from;
+    for (it = from->begin(); it != from->end(); it++)
+    {
+        string name = (*it)->tname;
+        if (tableMap.count(name) == 1)
         {
-            /* FIXME: Currently I only execute only RMAN or only PG queries. */
-            if (rman == 0)
+            (*it)->source = tableMap[name];
+            if (tableMap[name] == RASDAMAN)
+                rman++;
+            else
+                pg++;
+        }
+        else
+        {
+            ERROR << "Table '" << name << "' does not exist in Postgres nor in Rasdaman !";
+            INFO << "Skipping this query...";
+            status = "non-existing table ('" + name + "') ...";
+            error = true;
+        }
+    }
+    DEBUG << " Found " << rman << " Rasdaman tables in query.";
+    DEBUG << " Found " << pg << " Postgres tables in query.";
+
+    if (error == false)
+    {
+        /* FIXME: Currently I only execute only RMAN or only PG queries. */
+        if (rman == 0 && pg > 0)
+        {
+            /* The whole query is a SQL query... */
+            cout << RESPONSE_PROMPT << "Executing as Postgres query... " << endl;
+            try
             {
-                cout << RESPONSE_PROMPT << "Executing as Postgres query... " << endl;
-                try
-                {
-                    DEBUG << "Executing SQL query ...";
-                    HqlTable table = runSqlQuery(*pg_conn, select->query);
-                    table.print(cout);
-                    status = "ok";
-                }
-                catch (exception &e)
-                {
-                    ERROR << "Query execution error: " << e.what();
-                    status = string("failed... ") + e.what();
-                }
+                DEBUG << "Executing SQL query ...";
+                HqlTable table = runSqlQuery(*pg_conn, select->query);
+                table.print(cout);
+                status = "ok";
             }
-            if (pg == 0)
+            catch (exception &e)
             {
-                cout << RESPONSE_PROMPT << "Executing as Rasdaman query... " << endl;
-                try
-                {
-                    DEBUG << "Executing RaSQL query ...";
-                    HqlTable table = runRasqlQuery(rman_db, select->query);
-                    table.print(cout);
-                    status = "ok";
-                }
-                catch (r_Error &e)
-                {
-                    ERROR << "Query execution error: " << e.what();
-                    status = string("failed... ") + e.what();
-                }
+                ERROR << "Query execution error: " << e.what();
+                status = string("failed... ") + e.what();
             }
         }
+        if (pg == 0 && rman > 0)
+        {
+            /* The whole query is a RaSQL query ... */
+            cout << RESPONSE_PROMPT << "Executing as Rasdaman query... " << endl;
+            try
+            {
+                DEBUG << "Executing RaSQL query ...";
+                HqlTable table = runRasqlQuery(rman_db, select->query);
+                table.print(cout);
+                status = "ok";
+            }
+            catch (r_Error &e)
+            {
+                ERROR << "Query execution error: " << e.what();
+                status = string("failed... ") + e.what();
+            }
+        }
+
+        /* Now we come to the more interesting case: RaSQL *and* SQL query. */
+        if (rman > 0 && pg > 0)
+        {
+            cout << RESPONSE_PROMPT << "DELAYED ... Executing mixed queries "
+                    "is not yet implemented ..." << endl;
+            status = string("failed");
+        }
+    }
 
     //    /* Dummy method call. */
     //    status = this->executeHqlQuery(select->query);
@@ -326,6 +345,26 @@ HqlTable HqlMain::runSqlQuery(connection_base& C, const char* queryString)
     return table;
 }
 
+
+
+void commitRasqlTransaction(r_Transaction *tr)
+{
+    TRACE << "Committing current Rasdaman transaction ...";
+    tr->commit();
+    delete tr;
+    tr = NULL;
+    TRACE << "Rasdaman transaction closed.";
+}
+
+void abortRasqlTransaction(r_Transaction *tr)
+{
+    TRACE << "Aborting current Rasdaman transaction ...";
+    tr->abort();
+    delete tr;
+    tr = NULL;
+    TRACE << "Rasdaman transaction closed.";
+}
+
 /* Run a Rasql query on a given rasdaman database and transaction.
  * NOTE: Throws an (r_Error) exception if something goes wrong.
  */
@@ -341,32 +380,29 @@ HqlTable HqlMain::runRasqlQuery(r_Database *db, const char* queryString)
 
     /* The RaSQL result set is now declared globally, following trick in RaSQL app. */
     r_Set< r_Ref_Any > result_set;
-    r_Set< r_Ref< r_GMarray > > *image_set;
     r_Ref< r_GMarray > image;
     r_Iterator< r_Ref_Any > iter;
 
-    // Clear the results from the previous query
-    TRACE << "Previous query had " << result_set.cardinality() << " results.";
-    TRACE << "Clearing results from previous query. ";
-    TRACE << "Global result set now has " << result_set.cardinality() << " results.";
-
     /* Execute the actual query. */
-    TRACE << "Executing RaSQL ...";
-    r_oql_execute(query, result_set);
-    TRACE << "RaSQL execution ended. ";
-    DEBUG << "Result has " << result_set.cardinality() << " objects... ";
-
-    TRACE << "Finished executing RaSQL.";
+    try
+    {
+        TRACE << "Executing RaSQL ...";
+        r_oql_execute(query, result_set);
+        TRACE << "RaSQL execution ended. ";
+        DEBUG << "Result has " << result_set.cardinality() << " objects... ";
+        TRACE << "Finished executing RaSQL.";
+    }
+    catch (r_Error &e)
+    {
+        abortRasqlTransaction(rman_tr);
+        throw e;
+    }
 
     HqlTable table;
     table.importFromRasql(&result_set);
 
     /* Close the transaction (after processing of data) */
-    TRACE << "Aborting current Rasdaman transaction ...";
-    rman_tr->commit();
-    delete rman_tr;
-    rman_tr = NULL;
-    TRACE << "Rasdaman transaction closed.";
+    commitRasqlTransaction(rman_tr);
 
     /* Return the data. */
     return table;
