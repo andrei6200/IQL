@@ -20,6 +20,16 @@ QtSource::QtSource(char* name, char* alias) : tableName(name), alias(alias)
     TRACE << "Initializing QtSource: " << name << " as " << alias;
 }
 
+QtSource::QtSource(QtNode* name, char* alias): tableName(name->toCString()), alias(alias)
+{
+    TRACE << "Initializing QtSource: " << tableName << " as " << alias;
+}
+
+QtSource::QtSource(QtNode* name): tableName(name->toCString()), alias(NULL)
+{
+    TRACE << "Initializing QtSource: " << tableName;
+}
+
 QtSource::~QtSource()
 {
     if (tableName)

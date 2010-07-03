@@ -17,6 +17,7 @@ class QtList: public QtNode
 {
 public:
     QtList();
+    QtList(std::vector<QtNode*> newdata);
     void add(QtNode *elem);
     ~QtList();
     HqlTable* execute();

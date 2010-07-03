@@ -7,20 +7,20 @@
 
 #include "QtReference.hpp"
 
-QtReference::QtReference(char* str): name(str), alias(NULL)
+QtReference::QtReference(QtNode* b): base(b), alias(NULL)
 {
-    TRACE << "Initializing QtReference: " << name;
+    TRACE << "Initializing QtReference: " << base->toString();
 }
 
-QtReference::QtReference(char* str, char* al) : name(str), alias(al)
+QtReference::QtReference(QtNode* b, char* al) : base(b), alias(al)
 {
-    TRACE << "Initializing QtReference: " << name << " as " << alias;
+    TRACE << "Initializing QtReference: " << base->toString() << " as " << alias;
 }
 
 QtReference::~QtReference()
 {
-    if (name)
-        delete name;
+    if (base)
+        delete base;
     if (alias)
         delete alias;
 }
@@ -32,14 +32,20 @@ HqlTable* QtReference::execute()
 
 string QtReference::toString()
 {
-    TRACE << "QtReference :: toString()";
-    string out(name);
+    
+    string out(base->toString());
     if (alias)
         out += string(" AS ") + string(alias);
+    TRACE << "QtReference :: toString() : " << out;
     return out;
+}
+
+char* QtReference::toCString()
+{
+    return (char*) this->toString().c_str();
 }
 
 DbEnum QtReference::setupDbSource()
 {
-    return UNKNOWN_DB;
+    return base->setupDbSource();
 }

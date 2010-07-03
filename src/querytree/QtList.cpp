@@ -17,6 +17,12 @@ QtList::QtList()
     data = vector<QtNode*>();
 }
 
+QtList::QtList(vector<QtNode*> newdata)
+{
+    TRACE << "Initializing QtList ...";
+    data = newdata;
+}
+
 void QtList::add(QtNode *elem)
 {
     TRACE << "Adding to QtList: " << elem->toString();
@@ -50,11 +56,17 @@ HqlTable* QtList::execute()
 DbEnum QtList::setupDbSource()
 {
     TRACE << "QtList :: setupDbSource()";
+    TRACE << "QtList: " << toString();
+    /* Cache the result. */
+    if (db_source != UNKNOWN_DB)
+        return db_source;
+    
     db_source = UNKNOWN_DB;
     DbEnum source;
     for (int i = 0; i < data.size(); i++)
     {
         /* Check all children nodes */
+        TRACE << "QtList: Calling setupDbSource for child node...";
         source = data[i]->setupDbSource();
         switch (source)
         {

@@ -32,6 +32,7 @@
 using namespace std;
 using namespace pqxx;
 
+
 HqlTable::HqlTable() : rows(0), columns(0)
 {
 }

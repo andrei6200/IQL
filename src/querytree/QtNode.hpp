@@ -37,11 +37,13 @@ public:
     /* String representation */
     virtual std::string toString() = 0;
 
+    virtual char* toCString();
+
     /* Recursively computes the value of the "db_source" field.
      * - If all the child nodes belong to the same DB, then this node also belongs to it
-     * - If some child nodes belong to difference DB, then this node will be "mixed"
+     * - If some child nodes belong to different DB, then this node will be "mixed"
      */
-    virtual DbEnum setupDbSource();
+    virtual DbEnum setupDbSource() = 0;
 
     /* Get the source system that can handle this node. */
     DbEnum getDbSource();

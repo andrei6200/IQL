@@ -21,15 +21,21 @@ QtNode::~QtNode()
 
 DbEnum QtNode::getDbSource()
 {
+    TRACE << "QtNode::getDbSource()";
     return db_source;
 }
 
-DbEnum QtNode::setupDbSource()
-{
-    return db_source;
-}
+//DbEnum QtNode::setupDbSource()
+//{
+//    return db_source;
+//}
 
 HqlTable* QtNode::execute()
 {
     return NULL;
+}
+
+char* QtNode::toCString()
+{
+    return strdup((char*) this->toString().c_str());
 }

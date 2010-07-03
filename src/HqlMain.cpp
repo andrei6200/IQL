@@ -188,13 +188,15 @@ vector<string> HqlMain::getRasdamanCoverages()
     /* Connect to the default rasdaman backend dabatase. */
     connection C("dbname=RASBASE");
 
-    HqlTable table = getInstance().runSqlQuery(C, query);
+    HqlTable *table = getInstance().runSqlQuery(C, query);
 
-    vector<string> cov = table.getColumn(0);
+    vector<string> cov = table->getColumn(0);
 
     TRACE << "Rasdaman collections: ";
     for (int i = 0; i < cov.size(); i++)
         TRACE << " * " << cov[i];
+
+    delete table;
 
     return cov;
 }
@@ -208,23 +210,25 @@ vector<string> HqlMain::getPostgresTables()
     /* Connect to the default SQL database.*/
     connection C;
 
-    HqlTable table = getInstance().runSqlQuery(C, query);
+    HqlTable *table = getInstance().runSqlQuery(C, query);
 
-    vector<string> names = table.getColumn(0);
+    vector<string> names = table->getColumn(0);
 
     TRACE << "Postgres tables: ";
     for (int i = 0; i < names.size(); i++)
         TRACE << " * " << names[i];
 
+    delete table;
+
     return names;
 }
 
-HqlTable HqlMain::runSqlQuery(string query)
+HqlTable* HqlMain::runSqlQuery(string query)
 {
     return runSqlQuery(*pg_conn, (const char*) query.c_str());
 }
 
-HqlTable HqlMain::runRasqlQuery(string query)
+HqlTable* HqlMain::runRasqlQuery(string query)
 {
     return runRasqlQuery(rman_db, (const char*) query.c_str());
 }
@@ -233,7 +237,7 @@ HqlTable HqlMain::runRasqlQuery(string query)
  * results at column "outIndex" as a set of strings.
  * NOTE: Throws an std::exception in case of error.
  */
-HqlTable HqlMain::runSqlQuery(connection_base& C, const char* queryString)
+HqlTable* HqlMain::runSqlQuery(connection_base& C, const char* queryString)
 {
     DEBUG << "Connected to SQL database: " << C.dbname();
     TRACE << "SQL Backend version: " << C.server_version();
@@ -253,14 +257,14 @@ HqlTable HqlMain::runSqlQuery(connection_base& C, const char* queryString)
     if (R.empty())
     {
         WARN << "No rows in query result. ";
-        return HqlTable();
+        return new HqlTable();
     }
 
     T.abort();
 
 
-    HqlTable table = HqlTable();
-    table.importFromSql(R);
+    HqlTable *table = new HqlTable();
+    table->importFromSql(R);
     return table;
 }
 
@@ -287,7 +291,7 @@ void abortRasqlTransaction(r_Transaction *tr)
 /* Run a Rasql query on a given rasdaman database and transaction.
  * NOTE: Throws an (r_Error) exception if something goes wrong.
  */
-HqlTable HqlMain::runRasqlQuery(r_Database *db, const char* queryString)
+HqlTable* HqlMain::runRasqlQuery(r_Database *db, const char* queryString)
 {
     TRACE << "Opening Rasdaman transaction ...";
     r_Transaction *rman_tr = new r_Transaction();
@@ -317,8 +321,8 @@ HqlTable HqlMain::runRasqlQuery(r_Database *db, const char* queryString)
         throw e;
     }
 
-    HqlTable table;
-    table.importFromRasql(&result_set);
+    HqlTable *table = new HqlTable();
+    table->importFromRasql(&result_set);
 
     /* Close the transaction (after processing of data) */
     commitRasqlTransaction(rman_tr);

@@ -19,6 +19,8 @@ class QtSource: public QtNode
 public:
     QtSource(char* name);
     QtSource(char* name, char* alias);
+    QtSource(QtNode* name, char* alias);
+    QtSource(QtNode* name);
     virtual ~QtSource();
 
     HqlTable* execute();

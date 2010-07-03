@@ -40,9 +40,9 @@ public:
     std::map<std::string, DbEnum> tableMap;
 
     
-    HqlTable runSqlQuery(std::string query);
+    HqlTable* runSqlQuery(std::string query);
 
-    HqlTable runRasqlQuery(std::string query);
+    HqlTable* runRasqlQuery(std::string query);
     
 private:
     /*
@@ -53,7 +53,7 @@ private:
 
     /* Execute a query on a predefined Postgres connection, and return the results.
      */
-    HqlTable runSqlQuery(pqxx::connection_base& C, const char* queryString);
+    HqlTable* runSqlQuery(pqxx::connection_base& C, const char* queryString);
 
     /* Execute a Rasql query on a given Rasdaman database connection and transaction.
      * Prints some info about the query result. Returns the results as a HqlTable.
@@ -61,7 +61,7 @@ private:
      * "db" and "tr" may be NULL, in which case a DB connection is automatically
      * aquired and released after execution.
      */
-    HqlTable runRasqlQuery(r_Database *db, const char* queryString);
+    HqlTable* runRasqlQuery(r_Database *db, const char* queryString);
 
     /* Returns the available Rasdaman collections as a set of strings. */
     std::vector<std::string> getRasdamanCoverages();

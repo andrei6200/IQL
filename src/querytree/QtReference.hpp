@@ -17,16 +17,17 @@
 class QtReference: public QtNode
 {
 public:
-    QtReference(char* str);
-    QtReference(char* str, char* al);
+    QtReference(QtNode* b);
+    QtReference(QtNode* b, char* al);
     ~QtReference();
 
     std::string toString();
+    char* toCString();
     HqlTable* execute();
 
     DbEnum setupDbSource();
 private:
-    char* name;
+    QtNode* base;
     char* alias;
 };
 

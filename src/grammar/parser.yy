@@ -40,6 +40,7 @@ char* hqlQueries;
 #include "querytree/QueryTree.hpp"
 }
 
+
 /******************************** START POSTGRESQL *********************************/
 %union
 {
@@ -66,6 +67,8 @@ char* hqlQueries;
         QtList                          *nodelist;
         QtReference                     *tableRef;
         QtSource                        *source;
+        
+        QtNode                          *mynode;        // dummy placeholder
 }
 
 
@@ -77,7 +80,8 @@ char* hqlQueries;
 
 %type <ival>	opt_asc_desc opt_nulls_order
 
-%type <str>	relation_name attr_name name opt_table
+%type <str>	 attr_name name opt_table
+%type <mynode>  relation_name
 
 %type <list>	func_name qual_Op qual_all_Op subquery_Op
 
@@ -115,9 +119,9 @@ char* hqlQueries;
 
 %type <node>	TableFuncElement
 %type <node>	where_clause
-                a_expr b_expr c_expr func_expr AexprConst indirection_el
+%type <mynode>  a_expr b_expr c_expr func_expr AexprConst indirection_el
                 columnref in_expr func_table
-%type <list>	row type_list
+%type <mynode>	row type_list
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
@@ -416,7 +420,7 @@ stmtmulti:	stmtmulti SEMICOLON stmt
 					{ if ($1 != NULL)
 					{
                                                 DEBUG << "Parser matched query: " << $1->toString() << endl;
-						$$ = (char*) $1->toString().c_str();
+						$$ = (char*) $1->toCString();
                                                 HqlMain::getInstance().executeHqlQuery($1);
 						}
 					  else
@@ -582,7 +586,7 @@ simple_select:
                             QtSource src($2);
                             from.add(&src);
                             QtList what;
-                            QtReference ref("*");
+                            QtReference ref(new QtString((char*)"*"));
                             what.add(&ref);
                             QtSelect *select = new QtSelect(from, what);
                             select->query = cat2($1, $2);
@@ -682,11 +686,11 @@ sortby_list:
 
 sortby:		a_expr USING qual_all_Op opt_nulls_order
 				{
-    $$ = cat4($1, $2, $3, $4);
+                            $$ = cat4($1->toCString(), $2, $3, $4);
 				}
 			| a_expr opt_asc_desc opt_nulls_order
 				{
-                            $$ = cat3($1, $2, $3);
+                            $$ = cat3($1->toCString(), $2, $3);
 				}
 		;
 
@@ -724,7 +728,7 @@ select_limit:
 		;
 
 select_limit_value:
-			a_expr									{ $$ = $1; }
+			a_expr									{ $$ = $1->toCString(); }
 			| ALL
 				{
 					/* LIMIT ALL is represented as a NULL constant */
@@ -734,7 +738,7 @@ select_limit_value:
 
 
 select_offset_value:
-			a_expr									{ $$ = $1; }
+			a_expr									{ $$ = $1->toCString(); }
 		;
 
 
@@ -910,7 +914,7 @@ join_outer: OUTER_P									{ $$ = NULL; }
  */
 
 join_qual:	USING LRPAR name_list RRPAR					{ $$ = cat4($1, $2, $3, $4); }
-			| ON a_expr								{ $$ = cat2($1, $2); }
+			| ON a_expr								{ $$ = cat2($1, $2->toCString()); }
 		;
 
 
@@ -944,7 +948,7 @@ func_table: func_expr								{ $$ = $1; }
 
 
 where_clause:
-			WHERE a_expr							{ $$ = cat2($1, $2); }
+			WHERE a_expr							{ $$ = cat2($1, $2->toCString()); }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
@@ -1344,12 +1348,16 @@ interval_second:
  * c_expr is all the productions that are common to a_expr and b_expr;
  * it's factored out just to eliminate redundant coding.
  */
-a_expr:		c_expr									{ $$ = $1; }
+a_expr:		c_expr
+            {
+                TRACE << "Found c_expr: " << $1->toString();
+                $$ = new QtString($1->toString());
+            }
 			| a_expr TYPECAST Typename
-                            { $$ = cat3($1, $2, $3); }
+                            { $$ = new QtString(cat3($1->toCString(), $2, $3)); }
 			| a_expr AT TIME ZONE a_expr
                             {
-                                $$ = cat5($1, $2, $3, $4, $5);
+                                $$ = new QtString(cat5($1->toCString(), $2, $3, $4, $5->toCString()));
                             }
 
                 /*
@@ -1358,7 +1366,7 @@ a_expr:		c_expr									{ $$ = $1; }
 
                         | generalExp
                             {
-                                $$ = $1;
+                                $$ = new QtString($1);
                             }
 		/*
 		 * These operators must be called out explicitly in order to make use
@@ -1370,73 +1378,73 @@ a_expr:		c_expr									{ $$ = $1; }
 		 * also to b_expr and to the MathOp list above.
 		 */
 			| PLUS a_expr					%prec UMINUS
-                                { $$ = cat2($1, $2); }
+                                { $$ = new QtString(cat2($1, $2->toCString())); }
 			| MINUS a_expr					%prec UMINUS
-				{ $$ = cat2($1, $2); }
+				{ $$ = new QtString(cat2($1, $2->toCString())); }
 			| a_expr PLUS a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr MINUS a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr MULT a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr DIV a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr MOD a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr POWER a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr LESS a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
                         | a_expr LESSEQUAL a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr GREATER a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
                         | a_expr GREATEREQUAL a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr EQUAL a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
                         | a_expr NOTEQUAL a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 
 			| a_expr qual_Op a_expr				%prec Op
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| qual_Op a_expr					%prec Op
-				{ $$ = cat2($1, $2); }
+				{ $$ = new QtString(cat2($1, $2->toCString())); }
 			| a_expr qual_Op					%prec POSTFIXOP
-				{ $$ = cat2($1, $2); }
+				{ $$ = new QtString(cat2($1->toCString(), $2)); }
 
 			| a_expr AND a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr OR a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| NOT a_expr
-				{ $$ = cat2($1, $2); }
+				{ $$ = new QtString(cat2($1, $2->toCString())); }
 
 			| a_expr LIKE a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr LIKE a_expr ESCAPE a_expr
-				{ $$ = cat5($1, $2, $3, $4, $5); }
+				{ $$ = new QtString(cat5($1->toCString(), $2, $3->toCString(), $4, $5->toCString())); }
 			| a_expr NOT LIKE a_expr
-				{ $$ = cat4($1, $2, $3, $4); }
+				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString())); }
 			| a_expr NOT LIKE a_expr ESCAPE a_expr
-				{ $$ = cat6($1, $2, $3, $4, $5, $6); }
+				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString())); }
 			| a_expr ILIKE a_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr ILIKE a_expr ESCAPE a_expr
-				{ $$ = cat5($1, $2, $3, $4, $5); }
+				{ $$ = new QtString(cat5($1->toCString(), $2, $3->toCString(), $4, $5->toCString())); }
 			| a_expr NOT ILIKE a_expr
-				{ $$ = cat4($1, $2, $3, $4); }
+				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString())); }
 			| a_expr NOT ILIKE a_expr ESCAPE a_expr
-				{ $$ = cat6($1, $2, $3, $4, $5, $6); }
+				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString())); }
 
 			| a_expr SIMILAR TO a_expr				%prec SIMILAR
-				{ $$ = cat4($1, $2, $3, $4); }
+				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString())); }
 			| a_expr SIMILAR TO a_expr ESCAPE a_expr
-				{ $$ = cat6($1, $2, $3, $4, $5, $6); }
+				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString())); }
 			| a_expr NOT SIMILAR TO a_expr			%prec SIMILAR
-				{ $$ = cat5($1, $2, $3, $4, $5); }
+				{ $$ = new QtString(cat5($1->toCString(), $2, $3, $4, $5->toCString())); }
 			| a_expr NOT SIMILAR TO a_expr ESCAPE a_expr
-				{ $$ = cat7($1, $2, $3, $4, $5, $6, $7); }
+				{ $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5->toCString(), $6, $7->toCString())); }
 
 			/* NullTest clause
 			 * Define SQL92-style Null test clause.
@@ -1448,42 +1456,42 @@ a_expr:		c_expr									{ $$ = $1; }
 			 *	a NOTNULL
 			 */
 			| a_expr IS NULL_P
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
 			| a_expr ISNULL
-				{ $$ = cat2($1, $2); }
+				{ $$ = new QtString(cat2($1->toCString(), $2)); }
 			| a_expr IS NOT NULL_P
-				{ $$ = cat4($1, $2, $3, $4); }
+				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
 			| a_expr NOTNULL
-				{ $$ = cat2($1, $2); }
+				{ $$ = new QtString(cat2($1->toCString(), $2)); }
 			| row OVERLAPS row
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| a_expr IS TRUE_P
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
 			| a_expr IS NOT TRUE_P
-				{ $$ = cat4($1, $2, $3, $4); }
+				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
 			| a_expr IS FALSE_P
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
 			| a_expr IS NOT FALSE_P
-				{ $$ = cat4($1, $2, $3, $4); }
+				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
 			| a_expr IS UNKNOWN
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
 			| a_expr IS NOT UNKNOWN
-				{ $$ = cat4($1, $2, $3, $4); }
+				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
 			| a_expr IS DISTINCT FROM a_expr			%prec IS
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new QtString(cat5($1->toCString(), $2, $3, $4, $5->toCString()));
 				}
 			| a_expr IS NOT DISTINCT FROM a_expr		%prec IS
 				{
-                            $$ = cat6($1, $2, $3, $4, $5, $6);
+                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5, $6->toCString()));
 				}
 			| a_expr IS OF LRPAR type_list RRPAR			%prec IS
 				{
-                            $$ = cat6($1, $2, $3, $4, $5, $6);
+                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5->toCString(), $6));
 				}
 			| a_expr IS NOT OF LRPAR type_list RRPAR		%prec IS
 				{
-                            $$ = cat7($1, $2, $3, $4, $5, $6, $7);
+                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5, $6->toCString(), $7));
 				}
 			/*
 			 *	Ideally we would not use hard-wired operators below but instead use
@@ -1492,27 +1500,27 @@ a_expr:		c_expr									{ $$ = $1; }
 			 */
 			| a_expr BETWEEN opt_asymmetric b_expr AND b_expr		%prec BETWEEN
 				{
-                            $$ = cat6($1, $2, $3, $4, $5, $6);
+                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString()));
 				}
 			| a_expr NOT BETWEEN opt_asymmetric b_expr AND b_expr	%prec BETWEEN
 				{
-                            $$ = cat7($1, $2, $3, $4, $5, $6, $7);
+                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5->toCString(), $6, $7->toCString()));
 				}
 			| a_expr BETWEEN SYMMETRIC b_expr AND b_expr			%prec BETWEEN
 				{
-                            $$ = cat6($1, $2, $3, $4, $5, $6);
+                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString()));
 				}
 			| a_expr NOT BETWEEN SYMMETRIC b_expr AND b_expr		%prec BETWEEN
 				{
-                            $$ = cat7($1, $2, $3, $4, $5, $6, $7);
+                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5->toCString(), $6, $7->toCString()));
 				}
 			| a_expr IN_P in_expr
 				{
-                            $$ = cat3($1, $2, $3);
+                            $$ = new QtString(cat3($1->toCString(), $2, $3->toCString()));
 				}
 			| a_expr NOT IN_P in_expr
 				{
-                            $$ = cat4($1, $2, $3, $4);
+                            $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString()));
 				}
 /*
 // AA: We do not allow nested sub-queries to occur
@@ -1520,17 +1528,17 @@ a_expr:		c_expr									{ $$ = $1; }
 */
 			| a_expr subquery_Op sub_type LRPAR a_expr RRPAR		%prec Op
 				{
-                            $$ = cat6($1, $2, $3, $4, $5, $6);
+                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5->toCString(), $6));
 				}
 // AA: We do not allow nested sub-queries to occur
 //			| UNIQUE select_with_parens
 			| a_expr IS DOCUMENT_P					%prec IS
 				{
-                            $$ = cat3($1, $2, $3);
+                            $$ = new QtString(cat3($1->toCString(), $2, $3));
 				}
 			| a_expr IS NOT DOCUMENT_P				%prec IS
 				{
-                            $$ = cat4($1, $2, $3, $4);
+                            $$ = new QtString(cat4($1->toCString(), $2, $3, $4));
 				}
 		;
 
@@ -1544,62 +1552,62 @@ a_expr:		c_expr									{ $$ = $1; }
  * just eliminate all the boolean-keyword-operator productions from b_expr.
  */
 b_expr:		c_expr
-				{ $$ = $1; }
+				{ $$ = new QtString($1->toString()); }
 			| b_expr TYPECAST Typename
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
 			| PLUS b_expr					%prec UMINUS
-				{ $$ = cat2($1, $2); }
+				{ $$ = new QtString(cat2($1, $2->toCString())); }
 			| MINUS b_expr					%prec UMINUS
-				{ $$ = cat2($1, $2); }
+				{ $$ = new QtString(cat2($1, $2->toCString())); }
 			| b_expr PLUS b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| b_expr MINUS b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| b_expr MULT b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| b_expr DIV b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| b_expr MOD b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| b_expr POWER b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| b_expr LESS b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
                         | b_expr LESSEQUAL b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| b_expr GREATER b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
                         | b_expr GREATEREQUAL b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| b_expr EQUAL b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
                         | b_expr NOTEQUAL b_expr
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| b_expr qual_Op b_expr				%prec Op
-				{ $$ = cat3($1, $2, $3); }
+				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
 			| qual_Op b_expr					%prec Op
-				{ $$ = cat2($1, $2); }
+				{ $$ = new QtString(cat2($1, $2->toCString())); }
 			| b_expr qual_Op					%prec POSTFIXOP
-				{ $$ = cat2($1, $2); }
+				{ $$ = new QtString(cat2($1->toCString(), $2)); }
 			| b_expr IS DISTINCT FROM b_expr		%prec IS
-				{ $$ = cat5($1, $2, $3, $4, $5); }
+				{ $$ = new QtString(cat5($1->toCString(), $2, $3, $4, $5->toCString())); }
 			| b_expr IS NOT DISTINCT FROM b_expr	%prec IS
-				{ $$ = cat6($1, $2, $3, $4, $5, $6); }
+				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5, $6->toCString())); }
 			| b_expr IS OF LRPAR type_list RRPAR		%prec IS
 				{
-                                        $$ = cat6($1, $2, $3, $4, $5, $6);
+                                        $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5->toCString(), $6));
 				}
 			| b_expr IS NOT OF LRPAR type_list RRPAR	%prec IS
 				{
-                            $$ = cat7($1, $2, $3, $4, $5, $6, $7);
+                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5, $6->toCString(), $7));
 				}
 			| b_expr IS DOCUMENT_P					%prec IS
 				{
-                            $$ = cat3($1, $2, $3);
+                            $$ = new QtString(cat3($1->toCString(), $2, $3));
 				}
 			| b_expr IS NOT DOCUMENT_P				%prec IS
 				{
-                            $$ = cat4($1, $2, $3, $4);
+                            $$ = new QtString(cat4($1->toCString(), $2, $3, $4));
 				}
 		;
 
@@ -1611,20 +1619,20 @@ b_expr:		c_expr
  * inside parentheses, such as function arguments; that cannot introduce
  * ambiguity to the b_expr syntax.
  */
-c_expr:		columnref								{ $$ = $1; }
-			| AexprConst							{ $$ = $1; }
+c_expr:		columnref								{ $$ = new QtString($1->toString()); }
+			| AexprConst							{ $$ = new QtString($1->toString()); }
 			| PARAM opt_indirection
 				{
-                            $$ = cat2($1, $2);
+                            $$ = new QtString(cat2($1, $2));
 				}
 			| LRPAR a_expr RRPAR opt_indirection
 				{
-                            $$ = cat4($1, $2, $3, $4);
+                            $$ = new QtString(cat4($1, $2->toCString(), $3, $4));
 				}
 			| case_expr
-				{ $$ = $1; }
+				{ $$ = new QtString($1); }
 			| func_expr
-				{ $$ = $1; }
+				{ $$ = new QtString($1->toString()); }
 /*
 // AA: We do not allow nested sub-queries to occur
 			| select_with_parens			%prec UMINUS
@@ -1635,7 +1643,7 @@ c_expr:		columnref								{ $$ = $1; }
 */
 			| row
 				{
-                                        $$ = $1;
+                                        $$ = new QtString($1->toString());
 				}
 		;
 
@@ -1649,189 +1657,189 @@ c_expr:		columnref								{ $$ = $1; }
  */
 func_expr:	func_name LRPAR RRPAR over_clause
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| func_name LRPAR expr_list RRPAR over_clause
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
 				}
 			| func_name LRPAR VARIADIC a_expr RRPAR over_clause
 				{
-                                        $$ = cat6($1, $2, $3, $4, $5, $6);
+                                        $$ = new QtString(cat6($1, $2, $3, $4->toCString(), $5, $6));
 				}
 			| func_name LRPAR expr_list COMMA VARIADIC a_expr RRPAR over_clause
 				{
-                                        $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
+                                        $$ = new QtString(cat8($1, $2, $3, $4, $5, $6->toCString(), $7, $8));
 				}
 			| func_name LRPAR ALL expr_list RRPAR over_clause
 				{
-                                        $$ = cat6($1, $2, $3, $4, $5, $6);
+                                        $$ = new QtString(cat6($1, $2, $3, $4, $5, $6));
 				}
 			| func_name LRPAR DISTINCT expr_list RRPAR over_clause
 				{
-                                        $$ = cat6($1, $2, $3, $4, $5, $6);
+                                        $$ = new QtString(cat6($1, $2, $3, $4, $5, $6));
 				}
 			| func_name LRPAR MULT RRPAR over_clause
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
 				}
 			| CURRENT_DATE
 				{
-                                        $$ = $1;
+                                        $$ = new QtString($1);
 				}
 			| CURRENT_TIME
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| CURRENT_TIME LRPAR Iconst RRPAR
 				{
-					$$ = cat4($1, $2, $3, $4);
+					$$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| CURRENT_TIMESTAMP
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| CURRENT_TIMESTAMP LRPAR Iconst RRPAR
 				{
-                                       $$ = cat4($1, $2, $3, $4);
+                                       $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| LOCALTIME
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| LOCALTIME LRPAR Iconst RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| LOCALTIMESTAMP
 				{
-                                        $$ = $1;
+                                        $$ = new QtString($1);
 				}
 			| LOCALTIMESTAMP LRPAR Iconst RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| CURRENT_ROLE
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| CURRENT_USER
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| SESSION_USER
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| USER
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| CURRENT_CATALOG
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| CURRENT_SCHEMA
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| CAST LRPAR a_expr AS Typename RRPAR
-				{ $$ = cat6($1, $2, $3, $4, $5, $6); }
+				{ $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6)); }
 			| EXTRACT LRPAR extract_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| OVERLAY LRPAR overlay_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| POSITION LRPAR position_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| SUBSTRING LRPAR substr_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| TREAT LRPAR a_expr AS Typename RRPAR
 				{
-                                        $$ = cat6($1, $2, $3, $4, $5, $6);
+                                        $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
 				}
 			| TRIM LRPAR BOTH trim_list RRPAR
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
 				}
 			| TRIM LRPAR LEADING trim_list RRPAR
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
 				}
 			| TRIM LRPAR TRAILING trim_list RRPAR
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
 				}
 			| TRIM LRPAR trim_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| NULLIF LRPAR a_expr COMMA a_expr RRPAR
 				{
-                                        $$ = cat6($1, $2, $3, $4, $5, $6);
+                                        $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5->toCString(), $6));
 				}
 			| COALESCE LRPAR expr_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| GREATEST LRPAR expr_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| LEAST LRPAR expr_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| XMLCONCAT LRPAR expr_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| XMLELEMENT LRPAR NAME_P ColLabel RRPAR
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
 				}
 			| XMLELEMENT LRPAR NAME_P ColLabel COMMA xml_attributes RRPAR
 				{
-                                        $$ = cat7($1, $2, $3, $4, $5, $6, $7);
+                                        $$ = new QtString(cat7($1, $2, $3, $4, $5, $6, $7));
 				}
 			| XMLELEMENT LRPAR NAME_P ColLabel COMMA expr_list RRPAR
 				{
-                                        $$ = cat7($1, $2, $3, $4, $5, $6, $7);
+                                        $$ = new QtString(cat7($1, $2, $3, $4, $5, $6, $7));
 				}
 			| XMLELEMENT LRPAR NAME_P ColLabel COMMA xml_attributes COMMA expr_list RRPAR
 				{
-                                        $$ = cat9($1, $2, $3, $4, $5, $6, $7, $8, $9);
+                                        $$ = new QtString(cat9($1, $2, $3, $4, $5, $6, $7, $8, $9));
 				}
 			| XMLFOREST LRPAR xml_attribute_list RRPAR
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = new QtString(cat4($1, $2, $3, $4));
 				}
 			| XMLPARSE LRPAR document_or_content a_expr xml_whitespace_option RRPAR
 				{
-                                        $$ = cat6($1, $2, $3, $4, $5, $6);
+                                        $$ = new QtString(cat6($1, $2, $3, $4->toCString(), $5, $6));
 				}
 			| XMLPI LRPAR NAME_P ColLabel RRPAR
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
 				}
 			| XMLPI LRPAR NAME_P ColLabel COMMA a_expr RRPAR
 				{
-                                        $$ = cat7($1, $2, $3, $4, $5, $6, $7);
+                                        $$ = new QtString(cat7($1, $2, $3, $4, $5, $6->toCString(), $7));
 				}
 			| XMLROOT LRPAR a_expr COMMA xml_root_version opt_xml_root_standalone RRPAR
 				{
-                                        $$ = cat7($1, $2, $3, $4, $5, $6, $7);
+                                        $$ = new QtString(cat7($1, $2, $3->toCString(), $4, $5, $6, $7));
 				}
 			| XMLSERIALIZE LRPAR document_or_content a_expr AS SimpleTypename RRPAR
 				{
-                                        $$ = cat7($1, $2, $3, $4, $5, $6, $7);
+                                        $$ = new QtString(cat7($1, $2, $3, $4->toCString(), $5, $6, $7));
 				}
 		;
 
@@ -1839,7 +1847,7 @@ func_expr:	func_name LRPAR RRPAR over_clause
  * SQL/XML support
  */
 xml_root_version: VERSION_P a_expr
-				{ $$ = cat2($1, $2); }
+				{ $$ = cat2($1, $2->toCString()); }
 			| VERSION_P NO VALUE_P
 				{ $$ = cat2($1, $2); }
 		;
@@ -1863,11 +1871,11 @@ xml_attribute_list:	xml_attribute_el					{ $$ = $1; }
 
 xml_attribute_el: a_expr AS ColLabel
 				{
-                                        $$ = cat3($1, $2, $3);
+                                        $$ = cat3($1->toCString(), $2, $3);
 				}
 			| a_expr
 				{
-					$$ = $1;
+					$$ = $1->toCString();
 				}
 		;
 
@@ -1903,9 +1911,9 @@ over_clause:
  * without conflicting with the parenthesized a_expr production.  Without the
  * ROW keyword, there must be more than one a_expr inside the parens.
  */
-row:		ROW LRPAR expr_list RRPAR					{ $$ = cat4($1, $2, $3, $4); }
+row:		ROW LRPAR expr_list RRPAR					{ $$ = new QtString(cat4($1, $2, $3, $4)); }
 			| ROW LRPAR RRPAR					{ $$ = NULL; }
-			| LRPAR expr_list COMMA a_expr RRPAR			{ $$ = cat5($1, $2, $3, $4, $5); }
+			| LRPAR expr_list COMMA a_expr RRPAR			{ $$ = new QtString(cat5($1, $2, $3, $4->toCString(), $5)); }
 		;
 
 sub_type:	ANY										{ $$ = $1; }
@@ -1969,22 +1977,22 @@ subquery_Op:
 
 expr_list:	a_expr
 				{
-					$$ = $1;
+					$$ = $1->toCString();
 				}
 			| expr_list COMMA a_expr
 				{
-					$$ = cat3($1, $2, $3);
+					$$ = cat3($1, $2, $3->toCString());
 				}
 		;
 
-type_list:	Typename								{ $$ = $1; }
-			| type_list COMMA Typename				{ $$ = cat3($1, $2, $3); }
+type_list:	Typename								{ $$ = new QtString($1); }
+			| type_list COMMA Typename				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
 		;
 
 extract_list:
 			extract_arg FROM a_expr
 				{
-                                    $$ = cat3($1, $2, $3);
+                                    $$ = cat3($1, $2, $3->toCString());
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -2008,23 +2016,23 @@ extract_arg:
 overlay_list:
 			a_expr overlay_placing substr_from substr_for
 				{
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = cat4($1->toCString(), $2, $3, $4);
 				}
 			| a_expr overlay_placing substr_from
 				{
-                                        $$ = cat3($1, $2, $3);
+                                        $$ = cat3($1->toCString(), $2, $3);
 				}
 		;
 
 overlay_placing:
 			PLACING a_expr
-				{ $$ = cat2($1, $2); }
+				{ $$ = cat2($1, $2->toCString()); }
 		;
 
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
 
 position_list:
-			b_expr IN_P b_expr						{ $$ = cat3($1, $2, $3); }
+			b_expr IN_P b_expr						{ $$ = cat3($1->toCString(), $2, $3->toCString()); }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
@@ -2043,20 +2051,20 @@ position_list:
 substr_list:
 			a_expr substr_from substr_for
 				{
-                            $$ = cat3($1, $2, $3);
+                            $$ = cat3($1->toCString(), $2, $3);
 				}
 			| a_expr substr_for substr_from
 				{
 					/* not legal per SQL99, but might as well allow it */
-                            $$ = cat3($1, $2, $3);
+                            $$ = cat3($1->toCString(), $2, $3);
 				}
 			| a_expr substr_from
 				{
-                            $$ = cat2($1, $2);
+                            $$ = cat2($1->toCString(), $2);
 				}
 			| a_expr substr_for
 				{
-					$$ = cat2($1, $2);
+					$$ = cat2($1->toCString(), $2);
 				}
 			| expr_list
 				{
@@ -2067,13 +2075,13 @@ substr_list:
 		;
 
 substr_from:
-			FROM a_expr								{ $$ = cat2($1, $2); }
+			FROM a_expr								{ $$ = cat2($1, $2->toCString()); }
 		;
 
-substr_for: FOR a_expr								{ $$ = cat2($1, $2); }
+substr_for: FOR a_expr								{ $$ = cat2($1, $2->toCString()); }
 		;
 
-trim_list:	a_expr FROM expr_list					{ $$ = cat3($1, $2, $3); }
+trim_list:	a_expr FROM expr_list					{ $$ = cat3($1->toCString(), $2, $3); }
 			| FROM expr_list						{ $$ = cat2($1, $2); }
 			| expr_list								{ $$ = $1; }
 		;
@@ -2083,7 +2091,7 @@ in_expr:
 /*                select_with_parens
 			|
 */
-                LRPAR expr_list RRPAR						{ $$ = cat3($1, $2, $3); }
+                LRPAR expr_list RRPAR						{ $$ = new QtString(cat3($1, $2, $3)); }
 		;
 
 /*
@@ -2108,16 +2116,16 @@ when_clause_list:
 when_clause:
 			WHEN a_expr THEN a_expr
 				{
-                                    $$ = cat4($1, $2, $3, $4);
+                                    $$ = cat4($1, $2->toCString(), $3, $4->toCString());
 				}
 		;
 
 case_default:
-			ELSE a_expr								{ $$ = cat2($1, $2); }
+			ELSE a_expr								{ $$ = cat2($1, $2->toCString()); }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-case_arg:	a_expr									{ $$ = $1; }
+case_arg:	a_expr									{ $$ = $1->toCString(); }
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
@@ -2128,22 +2136,22 @@ case_arg:	a_expr									{ $$ = $1; }
  */
 columnref:	relation_name
 				{
-					$$ = $1;
+					$$ = new QtSource($1);
 				}
 			| relation_name indirection
 				{
-                                        $$ = cat2($1, $2);
+                                        $$ = new QtDot(new QtReference($1), $2);
 				}
 		;
 
 indirection_el:
 			DOT attr_name
 				{
-                                        $$ = cat2($1, $2);
+                                        $$ = new QtString($2);
 				}
 			| DOT MULT
 				{
-                                        $$ = cat2($1, $2);
+                                        $$ = new QtString($2);
 				}
 /*
 AA: Disallow syntax that would interfere with the RaSQL array
@@ -2153,13 +2161,13 @@ AA: Disallow syntax that would interfere with the RaSQL array
 		;
 
 indirection:
-			indirection_el							{ $$ = $1; }
-			| indirection indirection_el			{ $$ = cat2($1, $2); }
+			indirection_el							{ $$ = $1->toCString(); }
+			| indirection indirection_el			{ $$ = cat2($1, $2->toCString()); }
 		;
 
 opt_indirection:
 			/*EMPTY*/								{ $$ = NULL; }
-			| opt_indirection indirection_el		{ $$ = cat2($1, $2); }
+			| opt_indirection indirection_el		{ $$ = cat2($1, $2->toCString()); }
 		;
 
 opt_asymmetric: ASYMMETRIC                                              { $$ = $1; }
@@ -2210,21 +2218,13 @@ target_el:
 				}
 			| MULT
 				{
-                                        $$ = new QtReference($1);
+                                        $$ = new QtReference(new QtString($1));
 				}
-
 /* AA: RaSQL expressions allowed in the SELECT clause */
-                        | mddExp                            { $$ = new QtReference($1); }
-                        | trimExp                           { $$ = new QtReference($1); }
-                        | reduceExp                         { $$ = new QtReference($1); }
-                        | inductionExp                      { $$ = new QtReference($1); }
-                        | functionExp                       { $$ = new QtReference($1); }
-                        | integerExp                        { $$ = new QtReference($1); }
-                        | condenseExp                       { $$ = new QtReference($1); }
-                        | variable                          { $$ = new QtReference($1); }
-                        | mintervalExp                      { $$ = new QtReference($1); }
-                        | intervalExp                       { $$ = new QtReference($1); }
-                        | generalLit                        { $$ = new QtReference($1); }
+                        | generalExp
+                                {
+                                        $$ = new QtReference(new QtString($1));
+                                }
 		;
 
 
@@ -2235,8 +2235,8 @@ target_el:
  *****************************************************************************/
 
 relation_name:
-			SpecialRuleRelation						{ $$ = $1; }
-			| ColId									{ $$ = $1; }
+			SpecialRuleRelation						{ $$ = new QtString($1); }
+			| ColId									{ $$ = new QtString($1); }
 		;
 
 /*
@@ -2249,11 +2249,11 @@ relation_name:
 qualified_name:
 			relation_name
 				{
-                                        $$ = $1;
+                                        $$ = $1->toCString();
 				}
 			| relation_name indirection
 				{
-                                        $$ = cat2($1, $2);
+                                        $$ = cat2($1->toCString(), $2);
 				}
 		;
 
@@ -2279,7 +2279,7 @@ attr_name:	ColLabel								{ $$ = $1; };
 func_name:	type_function_name
 					{ $$ = $1; }
 			| relation_name indirection
-					{ $$ = cat2($1, $2); }
+					{ $$ = cat2($1->toCString(), $2); }
 		;
 
 
@@ -2288,55 +2288,55 @@ func_name:	type_function_name
  */
 AexprConst: Iconst
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| FCONST
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| Sconst
 				{
-					$$ = $1;
+					$$ = new QtString($1);
 				}
 			| BCONST
 				{
-					$$ = $1;
+					$$ = new QtString($1);
                                 }
 			| XCONST
 				{
-					$$ = $1;
+					$$ = new QtString($1);
                                 }
 			| func_name Sconst
 				{
-                                        $$ = cat2($1, $2);
+                                        $$ = new QtString(cat2($1, $2));
                                 }
 			| func_name LRPAR expr_list RRPAR Sconst
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
                                 }
 			| ConstTypename Sconst
 				{
-                                        $$ = cat2($1, $2);
+                                        $$ = new QtString(cat2($1, $2));
                                 }
 			| ConstInterval Sconst opt_interval
 				{
-                                        $$ = cat3($1, $2, $3);
+                                        $$ = new QtString(cat3($1, $2, $3));
                                 }
 			| ConstInterval LRPAR Iconst RRPAR Sconst opt_interval
 				{
-                                        $$ = cat6($1, $2, $3, $4, $5, $6);
+                                        $$ = new QtString(cat6($1, $2, $3, $4, $5, $6));
                                 }
 			| TRUE_P
 				{
-					$$ = $1;
+					$$ = new QtString($1);
                                 }
 			| FALSE_P
 				{
-					$$ = $1;
+					$$ = new QtString($1);
                                 }
 			| NULL_P
 				{
-					$$ = $1;
+					$$ = new QtString($1);
                                 }
 		;
 
