@@ -8,15 +8,14 @@
 
 TODO: 
 
-- Change the data model of QtSelect:
-    - "what" depends on another node "from":
-        - select -> what    -> from
-                 -> what2   -> from2
-
 - simple combinations of SQL + RaSQL
     - always execute one SQL and one RaSQL query
     - merge the results
         - cartesian product / join :-s
+
+- implement data sources architecture
+    - modules, as described in architecture document
+
 - add the GROUP BY and HAVING clauses to the gramamr
 - complex combinations of SQL + RaSQL
 

@@ -6,6 +6,7 @@
  */
 
 #include <list>
+#include <typeinfo>
 
 #include "QtList.hpp"
 
@@ -25,7 +26,8 @@ QtList::QtList(vector<QtNode*> newdata)
 
 void QtList::add(QtNode *elem)
 {
-    TRACE << "Adding to QtList: " << elem->toString();
+    TRACE << "Adding to QtList value: " << elem->toString();
+    TRACE << "      and type " << typeid(*elem).name();
     data.push_back(elem);
 }
 
@@ -58,38 +60,39 @@ DbEnum QtList::setupDbSource()
     TRACE << "QtList :: setupDbSource()";
     TRACE << "QtList: " << toString();
     /* Cache the result. */
-    if (db_source != UNKNOWN_DB)
+    if (db_source != DB_NOT_INITIALIZED)
         return db_source;
     
-    db_source = UNKNOWN_DB;
+    db_source = DB_NOT_INITIALIZED;
     DbEnum source;
-    for (int i = 0; i < data.size(); i++)
+
+    vector<QtNode*>::iterator i;
+    /* First iteration checks for errors and searches for init value */
+    for (i = data.begin(); i != data.end(); i++)
     {
         /* Check all children nodes */
-        TRACE << "QtList: Calling setupDbSource for child node...";
-        source = data[i]->setupDbSource();
-        switch (source)
+        QtNode* node = *i;
+        TRACE << "QtList: Calling setupDbSource for child node: " << typeid(*node).name();
+        source = node->setupDbSource();
+        if (source == UNKNOWN_DB || source == DB_NOT_INITIALIZED || source == MIXED)
         {
-            case UNKNOWN_DB:
-                continue;
-            case MIXED:
-                db_source = source;
-                return db_source;
-            case POSTGRES:
-            case RASDAMAN:
-                if (db_source == UNKNOWN_DB)
-                {
-                    db_source = source;
-                    break;
-                }
-                if (source != db_source)
-                {
-                    db_source = MIXED;
-                    return db_source;
-                }
+            db_source = source;
+            return source;
+        }
+        else
+            db_source = source;
+    }
+    /* now db_source is either POSTGRES or RASDAMAN. Check that the other values correspond. */
+    for (i = data.begin(); i != data.end(); i++)
+    {
+        if ((*i)->getDbSource() != db_source)
+        {
+            db_source = MIXED;
+            return db_source;
         }
     }
-    TRACE << "QtList :: source system: " << db_source;
+    
+    TRACE << "QtList :: found source system: " << db_source;
     return db_source;
 }
 

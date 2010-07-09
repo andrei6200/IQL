@@ -12,6 +12,8 @@
 #include "querytree/QueryTree.hpp"
 
 
+//#define YYDEBUG 1
+
 extern int yylex();
 extern void yyerror(const char* msg);
 
@@ -1351,7 +1353,7 @@ interval_second:
 a_expr:		c_expr
             {
                 TRACE << "Found c_expr: " << $1->toString();
-                $$ = new QtString($1->toString());
+                $$ = $1;
             }
 			| a_expr TYPECAST Typename
                             { $$ = new QtString(cat3($1->toCString(), $2, $3)); }
@@ -1619,8 +1621,8 @@ b_expr:		c_expr
  * inside parentheses, such as function arguments; that cannot introduce
  * ambiguity to the b_expr syntax.
  */
-c_expr:		columnref								{ $$ = new QtString($1->toString()); }
-			| AexprConst							{ $$ = new QtString($1->toString()); }
+c_expr:		columnref								{ $$ = $1; }
+			| AexprConst							{ $$ = $1; }
 			| PARAM opt_indirection
 				{
                             $$ = new QtString(cat2($1, $2));
@@ -1744,7 +1746,9 @@ func_expr:	func_name LRPAR RRPAR over_clause
 					$$ = new QtString($1);
 				}
 			| CAST LRPAR a_expr AS Typename RRPAR
-				{ $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6)); }
+				{ 
+                                        $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
+                                }
 			| EXTRACT LRPAR extract_list RRPAR
 				{
                                         $$ = new QtString(cat4($1, $2, $3, $4));

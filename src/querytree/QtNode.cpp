@@ -11,7 +11,7 @@
 
 using namespace std;
 
-QtNode::QtNode() : db_source(UNKNOWN_DB), query(NULL)
+QtNode::QtNode() : db_source(DB_NOT_INITIALIZED), query(NULL)
 {
 }
 
@@ -21,14 +21,8 @@ QtNode::~QtNode()
 
 DbEnum QtNode::getDbSource()
 {
-    TRACE << "QtNode::getDbSource()";
     return db_source;
 }
-
-//DbEnum QtNode::setupDbSource()
-//{
-//    return db_source;
-//}
 
 HqlTable* QtNode::execute()
 {

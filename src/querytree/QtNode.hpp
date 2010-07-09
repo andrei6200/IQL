@@ -17,10 +17,11 @@
 /* Enumeration of available DBMS systems */
 enum DbEnum
 {
-    UNKNOWN_DB = 0,
+    DB_NOT_INITIALIZED = 0,
     POSTGRES = 1,
     RASDAMAN = 2,
-    MIXED = 3
+    UNKNOWN_DB = 3,
+    MIXED = 4
 };
 
 

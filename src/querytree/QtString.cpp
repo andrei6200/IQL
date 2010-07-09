@@ -50,6 +50,7 @@ char* QtString::toCString()
 DbEnum QtString::setupDbSource()
 {
     /* Only Postgres understands SELECT * FROM table ... */
+    // TODO: Ambiguous if there are several tables !
     if (str == string("*"))
         return POSTGRES;
     /* Else try to use the global data source dictionary. */
@@ -57,13 +58,22 @@ DbEnum QtString::setupDbSource()
     switch (tables.count(str))
     {
     case 0:
-        return UNKNOWN_DB;
+        WARN << "QtString::setupDbSource(): Coult not find table '" << str <<
+                "' in global table dictionary";
+        db_source = UNKNOWN_DB;
+        break;
     case 1:
         DEBUG << "QtString::setupDbSource(). Found String " << str << " as a table.";
         DEBUG << "\tDatabase source: " << tables[str];
-        return tables[str];
+        db_source = tables[str];
+        break;
     default:
-        return UNKNOWN_DB;
+        TRACE << "QtString: Found " << tables.count(str) << " occurrences of '" << str
+                << "' inside the global table dictionary!";
+        db_source = UNKNOWN_DB;
+        break;
     }
+
+    return db_source;
 
 }

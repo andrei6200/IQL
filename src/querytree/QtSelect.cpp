@@ -7,6 +7,7 @@
 
 #include "QtSelect.hpp"
 #include <vector>
+#include <typeinfo>
 #include "HqlMain.hpp"
 
 //#include "utils/logger.hpp"
@@ -36,9 +37,13 @@ DbEnum QtSelect::setupDbSource()
 {
     string s = toString();
     TRACE << "QtSelect :: setupDbSource() for query'" << s << "' ...";
+    TRACE << "QtSelect: Setting up sources in FROM clause...";
     db_source = from.setupDbSource();
+    TRACE << "QtSelect: Setting up sources in SELECT clause...";
+    what.setupDbSource();
+
     TRACE << "QtSelect: Found source tables: " << db_source << endl;
-    TRACE << "QtSelect: Found selected tables: " << what.setupDbSource() << endl;
+    TRACE << "QtSelect: Found selected tables: " << what.getDbSource() << endl;
     return db_source;
 }
 
@@ -48,9 +53,7 @@ HqlTable* QtSelect::execute()
     HqlTable *table = NULL;
     HqlTable tableCopy;
 
-    from.setupDbSource();
-    what.setupDbSource();
-    
+    setupDbSource();
     switch (db_source)
     {
     case POSTGRES:
@@ -81,7 +84,8 @@ HqlTable* QtSelect::execute()
                     sqlWhat.push_back(node);
                 else
                     WARN << "Data source for node '" << node->toString()
-                        << "' cannot be fully determined !";
+                        << "' (" << typeid(*node).name() << ") is not a concrete system: "
+                        << node->getDbSource();
             }
             vector<QtNode*> rasqlFrom, sqlFrom;
             for (i = 0; i < from.length(); i++)
@@ -93,12 +97,15 @@ HqlTable* QtSelect::execute()
                     sqlFrom.push_back(node);
                 else
                     WARN << "Data source for node '" << node->toString()
-                        << "' cannot be fully determined !";
+                        << "' (" << typeid(*node).name() << ") is not a concrete system: "
+                        << node->getDbSource();
             }
-            
+
+
             QtList fromRasql = QtList(rasqlFrom);
             QtList whatRasql = QtList(rasqlWhat);
             QtSelect rasqlSelect = QtSelect(whatRasql, fromRasql);
+            DEBUG << "subquery RaSQL: " << rasqlSelect.toString();
             HqlTable *t1 = rasqlSelect.execute();
             if (t1)
             {
@@ -109,6 +116,7 @@ HqlTable* QtSelect::execute()
             QtList fromSql = QtList(sqlFrom);
             QtList whatSql = QtList(sqlWhat);
             QtSelect sqlSelect = QtSelect(whatSql, fromSql);
+            DEBUG << "subquery SQL: " << sqlSelect.toString();
             HqlTable *t2 = sqlSelect.execute();
             if (t2)
             {
@@ -119,7 +127,7 @@ HqlTable* QtSelect::execute()
         }
         else
         {
-            INFO << "Mixed query is too complicated (at least for now).";
+            INFO << "Mixed queries are too complicated (at least for now).";
             table = NULL;
         }
         break;
@@ -148,7 +156,7 @@ bool QtSelect::mixedQueryIsSimple()
     for (int i = 0; i < from.length(); i++)
     {
         DbEnum db = from.get(i)->setupDbSource();
-        if (db == MIXED || db == UNKNOWN_DB)
+        if (db == MIXED || db == UNKNOWN_DB || db == DB_NOT_INITIALIZED)
             return false;
     }
     return true;
