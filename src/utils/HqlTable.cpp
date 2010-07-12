@@ -143,6 +143,9 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
         row.clear();
         row.push_back(cell.str());
 
+        if (widths[0] < cell.str().length())
+            widths[0] = cell.str().length();
+
         data.push_back(row);
 
     } // for(...)
@@ -283,4 +286,51 @@ void HqlTable::print(ostream &out)
     out << endl << INDENT_PROMPT << "( " << rows << " rows )" << endl;
 
     TRACE << "Done Printing HqlTable instance.";
+}
+
+
+
+HqlTable* HqlTable::crossProduct(HqlTable* other)
+{
+    TRACE << "Cross product between two HqlTables.";
+
+    HqlTable *output = new HqlTable();
+
+    output->columns = this->columns + other->columns;
+    output->rows = this->rows * other->rows;
+
+    int c1, c2, r1, r2;
+    /* Copy column names and the column widths. */
+    TRACE << "Using widths vector: ";
+    for (c1 = 0; c1 < this->columns; c1++)
+    {
+        output->names.push_back(this->names[c1]);
+        output->widths.push_back(this->widths[c1]);
+        TRACE << " - " << output->widths[c1];
+    }
+    for (c2 = 0; c2 < other->columns; c2++)
+    {
+        output->names.push_back(other->names[c2]);
+        output->widths.push_back(other->widths[c2]);
+        TRACE << " - " << output->widths[c1 + c2];
+    }
+    
+    /* Compute the actual cross product */
+    vector<string> row, row2;
+    for (r1 = 0; r1 < this->rows; r1++)
+        for (r2 = 0; r2 < other->rows; r2++)
+        {
+            row = this->data[r1];
+            row2 = other->data[r2];
+            row.insert(row.end(), row2.begin(), row2.end());
+            output->data.push_back(row);
+            TRACE << "Just inserted row: ";
+            vector<string>::iterator i;
+            for (i = row.begin(); i != row.end(); i++)
+                TRACE << "- " << *i;
+        }
+
+    TRACE << "Cross product has been evaluated.";
+
+    return output;
 }

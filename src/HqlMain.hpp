@@ -31,7 +31,7 @@ public:
      * This function receives a SelectStruct structure from the parser, and is
      * responsable for the query execution and result delivery. 
      */
-    void executeHqlQuery(QtSelect *select);
+//    void executeHqlQuery(QtSelect *select);
 
     /* Public destructor. */
     ~HqlMain();

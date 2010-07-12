@@ -140,45 +140,14 @@ HqlMain::~HqlMain()
     TRACE << "HqlMain fields have been destroyed.";
 }
 
-/*
- * This function receives a SelectStruct structure from the parser, and is
- * responsable for the query execution and result delivery.
- */
-void HqlMain::executeHqlQuery(QtSelect *select)
-{
-    INFO << "Received SELECT structure: ";
-    DEBUG << select->toString();
-    string status;
-
-    try
-    {
-        /* Analyze data sources */
-        select->setupDbSource();
-        /* Execute the hybrid query, based on information about data sources. */
-        HqlTable* table = select->execute();
-        /* Print output */
-        if (table)
-            table->print(cout);
-        else
-            throw string("NULL result table.");
-    }
-    /* Error handling */
-    catch (string str)
-    {
-        ERROR << str;
-        status = string("failed ... ") + str;
-    }
-    catch (exception e)
-    {
-        ERROR << "Query execution exception: " << e.what();
-        status = string("failed ... ") + e.what();
-    }
-
-    /* And display the query execution status*/
-    cout << RESPONSE_PROMPT << status << endl;
-
-    cout << QUERY_PROMPT;
-}
+///*
+// * This function receives a SelectStruct structure from the parser, and is
+// * responsable for the query execution and result delivery.
+// */
+//void HqlMain::executeHqlQuery(QueryTree *qt)
+//{
+//
+//}
 
 /* Returns the available Rasdaman collections as a set of strings. */
 vector<string> HqlMain::getRasdamanCoverages()

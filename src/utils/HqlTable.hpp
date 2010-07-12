@@ -31,6 +31,9 @@ public:
     /* Import data from Postgres to the current table. */
     void importFromSql(pqxx::result sqlResult);
 
+    /* Execute a cross Product between this table and another HqlTable. */
+    HqlTable* crossProduct(HqlTable *other);
+
 //    /* Constructor from RaSQL result type */
 //    HqlTable(r_Set<r_Ref_Any> rasqlResult);
 

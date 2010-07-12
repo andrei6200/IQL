@@ -9,6 +9,7 @@
 #include <vector>
 #include <typeinfo>
 #include "HqlMain.hpp"
+#include "utils/logger.hpp"
 
 //#include "utils/logger.hpp"
 
@@ -101,26 +102,36 @@ HqlTable* QtSelect::execute()
                         << node->getDbSource();
             }
 
+            QtList fromSql = QtList(sqlFrom);
+            QtList whatSql = QtList(sqlWhat);
+            QtSelect sqlSelect = QtSelect(whatSql, fromSql);
+            DEBUG << "subquery SQL: " << sqlSelect.toString();
+            HqlTable *t2 = sqlSelect.execute();
+//            if (t2)
+//                t2->print(cout);
 
             QtList fromRasql = QtList(rasqlFrom);
             QtList whatRasql = QtList(rasqlWhat);
             QtSelect rasqlSelect = QtSelect(whatRasql, fromRasql);
             DEBUG << "subquery RaSQL: " << rasqlSelect.toString();
             HqlTable *t1 = rasqlSelect.execute();
+//            if (t1)
+//                t1->print(cout);
+
+            if (t1 && t2)
+            {
+                table = t2->crossProduct(t1);
+            }
+            else
+                /* FIXME: error handling */
+                ;
+
             if (t1)
             {
-                t1->print(cout);
                 delete t1;
             }
-
-            QtList fromSql = QtList(sqlFrom);
-            QtList whatSql = QtList(sqlWhat);
-            QtSelect sqlSelect = QtSelect(whatSql, fromSql);
-            DEBUG << "subquery SQL: " << sqlSelect.toString();
-            HqlTable *t2 = sqlSelect.execute();
             if (t2)
             {
-                t2->print(cout);
                 delete t2;
             }
 

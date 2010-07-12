@@ -12,8 +12,6 @@
 #include "querytree/QueryTree.hpp"
 
 
-//#define YYDEBUG 1
-
 extern int yylex();
 extern void yyerror(const char* msg);
 
@@ -411,7 +409,9 @@ stmtmulti:	stmtmulti SEMICOLON stmt
 					{
 					$$ = cat3($1, (char*)"\n", $3->query);
                                         DEBUG << "Parser matched query: " << $3->toString() << endl;
-                                        HqlMain::getInstance().executeHqlQuery($3);
+                                        QueryTree::getInstance().load($3);
+                                        QueryTree::getInstance().execute();
+                                        cout << QUERY_PROMPT;
 					}
 				  else
 				  {
@@ -423,7 +423,9 @@ stmtmulti:	stmtmulti SEMICOLON stmt
 					{
                                                 DEBUG << "Parser matched query: " << $1->toString() << endl;
 						$$ = (char*) $1->toCString();
-                                                HqlMain::getInstance().executeHqlQuery($1);
+                                                QueryTree::getInstance().load($1);
+                                                QueryTree::getInstance().execute();
+                                                cout << QUERY_PROMPT;
 						}
 					  else
 					  {

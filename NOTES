@@ -8,10 +8,16 @@
 
 TODO: 
 
+- extend the query tree classes to handle the HQL grammar
+
 - simple combinations of SQL + RaSQL
     - always execute one SQL and one RaSQL query
     - merge the results
         - cartesian product / join :-s
+
+- change tree structure.
+    - data sources register with the tree, globally
+    - any node operation related to a HQL QT node or to a data source node
 
 - implement data sources architecture
     - modules, as described in architecture document
@@ -20,6 +26,8 @@ TODO:
 - complex combinations of SQL + RaSQL
 
 
+- do not exit the hql client once a syntax error has been found
+    - move the "yyparse()" into a while loop.
 
 DONE
 - simple RaSQL queries

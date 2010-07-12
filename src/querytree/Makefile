@@ -12,7 +12,8 @@ INCLUDES = -I$(SRC)/postgres/include/ -I$(SRC)/rasdaman/include -I$(SRC) \
 CPPFLAGS = -g $(INCLUDES)
 
 OUTLIB = libquerytree.a
-OBJ = QtNode.o QtSource.o QtReference.o QtList.o QtSelect.o QtDot.o QtString.o
+OBJ = QtNode.o QtSource.o QtReference.o QtList.o QtSelect.o QtDot.o QtString.o \
+	QueryTree.o
 
 
 all: $(OUTLIB)
