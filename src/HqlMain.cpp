@@ -67,7 +67,7 @@ HqlMain::HqlMain()
 
     /* Init PG database connections */
     TRACE << "Connecting to Postgres database ...";
-    pg_conn = new lazyconnection(POSTGRES_CONN_OPTS);
+    pg_conn = new connection(POSTGRES_CONN_OPTS);
     TRACE << "Successfully connected to Postgres !";
     /* Init RMAN database connections */
     TRACE << "Connecting to Rasdaman host " << RASDAMAN_SERVER
@@ -177,7 +177,7 @@ vector<string> HqlMain::getPostgresTables()
             "not like 'pg_%' and tablename not like 'sql_%';";
 
     /* Connect to the default SQL database.*/
-    connection C;
+    connection C(POSTGRES_CONN_OPTS);
 
     HqlTable *table = getInstance().runSqlQuery(C, query);
 
