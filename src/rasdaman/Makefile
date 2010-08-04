@@ -24,3 +24,4 @@ $(SRC)/grammar/parser.h:
 
 clean:
 	rm -f $(OBJS) $(OUTLIB)
+	rm -rf .deps/

@@ -69,4 +69,5 @@ clean:
 	make -C rasdaman clean
 	make -C grammar clean
 	make -C querytree clean
+	make -C utils clean
 	rm -rvf *~ *.o y.tab.* lex.yy.* parser.output parser.c parser.h lexer.c teststr driver hql program.log hql_*

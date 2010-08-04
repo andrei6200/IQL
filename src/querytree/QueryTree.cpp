@@ -60,7 +60,12 @@ void QueryTree::execute()
         ERROR << str;
         status = string("failed ... ") + str;
     }
-    catch (exception e)
+    catch (pqxx::sql_error &e)
+    {
+        ERROR << "Query execution exception: " << e.what();
+        status = string("failed ... ") + e.what();
+    }
+    catch (exception &e)
     {
         ERROR << "Query execution exception: " << e.what();
         status = string("failed ... ") + e.what();

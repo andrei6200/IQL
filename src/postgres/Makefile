@@ -42,6 +42,7 @@ $(OBJS):  %.o: %.c include/parser/kwlist.h
 
 clean:
 	rm -f $(OBJS) $(OUTLIB)
+	rm -rf .deps/
 
 # ********************* AA: END - New targets
 

@@ -8,12 +8,17 @@
 
 TODO: 
 
+- integrate PostGIS grammar
+- perform serious tests
+
+
+
+
 - extend the query tree classes to handle the HQL grammar
 
-- simple combinations of SQL + RaSQL
-    - always execute one SQL and one RaSQL query
-    - merge the results
-        - cartesian product / join :-s
+- HqlTable: each row should have an internal ID
+	- helps with sorting
+
 
 - change tree structure.
     - data sources register with the tree, globally
@@ -34,3 +39,8 @@ DONE
 - Ambiguous queries
     - can be matched by both RaSQL and SQL
     - need to un-ambiguate based on table names
+
+- simple mixed combinations of SQL + RaSQL
+    - always execute one SQL and one RaSQL query
+    - merge the results
+        - cartesian product / join :-s

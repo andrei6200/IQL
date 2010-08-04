@@ -41,7 +41,7 @@
 #define RASDAMAN_PASSWORD   "rasguest"
 
 /* Postgresql connection defaults */
-#define POSTGRES_CONN_OPTS  ""
+#define POSTGRES_CONN_OPTS  "dbname=gisdb"
 
 #endif	/* CONFIG_HPP */
 
