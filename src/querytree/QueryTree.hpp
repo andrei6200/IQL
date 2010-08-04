@@ -12,10 +12,10 @@
 
 #include "QtString.hpp"
 #include "QtNode.hpp"
-#include "QtSource.hpp"
-#include "QtReference.hpp"
+#include "QtDataSource.hpp"
+#include "QtDataSourceRef.hpp"
 #include "QtDot.hpp"
-#include "QtSelect.hpp"
+#include "QtSelectStatement.hpp"
 
 /* Singleton class for accessing the entire query tree. */
 class QueryTree
@@ -25,7 +25,7 @@ public:
     static QueryTree& getInstance();
 
     /* Load the whole query tree and prepare for execution. */
-    void load(QtNode *newroot);
+    void load(QtSelectStatement *newroot);
 
     /* Execute the query and return the result. */
     void execute();
@@ -42,7 +42,7 @@ private:
     void attachDataSourceNodes();
 
     /* The query tree root node*/
-    QtNode *root;
+    QtSelectStatement *root;
 
     /* Singleton instance. */
     static QueryTree instance;

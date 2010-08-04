@@ -10,7 +10,7 @@
 #ifndef QTNODE_HPP
 #define	QTNODE_HPP
 
-#include <string>
+//#include <string>
 
 #include "utils/HqlTable.hpp"
 

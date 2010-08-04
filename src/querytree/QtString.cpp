@@ -54,7 +54,7 @@ DbEnum QtString::setupDbSource()
     if (str == string("*"))
         return POSTGRES;
     /* Else try to use the global data source dictionary. */
-    map<string, DbEnum> tables = HqlMain::getInstance().tableMap;
+    map<string, DbEnum> tables = HqlMain::getInstance()->tableMap;
     switch (tables.count(str))
     {
     case 0:
@@ -65,7 +65,7 @@ DbEnum QtString::setupDbSource()
     case 1:
         DEBUG << "QtString::setupDbSource(). Found String " << str << " as a table.";
         DEBUG << "\tDatabase source: " << tables[str];
-        db_source = tables[str];
+        db_source = tables.at(str);
         break;
     default:
         TRACE << "QtString: Found " << tables.count(str) << " occurrences of '" << str

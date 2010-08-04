@@ -20,7 +20,7 @@ void QueryTree::attachDataSourceNodes()
     /* TODO */
 }
 
-void QueryTree::load(QtNode* newroot)
+void QueryTree::load(QtSelectStatement* newroot)
 {
     if (root)
         delete root;

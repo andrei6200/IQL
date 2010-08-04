@@ -10,7 +10,7 @@
 #ifndef QTSTRING_HPP
 #define	QTSTRING_HPP
 
-#include <string>
+//#include <string>
 #include "QtNode.hpp"
 
 class QtString: public QtNode

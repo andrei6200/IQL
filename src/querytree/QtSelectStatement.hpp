@@ -10,8 +10,8 @@
 #ifndef QTSELECT_HPP
 #define	QTSELECT_HPP
 
-#include "QtReference.hpp"
-#include "QtSource.hpp"
+#include "QtDataSourceRef.hpp"
+#include "QtDataSource.hpp"
 #include "QtNode.hpp"
 #include "QtList.hpp"
 
@@ -19,12 +19,12 @@
 
 #include <vector>
 
-class QtSelect : public QtNode
+class QtSelectStatement : public QtNode
 {
 public:
-    QtSelect();
-    QtSelect(QtList refs, QtList sources);
-    ~QtSelect();
+    QtSelectStatement();
+    QtSelectStatement(QtList refs, QtList sources);
+    ~QtSelectStatement();
 
     HqlTable* execute();
 

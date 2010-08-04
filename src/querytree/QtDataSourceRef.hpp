@@ -1,5 +1,5 @@
 /* 
- * File:   QtReference.hpp
+ * File:   QtDataSourceRef.hpp
  * Author: andrei
  *
  * Created on June 26, 2010, 1:29 PM
@@ -9,17 +9,17 @@
  * - a Postgres field name
  */
 
-#ifndef QTREFERENCE_HPP
-#define	QTREFERENCE_HPP
+#ifndef QtDataSourceRef_HPP
+#define	QtDataSourceRef_HPP
 
 #include "QtNode.hpp"
 
-class QtReference: public QtNode
+class QtDataSourceRef: public QtNode
 {
 public:
-    QtReference(QtNode* b);
-    QtReference(QtNode* b, char* al);
-    ~QtReference();
+    QtDataSourceRef(QtNode* b);
+    QtDataSourceRef(QtNode* b, char* al);
+    ~QtDataSourceRef();
 
     std::string toString();
     char* toCString();
@@ -31,5 +31,5 @@ private:
     char* alias;
 };
 
-#endif	/* QTREFERENCE_HPP */
+#endif	/* QtDataSourceRef_HPP */
 

@@ -11,7 +11,7 @@ TODO:
 - integrate PostGIS grammar
 - perform serious tests
 
-
+- allow WHERE clauses
 
 
 - extend the query tree classes to handle the HQL grammar

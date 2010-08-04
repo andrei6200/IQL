@@ -5,24 +5,22 @@
  * Created on June 26, 2010, 1:36 PM
  */
 
-#include "QtSelect.hpp"
+#include "QtSelectStatement.hpp"
 #include <vector>
 #include <typeinfo>
 #include "HqlMain.hpp"
 #include "utils/logger.hpp"
 
-//#include "utils/logger.hpp"
-
 using namespace std;
 
-QtSelect::QtSelect()
+QtSelectStatement::QtSelectStatement()
 {
     what = QtList();
     from = QtList();
     TRACE << "Initialized QtSelect.";
 }
 
-QtSelect::QtSelect(QtList refs, QtList sources)
+QtSelectStatement::QtSelectStatement(QtList refs, QtList sources)
     : what(refs), from(sources)
 {
     TRACE << "Initializing QtSelect with 2 QtList objects";
@@ -30,11 +28,11 @@ QtSelect::QtSelect(QtList refs, QtList sources)
     TRACE << "From: " << from.toString();
 }
 
-QtSelect::~QtSelect()
+QtSelectStatement::~QtSelectStatement()
 {
 }
 
-DbEnum QtSelect::setupDbSource()
+DbEnum QtSelectStatement::setupDbSource()
 {
     string s = toString();
     TRACE << "QtSelect :: setupDbSource() for query'" << s << "' ...";
@@ -48,11 +46,10 @@ DbEnum QtSelect::setupDbSource()
     return db_source;
 }
 
-HqlTable* QtSelect::execute()
+HqlTable* QtSelectStatement::execute()
 {
     TRACE << "Executing QtSelect ...";
     HqlTable *table = NULL;
-    HqlTable tableCopy;
 
     setupDbSource();
     switch (db_source)
@@ -60,12 +57,12 @@ HqlTable* QtSelect::execute()
     case POSTGRES:
         cout << RESPONSE_PROMPT << "Executing postgres query ..." << endl;
         TRACE << "Executing postgres query: " << toString() ;
-        table = HqlMain::getInstance().runSqlQuery(toString());
+        table = HqlMain::getInstance()->runSqlQuery(toString());
         break;
     case RASDAMAN:
         cout << RESPONSE_PROMPT << "Executing rasdaman query ..." << endl;
         TRACE << "Executing rasdaman query: " << toString();
-        table = HqlMain::getInstance().runRasqlQuery(toString());
+        table = HqlMain::getInstance()->runRasqlQuery(toString());
         break;
     case MIXED:
         cout << RESPONSE_PROMPT << "Executing mixed query ..." << endl;
@@ -104,7 +101,7 @@ HqlTable* QtSelect::execute()
 
             QtList fromSql = QtList(sqlFrom);
             QtList whatSql = QtList(sqlWhat);
-            QtSelect sqlSelect = QtSelect(whatSql, fromSql);
+            QtSelectStatement sqlSelect = QtSelectStatement(whatSql, fromSql);
             DEBUG << "subquery SQL: " << sqlSelect.toString();
             HqlTable *t2 = sqlSelect.execute();
 //            if (t2)
@@ -112,7 +109,7 @@ HqlTable* QtSelect::execute()
 
             QtList fromRasql = QtList(rasqlFrom);
             QtList whatRasql = QtList(rasqlWhat);
-            QtSelect rasqlSelect = QtSelect(whatRasql, fromRasql);
+            QtSelectStatement rasqlSelect = QtSelectStatement(whatRasql, fromRasql);
             DEBUG << "subquery RaSQL: " << rasqlSelect.toString();
             HqlTable *t1 = rasqlSelect.execute();
 //            if (t1)
@@ -151,7 +148,7 @@ HqlTable* QtSelect::execute()
 }
 
 
-std::string QtSelect::toString()
+std::string QtSelectStatement::toString()
 {
     string out = string("SELECT ") + what.toString() +
                  string(" FROM ") + from.toString();
@@ -160,7 +157,7 @@ std::string QtSelect::toString()
 
 /* Returns true if the current Hql query contains a simple mixture of RaSQl and SQL.
  In case this is not a mixed query, this function returns false. */
-bool QtSelect::mixedQueryIsSimple()
+bool QtSelectStatement::mixedQueryIsSimple()
 {
     if (db_source != MIXED)
         return false;

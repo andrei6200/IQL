@@ -131,7 +131,7 @@ extern LOGGER <char, char_traits < char > > LOG;
 #define INFO    LOG.info()
 #define WARN    LOG.warn()
 #define ERROR   LOG.error()
-#define FATAL   LOG.fatal() << std::endl << std::endl
+#define FATAL   LOG.fatal()
 
 
 #endif	/* LOGGER_HPP */

@@ -10,14 +10,29 @@
 #ifndef HQLMAIN_HH
 #define	HQLMAIN_HH
 
-#include "rasdaman.hh"
+
+/* PostgreSQL includes and defines */
 #include <pqxx/pqxx>
+
+/* Rasdaman includes and defines */
+#define DEBUG_MAIN
+
+#ifdef EARLY_TEMPLATE
+#define __EXECUTABLE__
+#ifdef __GNUG__
+#include "raslib/template_inst.hh"
+#endif
+#endif
+#include "rasdaman.hh"
+
 
 #include <set>
 #include <vector>
 
 #include "querytree/QueryTree.hpp"
 #include "utils/HqlTable.hpp"
+#include "datasources/PostgresDS.hpp"
+#include "datasources/RasdamanDS.hpp"
 
 
 /* Singleton class responsible for DB access. */
@@ -25,7 +40,7 @@ class HqlMain
 {
 public:
     /* Return (and initialize if needed) the singleton instance of HqlMain. */
-    static HqlMain& getInstance();
+    static HqlMain* getInstance();
 
     /*
      * This function receives a SelectStruct structure from the parser, and is
@@ -51,32 +66,12 @@ private:
      */
     HqlMain();
 
-    /* Execute a query on a predefined Postgres connection, and return the results.
-     */
-    HqlTable* runSqlQuery(pqxx::connection_base& C, const char* queryString);
-
-    /* Execute a Rasql query on a given Rasdaman database connection and transaction.
-     * Prints some info about the query result. Returns the results as a HqlTable.
-     *
-     * "db" and "tr" may be NULL, in which case a DB connection is automatically
-     * aquired and released after execution.
-     */
-    HqlTable* runRasqlQuery(r_Database *db, const char* queryString);
-
-    /* Returns the available Rasdaman collections as a set of strings. */
-    std::vector<std::string> getRasdamanCoverages();
-    /* Returns the available Postgres tables as a set of strings. */
-    std::vector<std::string> getPostgresTables();
-
-
     /* The singleton instance. */
-    static HqlMain instance;
+    static HqlMain *instance;
 
-    /* Connection to Postgres */
-    static pqxx::connection_base *pg_conn;
-
-    /* Connection and transaction to Rasdaman */
-    static r_Database *rman_db;
+    /* Data Sources */
+    PostgresDS *pg;
+    RasdamanDS *rman;
 };
 
 

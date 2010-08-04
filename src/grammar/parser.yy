@@ -63,10 +63,10 @@ char* hqlQueries;
         char*                           jexpr;
         char*                           into;
 
-        QtSelect                        *select;
+        QtSelectStatement               *select;
         QtList                          *nodelist;
-        QtReference                     *tableRef;
-        QtSource                        *source;
+        QtDataSourceRef                 *tableRef;
+        QtDataSource                    *source;
         
         QtNode                          *mynode;        // dummy placeholder
 }
@@ -576,7 +576,7 @@ simple_select:
 // AA: We do not want to support r SQL windows
 //			group_clause having_clause window_clause
                         {
-                            QtSelect *select = new QtSelect(*$2, *$4);
+                            QtSelectStatement *select = new QtSelectStatement(*$2, *$4);
                             $$ = select;
                         }
                         
@@ -587,12 +587,12 @@ simple_select:
                             /* same as SELECT * FROM relation_expr */
                             
                             QtList from;
-                            QtSource src($2);
+                            QtDataSource src($2);
                             from.add(&src);
                             QtList what;
-                            QtReference ref(new QtString((char*)"*"));
+                            QtDataSourceRef ref(new QtString((char*)"*"));
                             what.add(&ref);
-                            QtSelect *select = new QtSelect(from, what);
+                            QtSelectStatement *select = new QtSelectStatement(from, what);
                             select->query = cat2($1, $2);
 
                             $$ = select;
@@ -785,31 +785,31 @@ from_list:
  */
 table_ref:	relation_expr
 				{
-					$$ = new QtSource($1);
+					$$ = new QtDataSource($1);
 				}
 			| relation_expr alias_clause
 				{
-                                        $$ = new QtSource($1, $2);
+                                        $$ = new QtDataSource($1, $2);
 				}
 			| func_table
 				{
-                                        $$ = new QtSource($1);
+                                        $$ = new QtDataSource($1);
 				}
 			| func_table alias_clause
 				{
-                                        $$ = new QtSource($1, $2);
+                                        $$ = new QtDataSource($1, $2);
 				}
 			| func_table AS LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = new QtSource($1);
+                                        $$ = new QtDataSource($1);
 				}
 			| func_table AS ColId LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = new QtSource($1, $2);
+                                        $$ = new QtDataSource($1, $2);
 				}
 			| func_table ColId LRPAR TableFuncElementList RRPAR
 				{
-                                        $$ = new QtSource($1, $2);
+                                        $$ = new QtDataSource($1, $2);
 				}
 // AA: We do not allow subqueries in the FROM clause
 /*			| select_with_parens
@@ -2142,11 +2142,11 @@ case_arg:	a_expr									{ $$ = $1->toCString(); }
  */
 columnref:	relation_name
 				{
-					$$ = new QtSource($1);
+					$$ = new QtDataSource($1);
 				}
 			| relation_name indirection
 				{
-                                        $$ = new QtDot(new QtReference($1), $2);
+                                        $$ = new QtDot(new QtDataSourceRef($1), $2);
 				}
 		;
 
@@ -2204,7 +2204,7 @@ target_list:
 target_el:	
                         a_expr AS ColLabel
 				{
-                                        $$ = new QtReference($1, $3);
+                                        $$ = new QtDataSourceRef($1, $3);
 				}
 			/*
 			 * We support omitting AS only for column labels that aren't
@@ -2216,20 +2216,20 @@ target_el:
 			 */
 			| a_expr IDENT
 				{
-                                        $$ = new QtReference($1, $2);
+                                        $$ = new QtDataSourceRef($1, $2);
 				}
 			| a_expr
 				{
-                                        $$ = new QtReference($1);
+                                        $$ = new QtDataSourceRef($1);
 				}
 			| MULT
 				{
-                                        $$ = new QtReference(new QtString($1));
+                                        $$ = new QtDataSourceRef(new QtString($1));
 				}
 /* AA: RaSQL expressions allowed in the SELECT clause */
                         | generalExp
                                 {
-                                        $$ = new QtReference(new QtString($1));
+                                        $$ = new QtDataSourceRef(new QtString($1));
                                 }
 		;
 

@@ -4,7 +4,7 @@
  *
  * Created on June 26, 2010, 12:56 PM
  *
- * Stores the name of a source table (either postgres of rasdaman table)
+ * Stores the name of a data source collection.
  */
 
 #ifndef QTSOURCE_HPP
@@ -14,14 +14,14 @@
 #include "QtNode.hpp"
 
 
-class QtSource: public QtNode
+class QtDataSource: public QtNode
 {
 public:
-    QtSource(char* name);
-    QtSource(char* name, char* alias);
-    QtSource(QtNode* name, char* alias);
-    QtSource(QtNode* name);
-    virtual ~QtSource();
+    QtDataSource(char* name);
+    QtDataSource(char* name, char* alias);
+    QtDataSource(QtNode* name, char* alias);
+    QtDataSource(QtNode* name);
+    virtual ~QtDataSource();
 
     HqlTable* execute();
     std::string toString();

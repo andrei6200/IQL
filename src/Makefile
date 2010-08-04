@@ -14,7 +14,8 @@ OBJ=grammar/lexer.o grammar/parser.o driver.o
 LIB_PG=postgres/libparse.a
 LIB_RMAN=rasdaman/librqlparse.a
 LIB_QT=querytree/libquerytree.a
-LIBTARGET=$(LIB_PG) $(LIB_RMAN) $(LIB_QT)
+LIB_DS=datasources/libdatasources.a
+LIBTARGET=$(LIB_PG) $(LIB_RMAN) $(LIB_QT) $(LIB_DS)
 
 
 #########################
@@ -31,13 +32,16 @@ $(LIB_RMAN):
 $(LIB_QT):
 	make -C querytree
 
+$(LIB_DS):
+	make -C datasources
+
 ### Driver actually builds the parser driver program
-hql: grammar utils driver.o HqlMain.o querytree
+hql: grammar utils driver.o HqlMain.o querytree datasources
 	$(CPP) $(CPPFLAGS) driver.o HqlMain.o		\
 	utils/HqlTable.o				\
 	$(RASQL_LIBS) $(SQL_LIBS)			\
 	grammar/parser.o grammar/lexer.o		\
-	$(GRAMMAR_LIBS)					\
+	$(LIBS)						\
 	-o hql
 
 grammar: lib/libparse.a lib/librqlparse.a
@@ -49,6 +53,9 @@ querytree: lib/libquerytree.a
 utils: utils/HqlTable.o
 	make -C utils
 
+datasources : lib/libdatasources.a
+	cp $(LIB_DS) $(HQLROOT)/lib/
+
 lib/libparse.a: $(LIB_PG)
 	cp $(LIB_PG) $(HQLROOT)/lib/
 
@@ -57,6 +64,9 @@ lib/librqlparse.a: $(LIB_RMAN)
 
 lib/libquerytree.a: $(LIB_QT)
 	make -C querytree
+
+lib/libdatasources.a: $(LIB_DS)
+	make -C datasources
 
 driver.o: driver.cpp
 	$(CPP) $(CPPFLAGS) $(LIBS) -c driver.cpp   -o driver.o
@@ -70,4 +80,5 @@ clean:
 	make -C grammar clean
 	make -C querytree clean
 	make -C utils clean
+	make -C datasources clean
 	rm -rvf *~ *.o y.tab.* lex.yy.* parser.output parser.c parser.h lexer.c teststr driver hql program.log hql_*

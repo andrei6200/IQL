@@ -5,32 +5,32 @@
  * Created on June 26, 2010, 12:56 PM
  */
 
-#include "QtSource.hpp"
+#include "QtDataSource.hpp"
 #include "HqlMain.hpp"
 
 using namespace std;
 
-QtSource::QtSource(char* name) : tableName(name), alias(NULL)
+QtDataSource::QtDataSource(char* name) : tableName(name), alias(NULL)
 {
-    TRACE << "Initializing QtSource: " << name;
+    TRACE << __FUNCTION__ << ": Initializing QtSource: " << name;
 }
 
-QtSource::QtSource(char* name, char* alias) : tableName(name), alias(alias)
+QtDataSource::QtDataSource(char* name, char* alias) : tableName(name), alias(alias)
 {
     TRACE << "Initializing QtSource: " << name << " as " << alias;
 }
 
-QtSource::QtSource(QtNode* name, char* alias): tableName(name->toCString()), alias(alias)
+QtDataSource::QtDataSource(QtNode* name, char* alias): tableName(name->toCString()), alias(alias)
 {
     TRACE << "Initializing QtSource: " << tableName << " as " << alias;
 }
 
-QtSource::QtSource(QtNode* name): tableName(name->toCString()), alias(NULL)
+QtDataSource::QtDataSource(QtNode* name): tableName(name->toCString()), alias(NULL)
 {
     TRACE << "Initializing QtSource: " << tableName;
 }
 
-QtSource::~QtSource()
+QtDataSource::~QtDataSource()
 {
     if (tableName)
         delete tableName;
@@ -38,12 +38,12 @@ QtSource::~QtSource()
         delete alias;
 }
 
-HqlTable* QtSource::execute()
+HqlTable* QtDataSource::execute()
 {
     return NULL;
 }
 
-string QtSource::toString()
+string QtDataSource::toString()
 {
     string out(tableName);
     if (alias)
@@ -51,10 +51,10 @@ string QtSource::toString()
     return out;
 }
 
-DbEnum QtSource::setupDbSource()
+DbEnum QtDataSource::setupDbSource()
 {
     TRACE << "QtSource :: setupDbSource() : " << tableName << " ...";
-    map<string,DbEnum> tableMap = HqlMain::getInstance().tableMap;
+    map<string,DbEnum> tableMap = HqlMain::getInstance()->tableMap;
     if (tableMap.count(string(tableName)) == 0)
     {
         ERROR << "Table '" << tableName << "' does not exist in Postgres nor in Rasdaman !";
@@ -62,5 +62,6 @@ DbEnum QtSource::setupDbSource()
     }
     db_source = tableMap[string(tableName)];
     DEBUG << "QtSource :: setupDbSource() : for " << tableName << " is " << db_source;
+
     return db_source;
 }

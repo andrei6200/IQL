@@ -33,9 +33,9 @@ SQL_LIBS = -lpqxx
 # Rasdaman client support
 RASQL_LIBS = -L$(RMANINSTALL)/lib -L/usr/lib					\
 	-lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto
+DATA_LIBS = -L$(HQLROOT)/lib -ldatasources
 
-
-LIBS = $(GRAMMAR_LIBS) $(SQL_LIBS) $(RASQL_LIBS)
+LIBS = $(GRAMMAR_LIBS) $(DATA_LIBS) $(SQL_LIBS) $(RASQL_LIBS) 
 
 FLEXFLAGS = -CF
 YACCFLAGS = -d
