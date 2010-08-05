@@ -16,6 +16,7 @@ extern int errorCount;
 extern void yyparse();
 extern char* hqlQueries;
 extern void yyparse();
+extern char *yytext;
 
 
 
@@ -26,10 +27,18 @@ string readQuery()
     cout << QUERY_PROMPT;
     yyparse();
     string result;
-    if (hqlQueries == NULL || strlen(hqlQueries) == 0)
+    if (yytext == NULL || strlen(yytext) == 0)
         result = EMPTY_QUERY;
     else
-        result = string(hqlQueries);
+    {
+        // Bison buffer contains data
+        if (hqlQueries == NULL || strlen(hqlQueries) == 0)
+            // but no query was successfully parsed
+            result = string(yytext);
+        else
+            // a query was successfully parsed
+            result = string(hqlQueries);
+    }
     return result;
 }
 
