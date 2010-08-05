@@ -54,7 +54,7 @@ string QtDataSource::toString()
 DbEnum QtDataSource::setupDbSource()
 {
     TRACE << "QtSource :: setupDbSource() : " << tableName << " ...";
-    map<string,DbEnum> tableMap = HqlMain::getInstance()->tableMap;
+    map<string,DbEnum> tableMap = HqlMain::getInstance().tableMap;
     if (tableMap.count(string(tableName)) == 0)
     {
         ERROR << "Table '" << tableName << "' does not exist in Postgres nor in Rasdaman !";

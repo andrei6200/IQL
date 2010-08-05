@@ -40,7 +40,7 @@ class HqlMain
 {
 public:
     /* Return (and initialize if needed) the singleton instance of HqlMain. */
-    static HqlMain* getInstance();
+    static HqlMain& getInstance();
 
     /*
      * This function receives a SelectStruct structure from the parser, and is

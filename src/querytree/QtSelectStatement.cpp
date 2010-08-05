@@ -57,12 +57,12 @@ HqlTable* QtSelectStatement::execute()
     case POSTGRES:
         cout << RESPONSE_PROMPT << "Executing postgres query ..." << endl;
         TRACE << "Executing postgres query: " << toString() ;
-        table = HqlMain::getInstance()->runSqlQuery(toString());
+        table = HqlMain::getInstance().runSqlQuery(toString());
         break;
     case RASDAMAN:
         cout << RESPONSE_PROMPT << "Executing rasdaman query ..." << endl;
         TRACE << "Executing rasdaman query: " << toString();
-        table = HqlMain::getInstance()->runRasqlQuery(toString());
+        table = HqlMain::getInstance().runRasqlQuery(toString());
         break;
     case MIXED:
         cout << RESPONSE_PROMPT << "Executing mixed query ..." << endl;

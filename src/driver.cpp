@@ -90,7 +90,7 @@ int main(int argc, char** argv)
      * Initialization is performed here.*/
     try
     {
-        HqlMain *hql = HqlMain::getInstance();
+        HqlMain::getInstance();
     }
     catch (...)
     {

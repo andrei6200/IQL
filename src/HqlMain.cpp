@@ -36,11 +36,11 @@ HqlMain* HqlMain::instance = NULL;
 extern void exitProgram(int code, string queries);
 
 /* Return (and initialize if needed) the singleton instance of HqlMain. */
-HqlMain* HqlMain::getInstance()
+HqlMain& HqlMain::getInstance()
 {
     if (!instance)
         instance = new HqlMain();
-    return instance;
+    return *instance;
 }
 
 /* Private constructor.
