@@ -252,9 +252,14 @@ void HqlTable::print(ostream &out)
     {
         out << INDENT_PROMPT;
         /* First print the column names */
-        out << setw(widths[0]) << names[0];
+        int l = names[0].size();
+        out << setw((widths[0]+l)/2) << names[0] << setw((widths[0]-l)/2) << "";
         for (int i = 1; i < columns; i++)
-            out << TABLE_COL_SEPARATOR << setw(widths[i]) << names[i];
+        {
+            l = names[i].size();
+            out << TABLE_COL_SEPARATOR << setw((widths[i]+l)/2) << names[i]
+                    << setw((widths[i]-l)/2) << "";
+        }
         out << endl;
         /* And the separator line ...*/
         out << INDENT_PROMPT << setw(widths[0])
@@ -283,7 +288,8 @@ void HqlTable::print(ostream &out)
     }
 
     // If no rows in the result, then just print "0 rows".
-    out << endl << INDENT_PROMPT << "( " << rows << " rows )" << endl;
+    out << endl << INDENT_PROMPT << "( " << rows 
+            << " row" << (rows == 1 ? "" : "s") << " )" << endl;
 
     TRACE << "Done Printing HqlTable instance.";
 }

@@ -571,12 +571,14 @@ simple_select:
 // AA: HQL does not yet support duplicate elimination through "DISTINCT"
 //			SELECT opt_distinct target_list
                         SELECT target_list
-			into_clause from_clause where_clause
+// AA: We do not want to support SELECT INTO queries
+//			into_clause from_clause where_clause
+                        from_clause where_clause
 //                        group_clause having_clause
 // AA: We do not want to support r SQL windows
 //			group_clause having_clause window_clause
                         {
-                            QtSelectStatement *select = new QtSelectStatement(*$2, *$4);
+                            QtSelectStatement *select = new QtSelectStatement(*$2, *$3);
                             $$ = select;
                         }
                         
