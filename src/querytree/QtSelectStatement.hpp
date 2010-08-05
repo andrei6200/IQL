@@ -17,7 +17,7 @@
 
 #include "utils/HqlTable.hpp"
 
-#include <vector>
+//#include <vector>
 
 class QtSelectStatement : public QtNode
 {
