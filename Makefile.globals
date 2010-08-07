@@ -27,13 +27,13 @@ CPPFLAGS = $(RMANCFLAGS)  $(INCLUDES) -g
 ##### Libraries section #####
 
 # SQL Grammar and RaSQL grammar libraries
-GRAMMAR_LIBS = -L$(HQLROOT)/lib -lparse -lrqlparse -lquerytree
+GRAMMAR_LIBS = -L$(SRC)/postgres -L$(SRC)/rasdaman -L$(SRC)/querytree -lparse -lrqlparse -lquerytree
 # PostgreSQL client support
 SQL_LIBS = -lpqxx
 # Rasdaman client support
 RASQL_LIBS = -L$(RMANINSTALL)/lib -L/usr/lib					\
 	-lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto
-DATA_LIBS = -L$(HQLROOT)/lib -ldatasources
+DATA_LIBS = -L$(SRC)/datasources -ldatasources
 
 LIBS = $(GRAMMAR_LIBS) $(DATA_LIBS) $(SQL_LIBS) $(RASQL_LIBS) 
 

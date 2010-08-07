@@ -35,6 +35,7 @@ using namespace pqxx;
 
 HqlTable::HqlTable() : rows(0), columns(0)
 {
+	TRACE << "Creater new Table with " << rows << " rows and " << columns << " columns";
 }
 
 
@@ -235,6 +236,7 @@ vector<string> HqlTable::getColumn(int index)
 
 HqlTable::~HqlTable()
 {
+	TRACE << "Destroyed table. ";
 }
 
 /* Print the table contents to a specified stream. */

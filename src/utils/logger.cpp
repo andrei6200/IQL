@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#include "utils/logger.hpp"
+#include "logger.hpp"
 #include "config.hpp"
 
 /******************* CONFIGURATION START **********************/
@@ -30,3 +30,22 @@ ofstream _outputFile(LOGFILE_NAME, ofstream::app);
 LOGGER <char, char_traits < char > > LOG(_outputFile);
 
 /******************* CONFIGURATION END **********************/
+
+
+string formatClassName(string prettyFunction)
+{
+    size_t index = prettyFunction.find( "(" );
+    if ( index == string::npos )
+        return prettyFunction;  /* Degenerate case */
+
+    prettyFunction.erase( index );
+
+    index = prettyFunction.rfind( " " );
+    if ( index == string::npos )
+        return prettyFunction;  /* Degenerate case */
+
+    prettyFunction.erase( 0, index + 1 );
+
+    /* The scoped class + function name. */
+    return prettyFunction;
+}

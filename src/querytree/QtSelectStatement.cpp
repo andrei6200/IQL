@@ -49,6 +49,25 @@ DbEnum QtSelectStatement::setupDbSource()
 HqlTable* QtSelectStatement::execute()
 {
     TRACE << "Executing QtSelect ...";
+
+    TRACE << "test DataSource BEGIN";
+    TRACE << "---------------------";
+    QtDataSource ds("gtest");
+    HqlTable *gtest = NULL;
+    gtest = ds.execute();
+    if (gtest)
+    {
+        cout << "START gtest" << endl;
+        gtest->print(cout);
+        cout << "END gtest" << endl;
+        delete gtest;
+    }
+    else
+        cout << "Could not find table 'gtest'" << endl;
+    TRACE << "---------------------";
+    TRACE << "test DataSource END";
+    
+
     HqlTable *table = NULL;
 
     setupDbSource();

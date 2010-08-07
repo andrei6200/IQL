@@ -15,10 +15,6 @@ QtNode::QtNode() : db_source(DB_NOT_INITIALIZED), query(NULL)
 {
 }
 
-QtNode::~QtNode()
-{
-}
-
 DbEnum QtNode::getDbSource()
 {
     return db_source;

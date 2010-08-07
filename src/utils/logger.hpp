@@ -80,8 +80,8 @@ public:
         /* Write time as a string. */
         time(&rawtime);
         
-        strftime(timestr, STRLENGTH, "%x %X", localtime(&rawtime));
-        os << std::endl << "[ " << timestr << " ]" << std::setw(8) << strLevel << " :  ";
+        strftime(timestr, STRLENGTH, "%X", localtime(&rawtime));
+        os << std::endl << "[" << timestr << "]" << std::setw(8) << strLevel << " :  ";
         return *this;
     }
 
@@ -125,13 +125,14 @@ private:
 
 extern std::ofstream _outputFile;
 extern LOGGER <char, char_traits < char > > LOG;
+extern string formatClassName(string prettyFunction);
 
-#define TRACE   LOG.trace()
-#define DEBUG   LOG.debug()
-#define INFO    LOG.info()
-#define WARN    LOG.warn()
-#define ERROR   LOG.error()
-#define FATAL   LOG.fatal()
+#define TRACE   LOG.trace() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
+#define DEBUG   LOG.debug() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
+#define INFO    LOG.info() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
+#define WARN    LOG.warn() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
+#define ERROR   LOG.error() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
+#define FATAL   LOG.fatal() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
 
 
 #endif	/* LOGGER_HPP */

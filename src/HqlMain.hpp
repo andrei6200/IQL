@@ -28,6 +28,7 @@
 
 #include <set>
 #include <vector>
+#include <string>
 
 #include "querytree/QueryTree.hpp"
 #include "utils/HqlTable.hpp"

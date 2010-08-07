@@ -9,6 +9,9 @@
 TODO: 
 
 - integrate PostGIS grammar
+	- read PostGIS functions at init-time
+	- search them in the grammar parser
+
 - perform serious tests
 
 - allow WHERE clauses
@@ -24,15 +27,11 @@ TODO:
     - data sources register with the tree, globally
     - any node operation related to a HQL QT node or to a data source node
 
-- implement data sources architecture
-    - modules, as described in architecture document
 
 - add the GROUP BY and HAVING clauses to the gramamr
 - complex combinations of SQL + RaSQL
 
 
-- do not exit the hql client once a syntax error has been found
-    - move the "yyparse()" into a while loop.
 
 DONE
 - simple RaSQL queries
@@ -44,3 +43,7 @@ DONE
     - always execute one SQL and one RaSQL query
     - merge the results
         - cartesian product / join :-s
+- do not exit the hql client once a syntax error has been found
+    - move the "yyparse()" into a while loop.
+- implement data sources architecture
+    - modules, as described in architecture document

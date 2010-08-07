@@ -18,7 +18,7 @@ $(OUTLIB): $(OBJ)
 	ranlib $(OUTLIB)
 
 
-$(OBJ): %.o: %.cpp
+$(OBJ): %.o: %.cpp %.hpp
 	$(CPP) -c $(CPPFLAGS) $< -o $@
 
 

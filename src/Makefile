@@ -38,35 +38,21 @@ $(LIB_DS):
 ### Driver actually builds the parser driver program
 hql: grammar utils driver.o HqlMain.o querytree datasources
 	$(CPP) $(CPPFLAGS) driver.o HqlMain.o		\
-	utils/HqlTable.o				\
+	utils/HqlTable.o utils/logger.o			\
 	$(RASQL_LIBS) $(SQL_LIBS)			\
 	grammar/parser.o grammar/lexer.o		\
 	$(LIBS)						\
 	-o hql
 
-grammar: lib/libparse.a lib/librqlparse.a
+grammar: $(LIB_PG) $(LIB_RMAN)
 	make -C grammar
 
-querytree: lib/libquerytree.a
-	cp $(LIB_QT) $(HQLROOT)/lib/
+querytree: $(LIB_QT)
 
-utils: utils/HqlTable.o
+utils: utils/HqlTable.o utils/logger.o
 	make -C utils
 
-datasources : lib/libdatasources.a
-	cp $(LIB_DS) $(HQLROOT)/lib/
-
-lib/libparse.a: $(LIB_PG)
-	cp $(LIB_PG) $(HQLROOT)/lib/
-
-lib/librqlparse.a: $(LIB_RMAN)
-	cp $(LIB_RMAN) $(HQLROOT)/lib/
-
-lib/libquerytree.a: $(LIB_QT)
-	make -C querytree
-
-lib/libdatasources.a: $(LIB_DS)
-	make -C datasources
+datasources : $(LIB_DS)
 
 driver.o: driver.cpp
 	$(CPP) $(CPPFLAGS) $(LIBS) -c driver.cpp   -o driver.o

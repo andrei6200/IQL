@@ -58,7 +58,7 @@ private:
     std::vector<std::vector<std::string> > data;
 
     /* Counters */
-    int columns, rows;
+    long columns, rows;
 };
 
 #define TABLE_COL_SEPARATOR     " | "
