@@ -168,10 +168,10 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libdatasources.a
 libdatasources_a_SOURCES = DataSourceInterface.cpp  PostgresDS.cpp  RasdamanDS.cpp
-AM_CXXFLAGS = -I.. -I@RASDAMAN@/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG
-AM_LDFLAGS = -L$(RASDAMAN)/lib 
-LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto -lpqxx
 test_SOURCES = test.cpp ../logger.cpp ../HqlTable.cpp RasdamanDS.cpp DataSourceInterface.cpp
+AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG
+LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto -lpqxx
+AM_LDFLAGS = -L$(RASDAMAN)/lib 
 all: all-am
 
 .SUFFIXES:
@@ -185,9 +185,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/datasources/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/datasources/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/datasources/Makefile
+	  $(AUTOMAKE) --foreign src/datasources/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -508,8 +508,6 @@ uninstall-am: uninstall-binPROGRAMS
 	mostlyclean-compile mostlyclean-generic pdf pdf-am ps ps-am \
 	tags uninstall uninstall-am uninstall-binPROGRAMS
 
-#test_DEPENDENCIES = libdatasources.a
-#test_LDADD = $(LDADD) libdatasources.a 
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -7,7 +7,7 @@
 FLEXFLAGS = -CF
 YACCFLAGS = -d
 
-CXXFLAGS += -I.. -I$(RASDAMAN)/include -I../postgres/include -I../rasdaman/include
+CXXFLAGS += -w -I.. -I$(RASDAMAN)/include -I../postgres/include -I../rasdaman/include
 
 
 #########################

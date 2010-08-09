@@ -175,7 +175,7 @@ libquerytree_a_SOURCES = \
 		QtDataSourceRef.cpp     QtNode.cpp              QtSliceArray.cpp							\
 		QtDot.cpp               QtPaginate.cpp          QtSort.cpp
 
-AM_CXXFLAGS = -I.. -I@RASDAMAN@/include
+AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include
 all: all-am
 
 .SUFFIXES:
@@ -189,9 +189,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/querytree/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/querytree/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/querytree/Makefile
+	  $(AUTOMAKE) --foreign src/querytree/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

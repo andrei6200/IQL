@@ -202,7 +202,7 @@ SUBDIRS = datasources grammar querytree postgres rasdaman
 hql_SOURCES = driver.cpp HqlMain.cpp HqlTable.cpp logger.cpp 
 hql_LDFLAGS = -L$(RASDAMAN)/lib
 hql_LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto -lpqxx grammar/parser.o grammar/lexer.o postgres/libpg.a rasdaman/librman.a querytree/libquerytree.a datasources/libdatasources.a -lpqxx -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto
-AM_CXXFLAGS = -I$(RASDAMAN)/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG
+AM_CXXFLAGS = -w -I$(RASDAMAN)/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG 
 all: all-recursive
 
 .SUFFIXES:
@@ -216,9 +216,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu src/Makefile
+	  $(AUTOMAKE) --foreign src/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \

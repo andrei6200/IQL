@@ -6,4 +6,4 @@ libquerytree_a_SOURCES = \
 		QtDataSource.cpp        QtList.cpp              QtSetOperation.cpp     QueryTree.cpp		\
 		QtDataSourceRef.cpp     QtNode.cpp              QtSliceArray.cpp							\
 		QtDot.cpp               QtPaginate.cpp          QtSort.cpp
-AM_CXXFLAGS = -I.. -I@RASDAMAN@/include
+AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include

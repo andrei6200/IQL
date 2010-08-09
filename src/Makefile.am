@@ -8,4 +8,4 @@ hql_LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -l
 
 
 
-AM_CXXFLAGS = -I$(RASDAMAN)/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG
+AM_CXXFLAGS = -w -I$(RASDAMAN)/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG 

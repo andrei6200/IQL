@@ -47,8 +47,9 @@ public:
     // Breaks the connection, aborting the active transaction.
     void disconnect();
 
-    void commit();
-    void abort();
+    void commitTa();
+    void abortTa();
+    void openTa();
 
     // Execute a query on the current data source
     HqlTable* query(std::string query);

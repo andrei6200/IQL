@@ -54,6 +54,9 @@ private:
     std::vector<std::string> names;
     /* The column widths */
     std::vector<int> widths;
+    /* Hidden info */
+    std::vector<bool> hidden;
+    int hiddenCount;
     /* The actual data, as strings */
     std::vector<std::vector<std::string> > data;
 

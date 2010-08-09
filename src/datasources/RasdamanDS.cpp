@@ -32,36 +32,47 @@ void RasdamanDS::connect()
     try
     {
         /* Init RMAN database connections */
-        TRACE << "Connecting to Rasdaman host " << RASDAMAN_SERVER
-                << " with port " << RASDAMAN_PORT
-                << " using user/password " << RASDAMAN_USERNAME << "/"
-                << RASDAMAN_PASSWORD
-                << " and opening database " << RASDAMAN_DATABASE;
-        db = new r_Database();
-        db->set_servername(RASDAMAN_SERVER, RASDAMAN_PORT);
-        db->set_useridentification(RASDAMAN_USERNAME, RASDAMAN_PASSWORD);
-        db->open(RASDAMAN_DATABASE);
-
-        tr = new r_Transaction();
-        tr->begin();
+        if (db == NULL)
+        {
+            TRACE << "Connecting to Rasdaman host " << RASDAMAN_SERVER
+                    << " with port " << RASDAMAN_PORT
+                    << " using user/password " << RASDAMAN_USERNAME << "/"
+                    << RASDAMAN_PASSWORD
+                    << " and opening database " << RASDAMAN_DATABASE;
+            db = new r_Database();
+            db->set_servername(RASDAMAN_SERVER, RASDAMAN_PORT);
+            db->set_useridentification(RASDAMAN_USERNAME, RASDAMAN_PASSWORD);
+            db->open(RASDAMAN_DATABASE);
+        }
+        /* And Init RMAN database transaction */
+        openTa();
     }
     catch (r_Error e)
     {
         FATAL << "Could not connect to Rasdaman: \n" << e.what();
         cout << "Could not connect to Rasdaman: \n" << e.what() << endl;
+
+        disconnect();
+
         throw e;
     }
 }
 
-void RasdamanDS::disconnect()
+void RasdamanDS::openTa()
 {
-    if (tr)
+    if (tr != NULL)
     {
         tr->abort();
-        delete tr;
         tr = NULL;
-        TRACE << "RasdamanDS: Aborted the database transaction ...";
     }
+    
+    tr = new r_Transaction();
+    tr->begin();
+}
+
+void RasdamanDS::disconnect()
+{
+    abortTa();
     if (db)
     {
         db->close();
@@ -80,47 +91,49 @@ RasdamanDS::~RasdamanDS()
 bool RasdamanDS::isConnected()
 {
     bool result = false;
-    if (db)
-        result = db->get_status() != r_Database::not_open;
-    result = result && (tr != NULL);
+    if (db == NULL || tr == NULL)
+        result = false;
+    else
+        result = (db->get_status() != r_Database::not_open) &&
+                 (tr->get_status() == r_Transaction::active);
     return result;
 }
 
 vector<string> RasdamanDS::getObjectNames()
 {
     string queryStr = "select mddcollname from RAS_MDDCOLLNAMES;";
-	HqlTable *table = new HqlTable();
-	connection *sqlconn = NULL;
-	work *sqltr = NULL;
+    HqlTable *table = new HqlTable();
+    connection *sqlconn = NULL;
+    work *sqltr = NULL;
 
     string opts("dbname=");
     opts += RASDAMAN_DATABASE;
 
-	try
-	{
-		sqlconn = new connection(opts);
-		sqltr = new work(*sqlconn, string("Hql-Rasdaman-Conn"));
-		result R(sqltr->exec(queryStr));
-		table->importFromSql(R);
-		sqltr->abort();
-		sqlconn->disconnect();
-	}
-	catch (...)
-	{
-		FATAL << "Could not get object names from Rasdaman underlying database.";
-		delete sqltr;
-		delete sqlconn;
-		delete table;
-		return vector<string>();
-	}
+    try
+    {
+        sqlconn = new connection(opts);
+        sqltr = new work(*sqlconn, string("Hql-Rasdaman-Conn"));
+        result R(sqltr->exec(queryStr));
+        table->importFromSql(R);
+        sqltr->abort();
+        sqlconn->disconnect();
+    }
+    catch (...)
+    {
+        FATAL << "Could not get object names from Rasdaman underlying database.";
+        delete sqltr;
+        delete sqlconn;
+        delete table;
+        return vector<string>();
+    }
 
-	delete sqltr;
-	delete sqlconn;
+    delete sqltr;
+    delete sqlconn;
 
     return table->getColumn(0);
 }
 
-void RasdamanDS::abort()
+void RasdamanDS::abortTa()
 {
     if (tr)
     {
@@ -132,7 +145,7 @@ void RasdamanDS::abort()
     }
 }
 
-void RasdamanDS::commit()
+void RasdamanDS::commitTa()
 {
     if (tr)
     {
@@ -166,17 +179,17 @@ HqlTable* RasdamanDS::query(string queryString)
     }
     catch (r_Error &e)
     {
-        abort();
+        abortTa();
+        disconnect();
         throw e;
     }
 
-    HqlTable *table = new HqlTable();
-    table->importFromRasql(&result_set);
-
     /* Close the transaction (after processing of data) */
-//    commit();
+    commitTa();
 
     /* Return the data. */
+    HqlTable *table = new HqlTable();
+    table->importFromRasql(&result_set);
     return table;
 }
 

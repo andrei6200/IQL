@@ -1,7 +1,7 @@
-/* 
+/*
  * File:   HqlTable.cpp
  * Author: andrei
- * 
+ *
  * Created on June 18, 2010, 4:02 PM
  */
 
@@ -23,17 +23,18 @@
 #include "rasdaman.hh"
 
 
+
+
 #include "HqlTable.hpp"
 #include "config.hpp"
 #include "logger.hpp"
-#include "HqlTable.hpp"
 
 
 using namespace std;
 using namespace pqxx;
 
 
-HqlTable::HqlTable() : rows(0), columns(0)
+HqlTable::HqlTable() : rows(0), columns(0), hiddenCount(0)
 {
 	TRACE << "Creater new Table with " << rows << " rows and " << columns << " columns";
 }
@@ -45,13 +46,20 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
     INFO << "Building HqlTable from Rasql result ...";
 
     rows = resultSet->cardinality();
-    columns = 1;
+    columns = 2;
 
-    string colname = "rasql_output";
+    string colname("rasql_output");
+    string oid("_rasql_oid");
     names = vector<string>();
     names.push_back(colname);
+    names.push_back(oid);
     widths = vector<int>();
     widths.push_back(colname.length());
+    widths.push_back(oid.length());
+    hidden = vector<bool>();
+    hidden.push_back(false);
+    hidden.push_back(true);
+    hiddenCount = 1;
 
     vector<string> row;
 
@@ -131,12 +139,9 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
 
             default:
                 TRACE << "  Scalar Result element " << i << ": " << flush;
-                //            printScalar(*(r_Ref<r_Scalar > (*iter)));
-                //            cout << endl;
-                // or simply
-                //            r_Ref<r_Scalar>(*iter)->print_status( cout );
-
+                
                 cell << *(r_Ref<r_Scalar > (*iter));
+                break;
         } // switch
 
         /* Add the value of the current cell to the table */
@@ -144,8 +149,15 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
         row.clear();
         row.push_back(cell.str());
 
+        r_Ref_Any ref = *iter;
+        stringstream stroid(stringstream::out);
+        stroid << ref.get_oid();
+        row.push_back(stroid.str());
+
         if (widths[0] < cell.str().length())
             widths[0] = cell.str().length();
+        if (widths[1] < stroid.str().length())
+            widths[1] = stroid.str().length();
 
         data.push_back(row);
 
@@ -160,6 +172,8 @@ void HqlTable::importFromSql(result sqlResult)
     columns = sqlResult.columns();
 
     widths = vector<int>(columns, 0);
+    hidden = vector<bool>(columns, false);
+    hiddenCount = 0;
 
     names = vector<string > (columns, "");
     for (int i = 0; i < columns; i++)
@@ -245,7 +259,7 @@ void HqlTable::print(ostream &out)
     TRACE << "Printing HqlTable instance.";
     DEBUG << "HqlTable instance:";
     DEBUG << " * " << rows << " rows";
-    DEBUG << " * " << columns << " columns";
+    DEBUG << " * " << columns << " columns ( " << hiddenCount << " hidden )";
     DEBUG;
 
     out << INDENT_PROMPT << "SQL Query results" << endl;
@@ -257,19 +271,23 @@ void HqlTable::print(ostream &out)
         int l = names[0].size();
         out << setw((widths[0]+l)/2) << names[0] << setw((widths[0]-l)/2) << "";
         for (int i = 1; i < columns; i++)
-        {
-            l = names[i].size();
-            out << TABLE_COL_SEPARATOR << setw((widths[i]+l)/2) << names[i]
-                    << setw((widths[i]-l)/2) << "";
-        }
+            if (hidden[i] == false)
+            {
+                l = names[i].size();
+                out << TABLE_COL_SEPARATOR << setw((widths[i]+l)/2) << names[i]
+                        << setw((widths[i]-l)/2) << "";
+            }
         out << endl;
         /* And the separator line ...*/
         out << INDENT_PROMPT << setw(widths[0])
                 << setfill(TABLE_HEADER_SEPARATOR) << TABLE_HEADER_SEPARATOR;
         for (int i = 1; i < columns; i++)
-            out << TABLE_HEADER_SEPARATOR << "+" << setw(widths[i])
-            << setfill(TABLE_HEADER_SEPARATOR) << TABLE_HEADER_SEPARATOR
-                << TABLE_HEADER_SEPARATOR;
+            if (hidden[i] == false)
+            {
+                out << TABLE_HEADER_SEPARATOR << "+" << setw(widths[i])
+                << setfill(TABLE_HEADER_SEPARATOR) << TABLE_HEADER_SEPARATOR
+                    << TABLE_HEADER_SEPARATOR;
+            }
         out << setfill(' ');
     }
 
@@ -284,13 +302,14 @@ void HqlTable::print(ostream &out)
             row = data[r];
             out << INDENT_PROMPT << setw(widths[0]) << row[0];
             for (int i = 1; i < row.size(); i++)
-                out << TABLE_COL_SEPARATOR << setw(widths[i]) << row[i];
+                if (hidden[i] == false)
+                    out << TABLE_COL_SEPARATOR << setw(widths[i]) << row[i];
         }
-        
+
     }
 
     // If no rows in the result, then just print "0 rows".
-    out << endl << INDENT_PROMPT << "( " << rows 
+    out << endl << INDENT_PROMPT << "( " << rows
             << " row" << (rows == 1 ? "" : "s") << " )" << endl;
 
     TRACE << "Done Printing HqlTable instance.";
@@ -304,6 +323,10 @@ HqlTable* HqlTable::crossProduct(HqlTable* other)
 
     HqlTable *output = new HqlTable();
 
+    output->hidden = this->hidden;
+    output->hidden.insert(output->hidden.begin(),
+            other->hidden.begin(),other->hidden.end());
+    output->hiddenCount = this->hiddenCount + other->hiddenCount;
     output->columns = this->columns + other->columns;
     output->rows = this->rows * other->rows;
 
@@ -322,7 +345,7 @@ HqlTable* HqlTable::crossProduct(HqlTable* other)
         output->widths.push_back(other->widths[c2]);
         TRACE << " - " << output->widths[c1 + c2];
     }
-    
+
     /* Compute the actual cross product */
     vector<string> row, row2;
     for (r1 = 0; r1 < this->rows; r1++)

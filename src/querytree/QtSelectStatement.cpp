@@ -1,7 +1,7 @@
-/* 
+/*
  * File:   QtSelect.cpp
  * Author: andrei
- * 
+ *
  * Created on June 26, 2010, 1:36 PM
  */
 
@@ -49,24 +49,6 @@ DbEnum QtSelectStatement::setupDbSource()
 HqlTable* QtSelectStatement::execute()
 {
     TRACE << "Executing QtSelect ...";
-
-    TRACE << "test DataSource BEGIN";
-    TRACE << "---------------------";
-    QtDataSource ds("gtest");
-    HqlTable *gtest = NULL;
-    gtest = ds.execute();
-    if (gtest)
-    {
-        cout << "START gtest" << endl;
-        gtest->print(cout);
-        cout << "END gtest" << endl;
-        delete gtest;
-    }
-    else
-        cout << "Could not find table 'gtest'" << endl;
-    TRACE << "---------------------";
-    TRACE << "test DataSource END";
-    
 
     HqlTable *table = NULL;
 

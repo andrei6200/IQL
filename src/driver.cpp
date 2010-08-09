@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 
     /* Then run the parser and wait input from the user. Queries will be executed
      * as they come in, one by one. The string "allQueries" will contain all
-     * the user-typed queries, after the grammar yields control. 
+     * the user-typed queries, after the grammar yields control.
      */
     string allQueries, query;
     do
