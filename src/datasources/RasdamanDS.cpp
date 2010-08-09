@@ -6,12 +6,11 @@
  */
 
 
-
+#include <pqxx/pqxx>
 
 #include "RasdamanDS.hpp"
-#include "PostgresDS.hpp"
 #include "config.hpp"
-#include "utils/logger.hpp"
+#include "logger.hpp"
 
 
 using namespace std;
@@ -90,12 +89,34 @@ bool RasdamanDS::isConnected()
 vector<string> RasdamanDS::getObjectNames()
 {
     string queryStr = "select mddcollname from RAS_MDDCOLLNAMES;";
+	HqlTable *table = new HqlTable();
+	connection *sqlconn = NULL;
+	work *sqltr = NULL;
 
     string opts("dbname=");
     opts += RASDAMAN_DATABASE;
-    PostgresDS pg(opts);
-    
-    HqlTable *table = pg.query(queryStr);
+
+	try
+	{
+		sqlconn = new connection(opts);
+		sqltr = new work(*sqlconn, string("Hql-Rasdaman-Conn"));
+		result R(sqltr->exec(queryStr));
+		table->importFromSql(R);
+		sqltr->abort();
+		sqlconn->disconnect();
+	}
+	catch (...)
+	{
+		FATAL << "Could not get object names from Rasdaman underlying database.";
+		delete sqltr;
+		delete sqlconn;
+		delete table;
+		return vector<string>();
+	}
+
+	delete sqltr;
+	delete sqlconn;
+
     return table->getColumn(0);
 }
 

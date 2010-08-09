@@ -12,7 +12,7 @@
 
 //#include <string>
 
-#include "utils/HqlTable.hpp"
+#include "HqlTable.hpp"
 
 /* Enumeration of available DBMS systems */
 enum DbEnum

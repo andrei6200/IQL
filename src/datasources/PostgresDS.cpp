@@ -7,7 +7,7 @@
 
 #include "PostgresDS.hpp"
 #include <pqxx/pqxx>
-#include "utils/HqlTable.hpp"
+#include "HqlTable.hpp"
 
 using namespace std;
 using namespace pqxx;

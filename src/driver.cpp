@@ -6,7 +6,7 @@
 #include <signal.h>
 
 #include "HqlMain.hpp"
-#include "utils/logger.hpp"
+#include "logger.hpp"
 #include "config.hpp"
 
 

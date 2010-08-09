@@ -14,10 +14,10 @@
 
 /* Header file of this class */
 #include "HqlMain.hpp"
-#include "utils/logger.hpp"
+#include "logger.hpp"
 #include "querytree/QueryTree.hpp"
 #include "config.hpp"
-#include "utils/HqlTable.hpp"
+#include "HqlTable.hpp"
 
 
 using namespace pqxx;

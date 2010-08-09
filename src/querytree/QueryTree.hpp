@@ -8,7 +8,7 @@
 #ifndef QUERYTREE_HPP
 #define	QUERYTREE_HPP
 
-#include "utils/HqlTable.hpp"
+#include "HqlTable.hpp"
 
 #include "QtString.hpp"
 #include "QtNode.hpp"

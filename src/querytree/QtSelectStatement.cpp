@@ -6,10 +6,10 @@
  */
 
 #include "QtSelectStatement.hpp"
-//#include <vector>
-//#include <typeinfo>
+#include <vector>
+#include <typeinfo>
 #include "HqlMain.hpp"
-#include "utils/logger.hpp"
+#include "logger.hpp"
 
 using namespace std;
 

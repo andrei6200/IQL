@@ -31,7 +31,7 @@
 #include <string>
 
 #include "querytree/QueryTree.hpp"
-#include "utils/HqlTable.hpp"
+#include "HqlTable.hpp"
 #include "datasources/PostgresDS.hpp"
 #include "datasources/RasdamanDS.hpp"
 

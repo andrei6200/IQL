@@ -7,11 +7,14 @@
 
 #include <string>
 #include "QtNode.hpp"
-#include "utils/logger.hpp"
 
 using namespace std;
 
 QtNode::QtNode() : db_source(DB_NOT_INITIALIZED), query(NULL)
+{
+}
+
+QtNode::~QtNode()
 {
 }
 

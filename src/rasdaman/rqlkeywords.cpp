@@ -14,7 +14,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "grammar/parser.h"
+#include "grammar/parser.hpp"
 #include "rqlkeywords.h"
 
 #define RASQL_KW(a,b) {a,b},

@@ -11,7 +11,7 @@
 #define	DATASOURCEINTERFACE_HPP
 
 #include <string>
-#include "utils/HqlTable.hpp"
+#include "HqlTable.hpp"
 
 class DataSourceInterface
 {

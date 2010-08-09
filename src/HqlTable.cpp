@@ -23,9 +23,9 @@
 #include "rasdaman.hh"
 
 
-#include "utils/HqlTable.hpp"
+#include "HqlTable.hpp"
 #include "config.hpp"
-#include "utils/logger.hpp"
+#include "logger.hpp"
 #include "HqlTable.hpp"
 
 

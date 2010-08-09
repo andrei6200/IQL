@@ -8,9 +8,9 @@
 #ifndef QTDOT_HPP
 #define	QTDOT_HPP
 
-//#include <string>
+#include <string>
 #include "QtNode.hpp"
-#include "utils/HqlTable.hpp"
+#include "HqlTable.hpp"
 
 class QtDot: public QtNode
 {

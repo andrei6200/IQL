@@ -8,7 +8,7 @@
 
 #include "str.h"
 #include "HqlMain.hpp"
-#include "utils/logger.hpp"
+#include "logger.hpp"
 #include "querytree/QueryTree.hpp"
 
 

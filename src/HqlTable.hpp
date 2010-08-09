@@ -11,7 +11,7 @@
 #include <pqxx/pqxx>
 #include "rasdaman.hh"
 
-#include "utils/logger.hpp"
+#include "logger.hpp"
 
 class HqlTable
 {
