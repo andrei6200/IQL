@@ -323,7 +323,6 @@ typecast		"::"
  * If you change either set, adjust the character lists appearing in the
  * rule for "operator"!
  */
-self			[,()\[\].;\:\+\-\*\/\%\^\<\>\=]
 op_chars		[\~\!\@\#\^\&\|\`\?\+\-\*\/\%\<\>\=]
 operator		{op_chars}+
 
@@ -734,11 +733,6 @@ other			.
 {typecast}		{
 					SET_YYLLOC();
 					return TYPECAST;
-				}
-
-{self}			{
-					SET_YYLLOC();
-					return yytext[0];
 				}
 
 {operator}		{

@@ -24,12 +24,6 @@ using namespace pqxx;
 using namespace std;
 
 
-/*********************************/
-/* Initialize logging */
-#include "utils/logger.cpp"
-/*********************************/
-
-
 
 HqlMain* HqlMain::instance = NULL;
 
