@@ -193,7 +193,6 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
 SUBDIRS = src
-EXTRA_DIST = autogen.sh
 all: all-recursive
 
 .SUFFIXES:

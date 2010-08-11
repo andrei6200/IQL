@@ -53,11 +53,10 @@ am_libdatasources_a_OBJECTS = DataSourceInterface.$(OBJEXT) \
 libdatasources_a_OBJECTS = $(am_libdatasources_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_test_OBJECTS = test.$(OBJEXT) logger.$(OBJEXT) HqlTable.$(OBJEXT) \
-	RasdamanDS.$(OBJEXT) DataSourceInterface.$(OBJEXT)
+am_test_OBJECTS = test.$(OBJEXT) logger.$(OBJEXT) RasdamanDS.$(OBJEXT) \
+	DataSourceInterface.$(OBJEXT)
 test_OBJECTS = $(am_test_OBJECTS)
 test_LDADD = $(LDADD)
-test_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -168,9 +167,10 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libdatasources.a
 libdatasources_a_SOURCES = DataSourceInterface.cpp  PostgresDS.cpp  RasdamanDS.cpp
-test_SOURCES = test.cpp ../logger.cpp ../HqlTable.cpp RasdamanDS.cpp DataSourceInterface.cpp
+test_SOURCES = test.cpp ../logger.cpp RasdamanDS.cpp DataSourceInterface.cpp
+test_DEPENDENCIES = ../HqlTable.o
 AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG
-LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto -lpqxx
+LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto -lpqxx ../HqlTable.o
 AM_LDFLAGS = -L$(RASDAMAN)/lib 
 all: all-am
 
@@ -261,7 +261,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DataSourceInterface.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HqlTable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PostgresDS.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RasdamanDS.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logger.Po@am__quote@
@@ -294,20 +293,6 @@ logger.obj: ../logger.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../logger.cpp' object='logger.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o logger.obj `if test -f '../logger.cpp'; then $(CYGPATH_W) '../logger.cpp'; else $(CYGPATH_W) '$(srcdir)/../logger.cpp'; fi`
-
-HqlTable.o: ../HqlTable.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT HqlTable.o -MD -MP -MF $(DEPDIR)/HqlTable.Tpo -c -o HqlTable.o `test -f '../HqlTable.cpp' || echo '$(srcdir)/'`../HqlTable.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/HqlTable.Tpo $(DEPDIR)/HqlTable.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../HqlTable.cpp' object='HqlTable.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o HqlTable.o `test -f '../HqlTable.cpp' || echo '$(srcdir)/'`../HqlTable.cpp
-
-HqlTable.obj: ../HqlTable.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT HqlTable.obj -MD -MP -MF $(DEPDIR)/HqlTable.Tpo -c -o HqlTable.obj `if test -f '../HqlTable.cpp'; then $(CYGPATH_W) '../HqlTable.cpp'; else $(CYGPATH_W) '$(srcdir)/../HqlTable.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/HqlTable.Tpo $(DEPDIR)/HqlTable.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../HqlTable.cpp' object='HqlTable.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o HqlTable.obj `if test -f '../HqlTable.cpp'; then $(CYGPATH_W) '../HqlTable.cpp'; else $(CYGPATH_W) '$(srcdir)/../HqlTable.cpp'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

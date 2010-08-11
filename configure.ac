@@ -4,7 +4,7 @@
 AC_PREREQ([2.65])
 AC_INIT(hql, 0.1, a.aiordachioaie@jacobs-university.de)
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign])
 
 # Checks for programs.
 AC_PROG_CXX
@@ -51,6 +51,8 @@ AC_PROG_RANLIB
 
 # The Rasdaman installation path could be overwritten by a commandline option to ./configure
 RASDAMAN=/var/lib/postgresql/installed/rasdaman.community
+CXXFLAGS=-g 
+CFLAGS=-g
 
 AC_SUBST(RASDAMAN)
 AC_SUBST(CXX)

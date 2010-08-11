@@ -4087,6 +4087,8 @@ fi
 
 # The Rasdaman installation path could be overwritten by a commandline option to ./configure
 RASDAMAN=/var/lib/postgresql/installed/rasdaman.community
+CXXFLAGS=-g
+CFLAGS=-g
 
 
 
