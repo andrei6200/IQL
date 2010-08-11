@@ -23,6 +23,7 @@
 #include "rasdaman.hh"
 
 
+#define PRINT_HIDDEN_COLUMNS
 
 
 #include "HqlTable.hpp"
@@ -34,9 +35,17 @@ using namespace std;
 using namespace pqxx;
 
 
-HqlTable::HqlTable() : rows(0), columns(0), hiddenCount(0)
+HqlTable::HqlTable() : rows(0), columns(1), hiddenCount(1), lastId(0)
 {
-	TRACE << "Creater new Table with " << rows << " rows and " << columns << " columns";
+    TRACE << "Created new Table with " << rows << " rows and "
+            << columns << " columns (" << hiddenCount << " hidden)";
+    string id("_hql_id");
+    names = vector<string>();
+    names.push_back(id);
+    widths = vector<int>();
+    widths.push_back(id.length());
+    hidden = vector<bool>();
+    hidden.push_back(true);
 }
 
 
@@ -46,20 +55,17 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
     INFO << "Building HqlTable from Rasql result ...";
 
     rows = resultSet->cardinality();
-    columns = 2;
+    columns += 2;
 
     string colname("rasql_output");
     string oid("_rasql_oid");
-    names = vector<string>();
     names.push_back(colname);
     names.push_back(oid);
-    widths = vector<int>();
     widths.push_back(colname.length());
     widths.push_back(oid.length());
-    hidden = vector<bool>();
     hidden.push_back(false);
     hidden.push_back(true);
-    hiddenCount = 1;
+    hiddenCount ++;
 
     vector<string> row;
 
@@ -105,9 +111,13 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
 
                 DEBUG << "  MDD Result object " << i << ": going into file " << defFileName << "..." << flush;
                 FILE *tfile = fopen(defFileName, "wb");
-                fwrite((void*) r_Ref<r_GMarray > (*iter)->get_array(), 1, r_Ref<r_GMarray > (*iter)->get_array_size(), tfile);
+                char* output = r_Ref<r_GMarray > (*iter)->get_array();
+                size_t size = r_Ref<r_GMarray > (*iter)->get_array_size();
+                if (size == fwrite((void*) output, sizeof(char), size, tfile))
+                    TRACE << "ok." << endl;
+                else
+                    TRACE << "could not write data into file !" << flush;
                 fclose(tfile);
-                TRACE << "ok." << endl;
 
                 cell << defFileName;
                 break;
@@ -144,9 +154,13 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
                 break;
         } // switch
 
+
+        row.clear();
+        // First generate ID of current row
+        row.push_back(generateId());
+
         /* Add the value of the current cell to the table */
         TRACE << " Cell value: " << cell.str();
-        row.clear();
         row.push_back(cell.str());
 
         r_Ref_Any ref = *iter;
@@ -154,13 +168,7 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
         stroid << ref.get_oid();
         row.push_back(stroid.str());
 
-        if (widths[0] < cell.str().length())
-            widths[0] = cell.str().length();
-        if (widths[1] < stroid.str().length())
-            widths[1] = stroid.str().length();
-
         data.push_back(row);
-
     } // for(...)
 }
 
@@ -169,18 +177,16 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
 void HqlTable::importFromSql(result sqlResult)
 {
     rows = sqlResult.size();
-    columns = sqlResult.columns();
+    int newcols = sqlResult.columns();
+    columns += newcols;
 
-    widths = vector<int>(columns, 0);
-    hidden = vector<bool>(columns, false);
-    hiddenCount = 0;
+    vector<bool> newhidden = vector<bool>(newcols, false);
+    newhidden[0] = true;
 
-    names = vector<string > (columns, "");
-    for (int i = 0; i < columns; i++)
+    vector<string> newnames = vector<string > (newcols, "");
+    for (int i = 0; i < newcols; i++)
     {
-        names[i] = sqlResult.column_name(i);
-        if (names[i].length() > widths[i])
-            widths[i] = names[i].length();
+        newnames[i] = sqlResult.column_name(i);
     }
 
     if (sqlResult.size() == 0)
@@ -188,21 +194,26 @@ void HqlTable::importFromSql(result sqlResult)
 
     result::const_iterator it;
     vector<string> row;
-    int length;
     data.clear();
     for (it = sqlResult.begin(); it != sqlResult.end(); it++)
     {
         row.clear();
+        // Insert row ID
+        row.push_back(generateId());
+        // Insert actual data
         result::tuple tuple = *it;
+        string val;
         for (int col = 0; col < tuple.size(); col++)
         {
-            row.push_back(tuple[col].as(string()));
-            length = tuple[col].as(string()).length();
-            if (length > widths[col])
-                widths[col] = length;
+            val = tuple[col].as(string());
+            row.push_back(val);
         }
         data.push_back(row);
     }
+
+    // Append the new data
+    hidden.insert(hidden.end(), newcols, false);
+    names.insert(names.end(), newnames.begin(), newnames.end());
 }
 
 vector<string> HqlTable::getColumn(int index)
@@ -212,6 +223,31 @@ vector<string> HqlTable::getColumn(int index)
         vec.push_back(data[i][index]);
     return vec;
 }
+
+
+vector<string> HqlTable::getColumn(string name)
+{
+    int index = -1, count = 0;
+    for (int i = 0; i < columns; i ++)
+        if (names[i] == name)
+        {
+            index = i;
+            count ++;
+        }
+
+    switch (count)
+    {
+        case 0:
+            throw string("Column with name '" + name + "' could not found.");
+        case 1:
+            return getColumn(index);
+        default:
+            throw string("Too many columns with name: '" + name + "'");
+    }
+
+    return vector<string>();
+}
+
 
 //HqlTable::HqlTable(vector<vector<string> > data, vector<string> names)
 //{
@@ -256,6 +292,8 @@ HqlTable::~HqlTable()
 /* Print the table contents to a specified stream. */
 void HqlTable::print(ostream &out)
 {
+    updateWidths();
+
     TRACE << "Printing HqlTable instance.";
     DEBUG << "HqlTable instance:";
     DEBUG << " * " << rows << " rows";
@@ -266,44 +304,55 @@ void HqlTable::print(ostream &out)
 
     if (columns > 0)
     {
-        out << INDENT_PROMPT;
+        string sep = INDENT_PROMPT;
         /* First print the column names */
-        int l = names[0].size();
-        out << setw((widths[0]+l)/2) << names[0] << setw((widths[0]-l)/2) << "";
-        for (int i = 1; i < columns; i++)
+        int l = 0;
+        for (int i = 0; i < columns; i++)
+#ifndef PRINT_HIDDEN_COLUMNS
             if (hidden[i] == false)
+#endif
             {
                 l = names[i].size();
-                out << TABLE_COL_SEPARATOR << setw((widths[i]+l)/2) << names[i]
+                out << sep << setw((widths[i]+l)/2) << names[i]
                         << setw((widths[i]-l)/2) << "";
+                if ((widths[i]+l) % 2 == 1 || (widths[i]-l) % 2 == 1)
+                    out << " ";
+                sep = TABLE_COL_SEPARATOR;
             }
         out << endl;
         /* And the separator line ...*/
-        out << INDENT_PROMPT << setw(widths[0])
-                << setfill(TABLE_HEADER_SEPARATOR) << TABLE_HEADER_SEPARATOR;
-        for (int i = 1; i < columns; i++)
+        sep = INDENT_PROMPT;
+        char newsep[5];
+        sprintf(newsep, "%c%s%c", TABLE_HEADER_SEPARATOR, "+", TABLE_HEADER_SEPARATOR);
+        for (int i = 0; i < columns; i++)
+#ifndef PRINT_HIDDEN_COLUMNS
             if (hidden[i] == false)
+#endif
             {
-                out << TABLE_HEADER_SEPARATOR << "+" << setw(widths[i])
-                << setfill(TABLE_HEADER_SEPARATOR) << TABLE_HEADER_SEPARATOR
-                    << TABLE_HEADER_SEPARATOR;
+                out << sep << setw(widths[i]) << setfill(TABLE_HEADER_SEPARATOR) << "";
+                sep = newsep;
             }
         out << setfill(' ');
     }
 
     if (rows > 0)
     {
-
+        
         /* Now print the actual data*/
         vector<string> row;
         for (int r = 0; r < rows; r++)
         {
+            string sep = INDENT_PROMPT;
             out << endl;
             row = data[r];
-            out << INDENT_PROMPT << setw(widths[0]) << row[0];
-            for (int i = 1; i < row.size(); i++)
+            for (int i = 0; i < row.size(); i++)
+#ifndef PRINT_HIDDEN_COLUMNS
                 if (hidden[i] == false)
-                    out << TABLE_COL_SEPARATOR << setw(widths[i]) << row[i];
+#endif
+                {
+                    out << sep << setw(widths[i]) << row[i];
+                    sep = TABLE_COL_SEPARATOR;
+                }
         }
 
     }
@@ -324,35 +373,33 @@ HqlTable* HqlTable::crossProduct(HqlTable* other)
     HqlTable *output = new HqlTable();
 
     output->hidden = this->hidden;
-    output->hidden.insert(output->hidden.begin(),
-            other->hidden.begin(),other->hidden.end());
-    output->hiddenCount = this->hiddenCount + other->hiddenCount;
-    output->columns = this->columns + other->columns;
+    vector<bool> h2 = other->hidden;
+    h2.erase(h2.begin());
+    output->hidden.insert(output->hidden.end(), h2.begin(), h2.end());
+    // "-1" so that we do not count the HQL id column twice
+    output->hiddenCount = this->hiddenCount + other->hiddenCount - 1;
+    output->columns = this->columns + other->columns - 1;
     output->rows = this->rows * other->rows;
 
     int c1, c2, r1, r2;
-    /* Copy column names and the column widths. */
-    TRACE << "Using widths vector: ";
-    for (c1 = 0; c1 < this->columns; c1++)
-    {
-        output->names.push_back(this->names[c1]);
-        output->widths.push_back(this->widths[c1]);
-        TRACE << " - " << output->widths[c1];
-    }
-    for (c2 = 0; c2 < other->columns; c2++)
-    {
-        output->names.push_back(other->names[c2]);
-        output->widths.push_back(other->widths[c2]);
-        TRACE << " - " << output->widths[c1 + c2];
-    }
+    /* Copy column names */
+    output->names = this->names;
+    vector<string> names2 = other->names;
+    names2.erase(names2.begin());   // erase the "HQL ID" column
+    output->names.insert(output->names.end(), names2.begin(), names2.end());
 
     /* Compute the actual cross product */
+    resetId();
     vector<string> row, row2;
     for (r1 = 0; r1 < this->rows; r1++)
         for (r2 = 0; r2 < other->rows; r2++)
         {
             row = this->data[r1];
             row2 = other->data[r2];
+            /* Update the IDs */
+            row.erase(row.begin());
+            row2.erase(row2.begin());
+            row.insert(row.begin(), generateId());
             row.insert(row.end(), row2.begin(), row2.end());
             output->data.push_back(row);
             TRACE << "Just inserted row: ";
@@ -364,4 +411,34 @@ HqlTable* HqlTable::crossProduct(HqlTable* other)
     TRACE << "Cross product has been evaluated.";
 
     return output;
+}
+
+
+string HqlTable::generateId()
+{
+    stringstream stream;
+    stream << ++lastId;
+    return stream.str();
+}
+
+void HqlTable::resetId()
+{
+    lastId = 0;
+}
+
+void HqlTable::updateWidths()
+{
+    widths = vector<int>(columns, 0);
+
+    vector<vector<string> >::iterator row;
+    for (row = data.begin(); row != data.end(); row++)
+    {
+        for (int col = 0; col < row->size(); col++)
+            if (row->at(col).length() > widths[col])
+                widths[col] = row->at(col).length();
+    }
+
+    for (int col = 0; col < names.size(); col++)
+        if (names[col].length() > widths[col])
+            widths[col] = names[col].length();
 }

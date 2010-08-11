@@ -95,7 +95,7 @@ vector<string> PostgresDS::getObjectNames()
 
     HqlTable *table = this->query(queryStr);
     
-    return table->getColumn(0);
+    return table->getColumn("tablename");
 }
 
 

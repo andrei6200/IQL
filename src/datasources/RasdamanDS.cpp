@@ -130,7 +130,7 @@ vector<string> RasdamanDS::getObjectNames()
     delete sqltr;
     delete sqlconn;
 
-    return table->getColumn(0);
+    return table->getColumn("mddcollname");
 }
 
 void RasdamanDS::abortTa()
@@ -184,12 +184,15 @@ HqlTable* RasdamanDS::query(string queryString)
         throw e;
     }
 
-    /* Close the transaction (after processing of data) */
-    commitTa();
+    
 
     /* Return the data. */
     HqlTable *table = new HqlTable();
     table->importFromRasql(&result_set);
+
+    /* Close the transaction (after processing of data) */
+    commitTa();
+
     return table;
 }
 

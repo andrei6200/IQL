@@ -16,8 +16,8 @@
 class HqlTable
 {
 public:
-    /* Constructor from RaSQL result type (uses global variable for info) */
-    HqlTable(/* r_Set< r_Ref_Any > rasqlResult */);
+    /* Default Constructor. */
+    HqlTable();
 
 //    /* Constructor with data and column names */
 //    HqlTable(std::vector<std::vector<std::string> > data, std::vector<std::string> names);
@@ -46,11 +46,14 @@ public:
     /* Return a certain column as a vector */
     std::vector<std::string> getColumn(int index);
 
+    /* Return a certain column as a vector */
+    std::vector<std::string> getColumn(std::string name);
+
     /* Display this table to stdout */
     void print(std::ostream& out);
 
 private:
-    /* The column names */
+    /* The column names.  */
     std::vector<std::string> names;
     /* The column widths */
     std::vector<int> widths;
@@ -59,6 +62,18 @@ private:
     int hiddenCount;
     /* The actual data, as strings */
     std::vector<std::vector<std::string> > data;
+
+    /* Reset the ID counter. */
+    void resetId();
+
+    /* Generates a new ID, unique for this table. */
+    string generateId();
+    
+    /* Last used id */
+    long lastId;
+
+    /* Update the width information for printing. */
+    void updateWidths();
 
     /* Counters */
     long columns, rows;

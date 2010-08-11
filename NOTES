@@ -1,9 +1,10 @@
-- Check if PostgreSQL can properly parse and understand "<=" or ">="
-    - Had 2 operators "<" and "=", and not the combined one
-
 - Make lists of restrictions for grammar (take from thesis)
 	- Write tests for all of them
 
+
+QUESTIONS
+- DataSourceRef nodes should not store data in a Table, right?
+- all other nodes store data in a DS
 
 
 TODO: 
