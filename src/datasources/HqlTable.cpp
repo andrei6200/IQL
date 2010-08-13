@@ -22,20 +22,31 @@
 #endif
 #include "rasdaman.hh"
 
-
+// Uncomment to print hidden columns of tables
 #define PRINT_HIDDEN_COLUMNS
+
+// Printing helpers
+#define TABLE_COL_SEPARATOR     " | "
+#define TABLE_HEADER_SEPARATOR  '-'
+
+// Filename pattern, for Rasdaman coverages stored on disk
+#define DEFAULT_OUTFILE_MASK "hql_%d"
+
 
 
 #include "HqlTable.hpp"
 #include "config.hpp"
 #include "logger.hpp"
+#include "RasdamanDS.hpp"
+#include "PostgresDS.hpp"
 
 
 using namespace std;
 using namespace pqxx;
 
 
-HqlTable::HqlTable() : rows(0), columns(1), hiddenCount(1), lastId(0)
+HqlTable::HqlTable(storageType type)
+    : rows(0), columns(1), hiddenCount(1), lastId(0), storage(type)
 {
     TRACE << "Created new Table with " << rows << " rows and "
             << columns << " columns (" << hiddenCount << " hidden)";
@@ -249,41 +260,6 @@ vector<string> HqlTable::getColumn(string name)
 }
 
 
-//HqlTable::HqlTable(vector<vector<string> > data, vector<string> names)
-//{
-//    rows = data.size();
-//    if (rows > 0)
-//        columns = data[0].size();
-//    /* Error checks */
-//    if (columns != names.size())
-//        throw std::exception("Cannot build HqlTable, because vector sizes do not match.");
-//
-//    this->names = names;
-//    this->data = data;
-//
-//    /* Find out the width of each table column: take the maximum length of
-//     any value in that column. */
-//    this->widths = vector<int>(data[0].size());
-//    for (int i = 0; i < widths.size(); i++)
-//        widths[i] = 0;
-//
-//    vector<vector<string> >::iterator it;
-//    vector<string> row;
-//    vector<string>::iterator val;
-//    for (it = data.begin(); it != data.end(); it ++)
-//    {
-//        row = *it;
-//        for (i = 0, val = row.begin(); val != row.end(); val ++, i++)
-//            if ((*val).length() > widths[i])
-//                widths[i] = (*val).length();
-//    }
-//
-//    TRACE << "Here are the widths of the table columns: ";
-//    for (int i = 0; i < widths.size(); i++)
-//        TRACE << widths[i];
-//    TRACE;
-//}
-
 HqlTable::~HqlTable()
 {
 	TRACE << "Destroyed table. ";
@@ -340,6 +316,7 @@ void HqlTable::print(ostream &out)
         
         /* Now print the actual data*/
         vector<string> row;
+        int l = 0;
         for (int r = 0; r < rows; r++)
         {
             string sep = INDENT_PROMPT;
@@ -350,7 +327,11 @@ void HqlTable::print(ostream &out)
                 if (hidden[i] == false)
 #endif
                 {
-                    out << sep << setw(widths[i]) << row[i];
+                    l = row[i].size();
+                    out << sep << setw((widths[i]+l)/2) << row[i]
+                               << setw((widths[i]-l)/2) << "";
+                    if ((widths[i]+l) % 2 == 1 || (widths[i]-l) % 2 == 1)
+                        out << " ";
                     sep = TABLE_COL_SEPARATOR;
                 }
         }
@@ -381,7 +362,7 @@ HqlTable* HqlTable::crossProduct(HqlTable* other)
     output->columns = this->columns + other->columns - 1;
     output->rows = this->rows * other->rows;
 
-    int c1, c2, r1, r2;
+    int r1, r2;
     /* Copy column names */
     output->names = this->names;
     vector<string> names2 = other->names;

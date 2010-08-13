@@ -17,7 +17,6 @@
 #include "logger.hpp"
 #include "querytree/QueryTree.hpp"
 #include "config.hpp"
-#include "HqlTable.hpp"
 
 
 using namespace pqxx;
@@ -42,7 +41,9 @@ HqlMain& HqlMain::getInstance()
  */
 HqlMain::HqlMain()
 {
-    INFO << "Initialization of HqlMain ... ";
+    id = random() % 10000;
+
+    INFO << "Initialization of HqlMain (ID " << id << ")... ";
     /* Initialization */
 
     pg = new PostgresDS();
@@ -119,4 +120,9 @@ HqlTable* HqlMain::runSqlQuery(string query)
 HqlTable* HqlMain::runRasqlQuery(string query)
 {
     return rman->query(query);
+}
+
+long HqlMain::getId()
+{
+    return id;
 }

@@ -16,14 +16,16 @@
 class HqlTable
 {
 public:
-    /* Default Constructor. */
-    HqlTable();
 
-//    /* Constructor with data and column names */
-//    HqlTable(std::vector<std::vector<std::string> > data, std::vector<std::string> names);
+    /* Allow full access to the private members of the HqlTable, for efficiency.*/
+    friend class PostgresDS;
+    friend class RasdamanDS;
 
-//    /* Constructor from SQL result type */
-//    HqlTable(pqxx::result sqlResult);
+    /* A table can be stored in memory, in Postgres or in Rasdaman. */
+    enum storageType {MEMORY, POSTGRES, RASDAMAN};
+
+    /* Default Constructor: an in-memory table. */
+    HqlTable(storageType type = MEMORY);
 
     /* Import data from Rasdaman to the current table */
     void importFromRasql(r_Set<r_Ref_Any> *resultSet);
@@ -33,12 +35,6 @@ public:
 
     /* Execute a cross Product between this table and another HqlTable. */
     HqlTable* crossProduct(HqlTable *other);
-
-//    /* Constructor from RaSQL result type */
-//    HqlTable(r_Set<r_Ref_Any> rasqlResult);
-
-//    /* Copy constructor */
-//    HqlTable(const HqlTable& orig);
 
     /* Destructor */
     virtual ~HqlTable();
@@ -77,11 +73,10 @@ private:
 
     /* Counters */
     long columns, rows;
+
+    /* Storage type */
+    storageType storage;
 };
 
-#define TABLE_COL_SEPARATOR     " | "
-#define TABLE_HEADER_SEPARATOR  '-'
-
-#define DEFAULT_OUTFILE_MASK "hql_%d"
 
 #endif	/* HQLTABLE_HPP */

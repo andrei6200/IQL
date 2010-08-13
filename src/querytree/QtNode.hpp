@@ -10,9 +10,8 @@
 #ifndef QTNODE_HPP
 #define	QTNODE_HPP
 
-//#include <string>
-
-#include "HqlTable.hpp"
+#include <string>
+#include "datasources/HqlTable.hpp"
 
 /* Enumeration of available DBMS systems */
 enum DbEnum
@@ -51,6 +50,9 @@ public:
 
     /* Execute the operation of this node and return a HqlTable result. */
     virtual HqlTable* execute();
+
+    /* Returns the unique ID of this node. */
+    std::string getId();
     
     /* Query string. */
     char* query;
@@ -58,6 +60,14 @@ public:
 protected:
     /* Database Source System */
     DbEnum db_source;
+
+    std::string id;
+
+    /* Generate a unique ID */
+    static std::string generateId();
+
+    /* Generated IDs so far. */
+    static long idCounter;
 };
 
 #endif	/* QTNODE_HPP */

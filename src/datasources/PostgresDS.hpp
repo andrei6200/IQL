@@ -54,4 +54,3 @@ private:
 };
 
 #endif	/* POSTGRESDS_HPP */
-

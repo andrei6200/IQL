@@ -50,6 +50,8 @@ HqlTable* QtSelectStatement::execute()
 {
     TRACE << "Executing QtSelect ...";
 
+    INFO << "ID: " << getId();
+
     HqlTable *table = NULL;
 
     setupDbSource();

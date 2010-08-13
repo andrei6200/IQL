@@ -31,7 +31,7 @@
 #include <string>
 
 #include "querytree/QueryTree.hpp"
-#include "HqlTable.hpp"
+#include "datasources/HqlTable.hpp"
 #include "datasources/PostgresDS.hpp"
 #include "datasources/RasdamanDS.hpp"
 
@@ -59,6 +59,8 @@ public:
     HqlTable* runSqlQuery(std::string query);
 
     HqlTable* runRasqlQuery(std::string query);
+
+    long getId();
     
 private:
     /*
@@ -73,6 +75,9 @@ private:
     /* Data Sources */
     PostgresDS *pg;
     RasdamanDS *rman;
+
+    /* Integer ID */
+    long id;
 };
 
 

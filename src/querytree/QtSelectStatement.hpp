@@ -15,7 +15,7 @@
 #include "QtNode.hpp"
 #include "QtList.hpp"
 
-#include "HqlTable.hpp"
+#include "datasources/HqlTable.hpp"
 
 #include <vector>
 

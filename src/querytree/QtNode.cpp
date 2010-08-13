@@ -7,11 +7,16 @@
 
 #include <string>
 #include "QtNode.hpp"
+#include "HqlMain.hpp"
 
 using namespace std;
 
+long QtNode::idCounter = 0;
+
 QtNode::QtNode() : db_source(DB_NOT_INITIALIZED), query(NULL)
 {
+    /* Generate ID for this node. */
+    id = QtNode::generateId();
 }
 
 QtNode::~QtNode()
@@ -31,4 +36,16 @@ HqlTable* QtNode::execute()
 char* QtNode::toCString()
 {
     return strdup((char*) this->toString().c_str());
+}
+
+string QtNode::getId()
+{
+    return id;
+}
+
+string QtNode::generateId()
+{
+    stringstream s;
+    s << "id" << HqlMain::getInstance().getId() << "-" << ++ QtNode::idCounter;
+    return s.str();
 }

@@ -49,14 +49,15 @@ ARFLAGS = cru
 libdatasources_a_AR = $(AR) $(ARFLAGS)
 libdatasources_a_LIBADD =
 am_libdatasources_a_OBJECTS = DataSourceInterface.$(OBJEXT) \
-	PostgresDS.$(OBJEXT) RasdamanDS.$(OBJEXT)
+	PostgresDS.$(OBJEXT) RasdamanDS.$(OBJEXT) HqlTable.$(OBJEXT)
 libdatasources_a_OBJECTS = $(am_libdatasources_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_test_OBJECTS = test.$(OBJEXT) logger.$(OBJEXT) RasdamanDS.$(OBJEXT) \
-	DataSourceInterface.$(OBJEXT)
+	DataSourceInterface.$(OBJEXT) HqlTable.$(OBJEXT)
 test_OBJECTS = $(am_test_OBJECTS)
 test_LDADD = $(LDADD)
+test_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -166,11 +167,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libdatasources.a
-libdatasources_a_SOURCES = DataSourceInterface.cpp  PostgresDS.cpp  RasdamanDS.cpp
-test_SOURCES = test.cpp ../logger.cpp RasdamanDS.cpp DataSourceInterface.cpp
-test_DEPENDENCIES = ../HqlTable.o
+libdatasources_a_SOURCES = DataSourceInterface.cpp  PostgresDS.cpp  RasdamanDS.cpp HqlTable.cpp
+test_SOURCES = test.cpp ../logger.cpp RasdamanDS.cpp DataSourceInterface.cpp HqlTable.cpp
 AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG
-LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto -lpqxx ../HqlTable.o
+LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto -lpqxx
 AM_LDFLAGS = -L$(RASDAMAN)/lib 
 all: all-am
 
@@ -261,6 +261,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DataSourceInterface.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HqlTable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PostgresDS.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RasdamanDS.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logger.Po@am__quote@

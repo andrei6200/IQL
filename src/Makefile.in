@@ -44,8 +44,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_hql_OBJECTS = driver.$(OBJEXT) HqlMain.$(OBJEXT) HqlTable.$(OBJEXT) \
-	logger.$(OBJEXT)
+am_hql_OBJECTS = driver.$(OBJEXT) HqlMain.$(OBJEXT) logger.$(OBJEXT)
 hql_OBJECTS = $(am_hql_OBJECTS)
 hql_DEPENDENCIES = grammar/parser.o grammar/lexer.o postgres/libpg.a \
 	rasdaman/librman.a querytree/libquerytree.a \
@@ -199,7 +198,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = datasources grammar querytree postgres rasdaman
-hql_SOURCES = driver.cpp HqlMain.cpp HqlTable.cpp logger.cpp 
+hql_SOURCES = driver.cpp HqlMain.cpp logger.cpp
 hql_LDFLAGS = -L$(RASDAMAN)/lib
 hql_LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto -lpqxx grammar/parser.o grammar/lexer.o postgres/libpg.a rasdaman/librman.a querytree/libquerytree.a datasources/libdatasources.a -lpqxx -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto
 AM_CXXFLAGS = -w -I$(RASDAMAN)/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG 
@@ -285,7 +284,6 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HqlMain.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HqlTable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/driver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logger.Po@am__quote@
 

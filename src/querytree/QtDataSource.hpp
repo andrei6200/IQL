@@ -12,7 +12,7 @@
 
 #include <string>
 #include "QtNode.hpp"
-#include "HqlTable.hpp"
+#include "datasources/HqlTable.hpp"
 
 
 class QtDataSource: public QtNode

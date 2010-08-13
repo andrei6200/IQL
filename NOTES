@@ -17,21 +17,21 @@ TODO:
 
 - allow WHERE clauses
 
+- bug request for Rasdaman docs
+    - query examples for oid(...) == <system|db|localOid>  are not correct
+    - one has to use quotes !
+        - oid(...) == < "system|db|localOid" >
+
+- bug request in Rasdaman
+    - MDDType marray<char, 2> with domain [1:100, 1:100] is NOT compatible with
+      MDDTYpe marray<char, 2> with domain [*:*, *:*]
+    - For the moment, HQL does not use unbounded domains for the newly created collections.
+         - this a temporary workaround
 
 - extend the query tree classes to handle the HQL grammar
 
-- HqlTable: each row should have an internal ID
-	- helps with sorting
-
-
-- change tree structure.
-    - data sources register with the tree, globally
-    - any node operation related to a HQL QT node or to a data source node
-
-
 - add the GROUP BY and HAVING clauses to the gramamr
 - complex combinations of SQL + RaSQL
-
 
 
 DONE
@@ -48,3 +48,5 @@ DONE
     - move the "yyparse()" into a while loop.
 - implement data sources architecture
     - modules, as described in architecture document
+- HqlTable: each row should have an internal ID
+	- helps with sorting

@@ -12,7 +12,7 @@
 
 using namespace std;
 
-QtList::QtList()
+QtList::QtList() : QtNode()
 {
     TRACE << "Initializing QtList ...";
     data = vector<QtNode*>();
