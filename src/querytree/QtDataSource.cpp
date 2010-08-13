@@ -93,3 +93,8 @@ DbEnum QtDataSource::setupDbSource()
 
     return db_source;
 }
+
+string QtDataSource::getTableName()
+{
+    return string(tableName);
+}

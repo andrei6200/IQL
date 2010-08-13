@@ -28,6 +28,8 @@ public:
     virtual HqlTable* execute();
     virtual std::string toString();
     virtual DbEnum setupDbSource();
+
+    std::string getTableName();
 private:
     std::string tableName;
     std::string alias;

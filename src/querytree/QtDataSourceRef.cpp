@@ -10,13 +10,15 @@
 #include "QtDataSourceRef.hpp"
 #include "QtDot.hpp"
 
-QtDataSourceRef::QtDataSourceRef(QtNode* b): base(b), alias(NULL)
+QtDataSourceRef::QtDataSourceRef(QtNode* b): base(b), alias(NULL), all(false)
 {
     TRACE << "Initializing QtDataSourceRef: " << base->toString();
     TRACE << "  Using base class: " << typeid(*b).name();
+    if (b->toString() == "*")
+        all = true;
 }
 
-QtDataSourceRef::QtDataSourceRef(QtNode* b, char* al) : base(b), alias(al)
+QtDataSourceRef::QtDataSourceRef(QtNode* b, char* al) : base(b), alias(al), all(false)
 {
     TRACE << "Initializing QtDataSourceRef: " << base->toString() << " as " << alias;
     TRACE << "  Using base class: " << typeid(*b).name();
@@ -54,4 +56,9 @@ DbEnum QtDataSourceRef::setupDbSource()
 {
     db_source = base->setupDbSource();
     return db_source;
+}
+
+bool QtDataSourceRef::selectsAll()
+{
+    return all;
 }

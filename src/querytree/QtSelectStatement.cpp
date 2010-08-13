@@ -55,6 +55,7 @@ HqlTable* QtSelectStatement::execute()
     HqlTable *table = NULL;
 
     setupDbSource();
+    
     switch (db_source)
     {
     case POSTGRES:
@@ -64,6 +65,24 @@ HqlTable* QtSelectStatement::execute()
         break;
     case RASDAMAN:
         cout << RESPONSE_PROMPT << "Executing rasdaman query ..." << endl;
+
+        // Allow queries like: SELECT * FROM mr
+        if (what.length() == 1 && from.length() == 1)
+        {
+            QtDataSource *src = (QtDataSource*) from.get(0);
+            QtDataSourceRef *ref = (QtDataSourceRef*) what.get(0);
+            if (ref->selectsAll())
+            {
+                delete ref;
+                QtString *str = new QtString(src->getTableName());
+                ref = new QtDataSourceRef(str);
+                vector<QtNode*> vec;
+                vec.push_back(ref);
+                what = QtList(vec);
+                setupDbSource();
+            }
+        }
+
         TRACE << "Executing rasdaman query: " << toString();
         table = HqlMain::getInstance().runRasqlQuery(toString());
         break;

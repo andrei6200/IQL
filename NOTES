@@ -13,6 +13,8 @@ TODO:
 	- read PostGIS functions at init-time
 	- search them in the grammar parser
 
+- allow several rasdaman results to be stored in one HqlTable
+
 - perform serious tests
 
 - allow WHERE clauses

@@ -26,9 +26,12 @@ public:
     HqlTable* execute();
 
     DbEnum setupDbSource();
+
+    bool selectsAll();
 private:
     QtNode* base;
     char* alias;
+    bool all;
 };
 
 #endif	/* QtDataSourceRef_HPP */
