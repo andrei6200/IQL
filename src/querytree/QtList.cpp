@@ -107,3 +107,11 @@ QtNode* QtList::get(int index)
         return NULL;
     return data[index];
 }
+
+/*ghhhfjjvk deci acum eu scriu la teza lui andrei
+//{hh este orasul in care vrem sa ne mutam curand}
+//[nu stiu daca andrei mai are chef sa se intoarca azi la teza, insa banuiesc ca nu-i dupa el]//
+    (int acum se joaca cu petru si ma cearta despre un termin pe care nu mai stie cand era, dar stie ca era )
+            petru s-a intors pe burtica si partaie...
+ */
+
