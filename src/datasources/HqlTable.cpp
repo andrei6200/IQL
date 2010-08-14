@@ -46,10 +46,11 @@ using namespace pqxx;
 
 
 HqlTable::HqlTable(storageType type)
-    : rows(0), columns(1), hiddenCount(1), lastId(0), storage(type)
+    : rows(0), columns(1), hiddenCount(1), lastId(0), storage(type), 
+        tableName("")
 {
-    TRACE << "Created new Table with " << rows << " rows and "
-            << columns << " columns (" << hiddenCount << " hidden)";
+    TRACE << "Created HqlTable '" << tableName << "' with " << rows << " rows and "
+            << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden)";
     string id("_hql_id");
     names = vector<string>();
     names.push_back(id);
@@ -57,19 +58,36 @@ HqlTable::HqlTable(storageType type)
     widths.push_back(id.length());
     hidden = vector<bool>();
     hidden.push_back(true);
+    data = vector<vector<string> >();
 }
 
 
+HqlTable::HqlTable(string name)
+    : rows(0), columns(1), hiddenCount(1), lastId(0), storage(POSTGRES),
+        tableName(name)
+{
+    TRACE << "Created HqlTable '" << tableName << "' with " << rows << " rows and "
+            << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden)";
+    string id("_hql_id");
+    names = vector<string>();
+    names.push_back(id);
+    widths = vector<int>();
+    widths.push_back(id.length());
+    hidden = vector<bool>();
+    hidden.push_back(true);
+    data = vector<vector<string> >();
+}
+
 /* Import data from the result of a RaSQL query. */
-void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
+void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
 {
     INFO << "Building HqlTable from Rasql result ...";
 
     rows = resultSet->cardinality();
     columns += 2;
 
-    string colname("rasql_output");
-    string oid("_rasql_oid");
+    string colname("filename");
+    string oid("oid");
     names.push_back(colname);
     names.push_back(oid);
     widths.push_back(colname.length());
@@ -79,6 +97,9 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
     hiddenCount ++;
 
     vector<string> row;
+
+    if (storeOnDisk == false)
+        DEBUG << "No file will be created on disk, this is an intermediate result table.";
 
     r_Iterator< r_Ref_Any > iter = resultSet->create_iterator();
     // iter.not_done() seems to behave wrongly on empty set, therefore this additional check -- PB 2003-aug-16
@@ -91,7 +112,7 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
             {
                 char defFileName[FILENAME_MAX];
                 (void) snprintf(defFileName, sizeof (defFileName) - 1, DEFAULT_OUTFILE_MASK, i);
-                TRACE << "filename for #" << i << " is: " << defFileName;
+//                TRACE << "filename for #" << i << " is: " << defFileName;
 
                 // special treatment only for DEFs
                 r_Data_Format mafmt = r_Ref<r_GMarray > (*iter)->get_current_format();
@@ -120,17 +141,24 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet)
                         break;
                 }
 
-                DEBUG << "  MDD Result object " << i << ": going into file " << defFileName << "..." << flush;
-                FILE *tfile = fopen(defFileName, "wb");
-                char* output = r_Ref<r_GMarray > (*iter)->get_array();
-                size_t size = r_Ref<r_GMarray > (*iter)->get_array_size();
-                if (size == fwrite((void*) output, sizeof(char), size, tfile))
-                    TRACE << "ok." << endl;
-                else
-                    TRACE << "could not write data into file !" << flush;
-                fclose(tfile);
+                if (storeOnDisk)
+                {
+                    DEBUG << "  MDD Result object " << i << ": going into file " << defFileName << "..." << flush;
+                    FILE *tfile = fopen(defFileName, "wb");
+                    char* output = r_Ref<r_GMarray > (*iter)->get_array();
+                    size_t size = r_Ref<r_GMarray > (*iter)->get_array_size();
+                    if (size == fwrite((void*) output, sizeof(char), size, tfile))
+                        TRACE << "ok." << endl;
+                    else
+                        TRACE << "could not write data into file !" << flush;
+                    fclose(tfile);
 
-                cell << defFileName;
+                    cell << defFileName;
+                }
+                else
+                    // Do not enter filenames into table if file does not exist
+                    cell << "";
+                
                 break;
             }
 
@@ -189,6 +217,7 @@ void HqlTable::importFromSql(result sqlResult)
 {
     rows = sqlResult.size();
     int newcols = sqlResult.columns();
+    int startCol = 0;
     columns += newcols;
 
     vector<bool> newhidden = vector<bool>(newcols, false);
@@ -200,11 +229,20 @@ void HqlTable::importFromSql(result sqlResult)
         newnames[i] = sqlResult.column_name(i);
     }
 
+    // If this is an HQL table, then the first column is "_hql_id" and should be hidden
+    if (string(sqlResult.column_name(0)) == string("_hql_id"))
+    {
+        columns --;
+        startCol = 1;
+        newnames.erase(newnames.begin());
+    }
+
     if (sqlResult.size() == 0)
         return;
 
     result::const_iterator it;
     vector<string> row;
+    // FIXME: clear the table before the import ? 
     data.clear();
     for (it = sqlResult.begin(); it != sqlResult.end(); it++)
     {
@@ -214,7 +252,7 @@ void HqlTable::importFromSql(result sqlResult)
         // Insert actual data
         result::tuple tuple = *it;
         string val;
-        for (int col = 0; col < tuple.size(); col++)
+        for (int col = startCol; col < tuple.size(); col++)
         {
             val = tuple[col].as(string());
             row.push_back(val);
@@ -271,9 +309,9 @@ void HqlTable::print(ostream &out)
     updateWidths();
 
     TRACE << "Printing HqlTable instance.";
-    DEBUG << "HqlTable instance:";
+    DEBUG << "HqlTable instance '" << tableName << "':";
     DEBUG << " * " << rows << " rows";
-    DEBUG << " * " << columns << " columns ( " << hiddenCount << " hidden )";
+    DEBUG << " * " << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden )";
     DEBUG;
 
     out << INDENT_PROMPT << "SQL Query results" << endl;
@@ -395,6 +433,51 @@ HqlTable* HqlTable::crossProduct(HqlTable* other)
 }
 
 
+HqlTable* HqlTable::addColumns(HqlTable* other)
+{
+    TRACE << "Column addition between two HqlTables.";
+
+    if (this->rows != other->rows)
+    {
+        ERROR << "The two tables have different number of rows ! Cannot combine the columns !";
+        throw string("Two intermediate tables have different number of rows ! Cannot combine the columns !");
+    }
+
+    vector<bool> h2 = other->hidden;
+    h2.erase(h2.begin());
+    this->hidden.insert(this->hidden.end(), h2.begin(), h2.end());
+    // "-1" so that we do not count the HQL id column twice
+    this->hiddenCount += other->hiddenCount - 1;
+    this->columns += other->columns - 1;
+    TRACE << "Result table has " << columns - hiddenCount << " columns ( + "
+            << hiddenCount << " hidden ) and " << hidden.size() << " elements in the 'hidden' vector";
+    
+    /* Copy column names */
+    vector<string> names2 = other->names;
+    names2.erase(names2.begin());   // erase the "HQL ID" column
+    this->names.insert(this->names.end(), names2.begin(), names2.end());
+
+    /* Copy the data */
+    for (int row = 0; row < this->rows; row++)
+    {
+        vector<string> otherrow = other->data[row];
+        otherrow.erase(otherrow.begin());
+        this->data[row].insert(this->data[row].end(), otherrow.begin(), otherrow.end());
+        TRACE << "Just inserted row: ";
+        vector<string>::iterator i;
+        for (i = otherrow.begin(); i != otherrow.end(); i++)
+            TRACE << "- " << *i;
+        TRACE << "Combined row: ";
+        for (i = data[row].begin(); i != data[row].end(); i++)
+            TRACE << "- " << *i;
+    }
+
+    TRACE << "Column addition has been evaluated.";
+
+    return this;
+}
+
+
 string HqlTable::generateId()
 {
     stringstream stream;
@@ -409,7 +492,11 @@ void HqlTable::resetId()
 
 void HqlTable::updateWidths()
 {
-    widths = vector<int>(columns, 0);
+    if (columns == 0)
+        return;
+
+    widths.clear();
+    widths.assign(columns, 0);
 
     vector<vector<string> >::iterator row;
     for (row = data.begin(); row != data.end(); row++)
@@ -423,3 +510,10 @@ void HqlTable::updateWidths()
         if (names[col].length() > widths[col])
             widths[col] = names[col].length();
 }
+
+std::ostream& operator << (std::ostream &o, HqlTable *a)
+{
+    a->print(o);
+    return o;
+}
+

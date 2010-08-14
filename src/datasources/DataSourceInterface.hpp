@@ -38,7 +38,7 @@ public:
     virtual HqlTable* query(std::string) = 0;
 
     // FIXME: Insert some data in a temporary table
-    virtual void insertData() = 0;
+    virtual void insertData(HqlTable* table, std::string tableName) = 0;
 };
 
 #endif	/* DATASOURCEINTERFACE_HPP */

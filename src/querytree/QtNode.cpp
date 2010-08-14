@@ -46,6 +46,6 @@ string QtNode::getId()
 string QtNode::generateId()
 {
     stringstream s;
-    s << "id" << HqlMain::getInstance().getId() << "-" << ++ QtNode::idCounter;
+    s << "id_" << HqlMain::getInstance().getId() << "_" << ++ QtNode::idCounter;
     return s.str();
 }

@@ -39,8 +39,8 @@ public:
     // Execute a query on the current data source
     HqlTable* query(std::string q);
 
-    // FIXME: Insert some data in a temporary table
-    void insertData();
+    // Insert some data in a temporary table
+    void insertData(HqlTable* table, std::string tableName);
 
 private:
     // Connection options
@@ -50,7 +50,7 @@ private:
     pqxx::connection_base *conn;
 
     // Transaction
-    pqxx::transaction_base *tr;
+    pqxx::work *tr;
 };
 
 #endif	/* POSTGRESDS_HPP */

@@ -9,8 +9,11 @@
 #define	LOGGER_HPP
 
 #include <fstream>
+#include <ostream>
 #include <iomanip>
 #include <cstring>
+
+class HqlTable;
 
 #undef DEBUG
 #undef TRACE
@@ -44,6 +47,9 @@ template<typename Char, typename Traits = char_traits<Char> >
 public:
     typedef std::basic_ostream<Char, Traits> ostream_type;
     typedef ostream_type & (*manip_type)(ostream_type&);
+
+    friend LOGGER<char, char_traits < char > >& operator <<
+        (LOGGER<char, char_traits < char > > &o, HqlTable *a);
 
     LOGGER(ostream_type & os) :
         os(os), level(GLOBAL_LOGGING_LEVEL)
@@ -127,8 +133,12 @@ extern std::ofstream _outputFile;
 extern LOGGER <char, char_traits < char > > LOG;
 extern string formatClassName(string prettyFunction);
 
-#define TRACE   LOG.trace() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
-#define DEBUG   LOG.debug() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
+
+LOGGER<char, char_traits < char > >& operator <<
+    (LOGGER<char, char_traits < char > > &o, HqlTable *a);
+
+#define TRACE   LOG.trace() << "[" << formatClassName(__PRETTY_FUNCTION__) << " - " << __LINE__ << "] "
+#define DEBUG   LOG.debug() << "[" << formatClassName(__PRETTY_FUNCTION__) << " - " << __LINE__ << "] "
 #define INFO    LOG.info() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
 #define WARN    LOG.warn() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
 #define ERROR   LOG.error() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "

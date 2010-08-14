@@ -126,3 +126,13 @@ long HqlMain::getId()
 {
     return id;
 }
+
+PostgresDS& HqlMain::getSqlDataSource()
+{
+    return *pg;
+}
+
+RasdamanDS& HqlMain::getRasqlDataSource()
+{
+    return *rman;
+}

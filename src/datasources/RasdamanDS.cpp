@@ -159,6 +159,13 @@ void RasdamanDS::commitTa()
 
 HqlTable* RasdamanDS::query(string queryString)
 {
+    // By default, do not write files to disk
+    HqlTable* result = this->query(queryString, false);
+    return result;
+}
+
+HqlTable* RasdamanDS::query(string queryString, bool storeOnDisk)
+{
     connect();
 
     DEBUG << "Executing RaSQL query: " << queryString;
@@ -188,7 +195,7 @@ HqlTable* RasdamanDS::query(string queryString)
 
     /* Return the data. */
     HqlTable *table = new HqlTable();
-    table->importFromRasql(&result_set);
+    table->importFromRasql(&result_set, storeOnDisk);
 
     /* Close the transaction (after processing of data) */
     commitTa();
@@ -197,8 +204,18 @@ HqlTable* RasdamanDS::query(string queryString)
 }
 
 
-//FIXME: implement
-void RasdamanDS::insertData()
+HqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk)
 {
-
+    string query = "SELECT " + name + " FROM " + name;
+    HqlTable* out = this->query(query, storeOnDisk);
+    out->names[1] = name + "_" + out->names[1];
+    out->names[2] = name + "_" + out->names[2];
+    return out;
 }
+
+void RasdamanDS::insertData(HqlTable* table, string tableName)
+{
+    ERROR << "Inserting temporary tables into Rasdaman is not supported !";
+    throw string("Inserting temporary tables into Rasdaman is not supported !");
+}
+

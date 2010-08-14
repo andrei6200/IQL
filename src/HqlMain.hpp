@@ -60,6 +60,10 @@ public:
 
     HqlTable* runRasqlQuery(std::string query);
 
+    PostgresDS& getSqlDataSource();
+
+    RasdamanDS& getRasqlDataSource();
+
     long getId();
     
 private:

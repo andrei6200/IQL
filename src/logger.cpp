@@ -5,6 +5,9 @@
  * Created on June 14, 2010, 1:28 PM
  */
 
+#include "datasources/HqlTable.hpp"
+
+
 #include <iomanip>
 #include <iostream>
 #include <fstream>
@@ -48,4 +51,11 @@ string formatClassName(string prettyFunction)
 
     /* The scoped class + function name. */
     return prettyFunction;
+}
+
+LOGGER<char, char_traits < char > >& operator <<
+    (LOGGER<char, char_traits < char > > &o, HqlTable *a)
+{
+    a->print(o.os);
+    return o;
 }
