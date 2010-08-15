@@ -11,8 +11,8 @@
 #define	QTSOURCE_HPP
 
 #include <string>
+#include <ostream>
 #include "QtNode.hpp"
-#include "datasources/HqlTable.hpp"
 
 
 class QtDataSource: public QtNode
@@ -30,6 +30,8 @@ public:
     virtual DbEnum setupDbSource();
 
     std::string getTableName();
+
+    void print(ostream &o, std::string indent = "");
 private:
     std::string tableName;
     std::string alias;

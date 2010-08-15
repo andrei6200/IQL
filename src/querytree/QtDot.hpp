@@ -10,7 +10,6 @@
 
 #include <string>
 #include "QtNode.hpp"
-#include "datasources/HqlTable.hpp"
 
 class QtDot: public QtNode
 {
@@ -18,12 +17,14 @@ public:
     QtDot(QtNode* n, std::string e);
     virtual ~QtDot();
 
-    std::string toString();
+    virtual std::string toString();
     char* toCString();
 
     DbEnum setupDbSource();
 
     HqlTable* execute();
+
+    void print(ostream &o, std::string indent);
 private:
     QtNode* base;
     std::string exp;

@@ -44,28 +44,40 @@ QtDataSource::~QtDataSource()
 
 HqlTable* QtDataSource::execute()
 {
-    TRACE << "step 1" << flush;
     HqlTable* table = NULL;
-    TRACE << "step 2" << flush;
     string q;
-    TRACE << "step 3" << flush;
     
     setupDbSource();
-    TRACE << "step 4" << flush;
     
     switch (db_source)
     {
         case POSTGRES:
             q = string("SELECT * FROM ") + tableName;
+            TRACE << "Going to execute: " << q;
             table = HqlMain::getInstance().runSqlQuery(q);
+            table->setName(tableName, true);
             break;
         case RASDAMAN:
             q = string("SELECT ") + tableName + " FROM " + tableName;
+            TRACE << "Going to execute: " << q;
             table = HqlMain::getInstance().runRasqlQuery(q);
+            table->setName(tableName, true);
+
+            // Store the HqlTable in Postgres for subsequent calculations
+            HqlMain::getInstance().getSqlDataSource().insertData(table, tableName);
+            // Now we can safely return from this function.
+
             break;
         default:
+            q = "Cannot retrieve table '" + tableName +
+                    "' because of unknown DataSource system.";
+            ERROR << q;
+            throw q;
             break;
     }
+
+    
+    TRACE << table;
     
     return table;
 }
@@ -97,4 +109,12 @@ DbEnum QtDataSource::setupDbSource()
 string QtDataSource::getTableName()
 {
     return string(tableName);
+}
+
+void QtDataSource::print(ostream &o, std::string indent)
+{
+    o << indent << "QtDataSource (" << id << "): tableName '" << tableName << "'";
+    if (alias != "")
+        o << alias << "'" << alias << "'";
+    o << endl;
 }

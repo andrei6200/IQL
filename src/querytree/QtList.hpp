@@ -22,13 +22,22 @@ public:
     ~QtList();
     HqlTable* execute();
     std::string toString();
+    void print(ostream &o, std::string indent);
 
     DbEnum setupDbSource();
 
+    /* Return the cartesian product of the HqlTables of its children. No restrictions. */
+    HqlTable* multiplyResults();
+    /* Return a table with all the columns of the HqlTables of its children. All tables
+     must have the same number of elements, otherwise an exception is thrown. */
+    HqlTable* addResults();
+
+    /* Vector-like functions */
     int length();
     QtNode* get(int index);
 private:
     std::vector<QtNode*> data;
+    std::vector<HqlTable*> results;
 };
 
 #endif	/* QTLIST_HPP */

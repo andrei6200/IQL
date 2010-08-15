@@ -89,6 +89,19 @@ void PostgresDS::connect()
 
 HqlTable* PostgresDS::query(string queryString)
 {
+    result R = regularQuery(queryString);
+    HqlTable *result = new HqlTable();
+
+    if (R.empty())
+        WARN << "No rows in query result. ";
+    else
+        result->importFromSql(R);
+    
+    return result;
+}
+
+result PostgresDS::regularQuery(string queryString)
+{
     connect();
 
     TRACE;
@@ -96,17 +109,7 @@ HqlTable* PostgresDS::query(string queryString)
 
     // Perform a query on the database, storing result tuples in R.
     result R(tr->exec(queryString));
-
-    // We're expecting to find some tuples...
-    if (R.empty())
-    {
-        WARN << "No rows in query result. ";
-        return new HqlTable();
-    }
-
-    HqlTable *table = new HqlTable();
-    table->importFromSql(R);
-    return table;
+    return R;
 }
 
 vector<string> PostgresDS::getObjectNames()
@@ -115,6 +118,7 @@ vector<string> PostgresDS::getObjectNames()
             "not like 'pg_%' and tablename not like 'sql_%';";
 
     HqlTable *table = this->query(queryStr);
+    TRACE << table << endl;
     
     return table->getColumn("tablename");
 }
@@ -141,6 +145,9 @@ void PostgresDS::disconnect()
 
 void PostgresDS::insertData(HqlTable* table, string tableName)
 {
+    TRACE << "Insert table into SQL datasource: ";
+    TRACE << table << endl;
+
     connect();
     
     /* (1) First drop old table, if it exists.
@@ -168,7 +175,8 @@ void PostgresDS::insertData(HqlTable* table, string tableName)
     for (int i = 1; i < table->names.size(); i++)
         query += string(", ") + table->names[i] + " VARCHAR";
     query += ")";
-    
+
+    TRACE << query;
     tr->exec(query, "Create Table " + tableName);
     TRACE << "Created new Table: " << tableName;
     

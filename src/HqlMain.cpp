@@ -43,11 +43,12 @@ HqlMain::HqlMain()
 {
     id = random() % 10000;
 
-    INFO << "Initialization of HqlMain (ID " << id << ")... ";
     /* Initialization */
-
+    INFO << "Initialization of HqlMain (ID " << id << ")... ";
     pg = new PostgresDS();
+    pg->connect();
     rman = new RasdamanDS();
+    rman->connect();
 
     /* Rasdaman tables */
     vector<string> rasTables = rman->getObjectNames();

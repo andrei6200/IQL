@@ -39,6 +39,9 @@ public:
     // Execute a query on the current data source
     HqlTable* query(std::string q);
 
+    // Execute a query and return a pqxx result object
+    pqxx::result regularQuery(std::string queryString);
+
     // Insert some data in a temporary table
     void insertData(HqlTable* table, std::string tableName);
 

@@ -9,6 +9,12 @@
 #define	HQLTABLE_HPP
 
 #include <pqxx/pqxx>
+#ifdef EARLY_TEMPLATE
+#define __EXECUTABLE__
+#ifdef __GNUG__
+#include "raslib/template_inst.hh"
+#endif
+#endif
 #include "rasdaman.hh"
 
 #include "logger.hpp"
@@ -16,6 +22,8 @@
 class HqlTable
 {
 public:
+    /* If false, the only useful information may be the table name. */
+    bool dataAlsoInMemory;
 
     /* Allow full access to the private members of the HqlTable, for efficiency.*/
     friend class PostgresDS;
@@ -53,6 +61,12 @@ public:
 
     /* Display this table to stdout */
     void print(std::ostream& out);
+
+    /* Set the name of this table. */
+    void setName(std::string name, bool updateColumnNames = false);
+
+    /* Get the name of this table, as it is stored in the DataSources. */
+    std::string getName();
 
 private:
 

@@ -9,30 +9,36 @@
 #include <typeinfo>
 
 #include "QtList.hpp"
+#include "QueryTree.hpp"
+#include "HqlMain.hpp"
 
 using namespace std;
 
 QtList::QtList() : QtNode()
 {
-    TRACE << "Initializing QtList ...";
     data = vector<QtNode*>();
+    results = vector<HqlTable*>();
 }
 
 QtList::QtList(vector<QtNode*> newdata)
 {
-    TRACE << "Initializing QtList ...";
     data = newdata;
+    results = vector<HqlTable*>();
 }
 
 void QtList::add(QtNode *elem)
 {
-    TRACE << "Adding to QtList value: " << elem->toString();
-    TRACE << "      and type " << typeid(*elem).name();
     data.push_back(elem);
 }
 
 QtList::~QtList()
 {
+    for (int i = 0; i < data.size(); i ++)
+        if (data[i])
+        {
+            delete data[i];
+            data[i] = NULL;
+        }
     data.clear();
 }
 
@@ -52,13 +58,94 @@ string QtList::toString()
 
 HqlTable* QtList::execute()
 {
+    results.clear();
+    HqlTable *table = NULL;
+    for (int i = 0; i < data.size(); i++)
+    {
+        table = data[i]->execute();
+        if (table->dataAlsoInMemory == false)
+        {
+            /* This table only carries the tableName. Retrieve the table explicitly. */
+            string q = "SELECT * FROM " + table->getName();
+            pqxx::result R = HqlMain::getInstance().getSqlDataSource().regularQuery(q);
+            table->importFromSql(R);
+        }
+        /* Store the table for later processing */
+        TRACE << "Table " << i << " of the list: " << endl << table;
+        results.push_back(table);
+    }
+    // Return NULL, because no action is specified. These intermediate results
+    // can be processed with the multiplyResults() or addResults() functions.
     return NULL;
+}
+
+HqlTable* QtList::multiplyResults()
+{
+    TRACE << "Computing the cross product between " << data.size() << " HqlTables...";
+
+    if (results.size() == 0)
+    {
+        execute();
+        if (results.size() == 0)
+            return NULL;
+    }
+
+    HqlTable *t = results[0];
+    if (t == NULL)
+    {
+        ERROR << "Cannot compute cross product, intermediate result was NULL.";
+        throw string("Intermediate result was NULL. ");
+    }
+    for (int i = 1; i < results.size(); i++)
+        if (results[i] == NULL)
+        {
+            ERROR << "Cannot compute cross product, intermediate result was NULL.";
+            throw string("Intermediate result was NULL. ");
+        }
+        else
+        {
+            HqlTable *t2 = t->crossProduct(results[i]);
+            t = t2;
+        }
+    
+    TRACE << "The cross product between " << data.size() << " HqlTables is " << t;
+
+    return t;
+}
+
+HqlTable* QtList::addResults()
+{
+    TRACE << "Computing the column-addition between " << data.size() << " HqlTables...";
+
+    if (results.size() == 0)
+    {
+        execute();
+        if (results.size() == 0)
+            return NULL;
+    }
+
+    HqlTable *t = results[0];
+    if (t == NULL)
+    {
+        ERROR << "Cannot add columns of tables, intermediate result was NULL.";
+        throw string("Intermediate result was NULL. ");
+    }
+    for (int i = 1; i < results.size(); i++)
+        if (results[i] == NULL)
+        {
+            ERROR << "Cannot add columns of tables, intermediate result was NULL.";
+            throw string("Intermediate result was NULL. ");
+        }
+        else
+            t->addColumns(results[i]);
+
+    TRACE << "The column addition between " << data.size() << " HqlTables is " << t;
+
+    return t;
 }
 
 DbEnum QtList::setupDbSource()
 {
-    TRACE << "QtList :: setupDbSource()";
-    TRACE << "QtList: " << toString();
     /* Cache the result. */
     if (db_source != DB_NOT_INITIALIZED)
         return db_source;
@@ -72,7 +159,6 @@ DbEnum QtList::setupDbSource()
     {
         /* Check all children nodes */
         QtNode* node = *i;
-        TRACE << "QtList: Calling setupDbSource for child node: " << typeid(*node).name();
         source = node->setupDbSource();
         if (source == UNKNOWN_DB || source == DB_NOT_INITIALIZED || source == MIXED)
         {
@@ -92,7 +178,7 @@ DbEnum QtList::setupDbSource()
         }
     }
     
-    TRACE << "QtList :: found source system: " << db_source;
+    TRACE << "Found source system: " << db_source;
     return db_source;
 }
 
@@ -115,3 +201,9 @@ QtNode* QtList::get(int index)
             petru s-a intors pe burtica si partaie...
  */
 
+void QtList::print(ostream &o, string indent)
+{
+    o << indent << "QtList (" << id << ") with " << data.size() << " element(s)" << endl;
+    for (int i = 0; i < data.size(); i++)
+        data[i]->print(o, indent + QTINDENT);
+}

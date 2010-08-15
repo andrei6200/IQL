@@ -28,6 +28,8 @@ public:
     DbEnum setupDbSource();
 
     bool selectsAll();
+
+    void print(ostream &o, std::string indent = "");
 private:
     QtNode* base;
     char* alias;

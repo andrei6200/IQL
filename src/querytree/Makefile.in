@@ -55,8 +55,8 @@ am_libquerytree_a_OBJECTS = QtCartesianProduct.$(OBJEXT) \
 	QtDataSource.$(OBJEXT) QtList.$(OBJEXT) \
 	QtSetOperation.$(OBJEXT) QueryTree.$(OBJEXT) \
 	QtDataSourceRef.$(OBJEXT) QtNode.$(OBJEXT) \
-	QtSliceArray.$(OBJEXT) QtDot.$(OBJEXT) QtPaginate.$(OBJEXT) \
-	QtSort.$(OBJEXT)
+	QtSliceArray.$(OBJEXT) QtColumn.$(OBJEXT) QtDot.$(OBJEXT) \
+	QtPaginate.$(OBJEXT) QtSort.$(OBJEXT)
 libquerytree_a_OBJECTS = $(am_libquerytree_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -172,8 +172,8 @@ libquerytree_a_SOURCES = \
 		QtCondenseArray.cpp     QtInducedOperation.cpp  QtScaleArray.cpp       QtString.cpp			\
 		QtCreateArray.cpp       QtJoin.cpp              QtSelectStatement.cpp  QtTrimArray.cpp		\
 		QtDataSource.cpp        QtList.cpp              QtSetOperation.cpp     QueryTree.cpp		\
-		QtDataSourceRef.cpp     QtNode.cpp              QtSliceArray.cpp							\
-		QtDot.cpp               QtPaginate.cpp          QtSort.cpp
+		QtDataSourceRef.cpp     QtNode.cpp              QtSliceArray.cpp		QtColumn.cpp 		\
+		QtDot.cpp               QtPaginate.cpp          QtSort.cpp            
 
 AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include
 all: all-am
@@ -225,6 +225,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtCartesianProduct.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtColumn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtCondenseArray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtCreateArray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtDataSource.Po@am__quote@

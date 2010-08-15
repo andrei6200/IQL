@@ -11,6 +11,7 @@
 #define	QTSTRING_HPP
 
 #include <string>
+#include <ostream>
 #include "QtNode.hpp"
 
 class QtString: public QtNode
@@ -22,6 +23,7 @@ public:
     HqlTable* execute();
     std::string toString();
     char* toCString();
+    void print(ostream &o, std::string indent);
 
     DbEnum setupDbSource();
 private:

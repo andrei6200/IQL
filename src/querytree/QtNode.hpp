@@ -11,6 +11,7 @@
 #define	QTNODE_HPP
 
 #include <string>
+#include <ostream>
 #include "datasources/HqlTable.hpp"
 
 /* Enumeration of available DBMS systems */
@@ -22,7 +23,6 @@ enum DbEnum
     UNKNOWN_DB = 3,
     MIXED = 4
 };
-
 
 /* Public super-class for all nodes of the Query Tree. */
 class QtNode
@@ -49,13 +49,15 @@ public:
     DbEnum getDbSource();
 
     /* Execute the operation of this node and return a HqlTable result. */
-    virtual HqlTable* execute();
+    virtual HqlTable* execute() = 0;
 
     /* Returns the unique ID of this node. */
     std::string getId();
     
     /* Query string. */
     char* query;
+
+    virtual void print(ostream &o, std::string indent = "") = 0;
 
 protected:
     /* Database Source System */
@@ -70,5 +72,10 @@ protected:
     static long idCounter;
 };
 
-#endif	/* QTNODE_HPP */
 
+std::ostream& operator << (std::ostream &o, QtNode *node);
+
+/* Indentation characters for query tree printing. */
+#define QTINDENT "-  "
+
+#endif	/* QTNODE_HPP */

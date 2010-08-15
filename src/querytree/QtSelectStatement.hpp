@@ -15,15 +15,13 @@
 #include "QtNode.hpp"
 #include "QtList.hpp"
 
-#include "datasources/HqlTable.hpp"
-
 #include <vector>
 
 class QtSelectStatement : public QtNode
 {
 public:
     QtSelectStatement();
-    QtSelectStatement(QtList refs, QtList sources);
+    QtSelectStatement(QtList* refs, QtList* sources);
     ~QtSelectStatement();
 
     HqlTable* execute();
@@ -32,13 +30,22 @@ public:
 
     std::string toString();
 
+    void print(ostream &o, std::string indent = "");
+
+    /* Return a QtList (containing all the QtDataSource objects) */
+    QtList* getSourceTables();
+    /* Return a table that holds the cartesian product, if it has been evaluated. */
+    HqlTable* getCartesianProduct();
+
     /* Returns true if this structure can be evaluated with exactly two queries,
      one RaSQL and one SQL query. */
-    bool mixedQueryIsSimple();
+//    bool mixedQueryIsSimple();
     
 private:
-    QtList what;
-    QtList from;
+    QtList* what;
+    QtList* from;
+
+    HqlTable *product;
 };
 
 #endif	/* QTSELECT_HPP */

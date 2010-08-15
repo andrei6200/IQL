@@ -80,12 +80,12 @@ char* hqlQueries;
 
 %type <ival>	opt_asc_desc opt_nulls_order
 
-%type <str>	 attr_name name opt_table
-%type <mynode>  relation_name
+%type <str>	 attr_name name
+%type <str>  relation_name
 
 %type <list>	func_name qual_Op qual_all_Op subquery_Op
 
-%type <range>	qualified_name
+%type <mynode>	qualified_name
 
 %type <str>	all_Op MathOp SpecialRuleRelation
 
@@ -94,16 +94,14 @@ char* hqlQueries;
 %type <list>	sort_clause opt_sort_clause sortby_list
                 name_list  
                 expr_list attrs
-%type <nodelist> target_list from_clause from_list
+%type <nodelist> target_list from_list from_clause
+//%type <mynode>  
 
 %type <list>	indirection opt_indirection
                 select_limit
                 any_operator
                 TableFuncElementList opt_type_modifiers
 
-
-%type <range>	OptTempTableName
-%type <into>	into_clause
 
 %type <boolean>	opt_all
 
@@ -129,8 +127,8 @@ char* hqlQueries;
 %type <sortby>	sortby
 %type <source>	table_ref
 %type <source>	joined_table
-%type <range>	relation_expr
-%type <tableRef>	target_el
+%type <mynode>	relation_expr
+%type <mynode>	target_el
 
 %type <typnam>	Typename SimpleTypename ConstTypename
                 GenericType Numeric opt_float
@@ -578,7 +576,7 @@ simple_select:
 // AA: We do not want to support r SQL windows
 //			group_clause having_clause window_clause
                         {
-                            QtSelectStatement *select = new QtSelectStatement(*$2, *$3);
+                            QtSelectStatement *select = new QtSelectStatement($2, $3);
                             $$ = select;
                         }
                         
@@ -588,14 +586,14 @@ simple_select:
 				{
                             /* same as SELECT * FROM relation_expr */
                             
-                            QtList from;
+                            QtList *from = new QtList();
                             QtDataSource src($2);
-                            from.add(&src);
-                            QtList what;
-                            QtDataSourceRef ref(new QtString((char*)"*"));
-                            what.add(&ref);
+                            from->add(&src);
+                            QtColumn *ref = new QtColumn((char*)"*");
+                            QtList *what = new QtList();
+                            what->add(ref);
                             QtSelectStatement *select = new QtSelectStatement(from, what);
-                            select->query = cat2($1, $2);
+                            select->query = cat2($1, $2->toCString());
 
                             $$ = select;
 				}
@@ -617,58 +615,6 @@ simple_select:
                             $$ = $1;
                             $$->query = cat4($1->query, $2, $3, $4->query);
 				}
-		;
-
-into_clause:
-			INTO OptTempTableName
-				{
-                                $$ = cat2($1, $2);
-				}
-			| /*EMPTY*/
-				{ $$ = NULL; }
-		;
-
-/*
- * Redundancy here is needed to avoid shift/reduce conflicts,
- * since TEMP is not a reserved word.  See also OptTemp.
- */
-OptTempTableName:
-			TEMPORARY opt_table qualified_name
-				{
-                            $$ = cat3($1, $2, $3);
-				}
-			| TEMP opt_table qualified_name
-				{
-                            $$ = cat3($1, $2, $3);
-				}
-			| LOCAL TEMPORARY opt_table qualified_name
-				{
-                            $$ = cat4($1, $2, $3, $4);
-				}
-			| LOCAL TEMP opt_table qualified_name
-				{
-                            $$ = cat4($1, $2, $3, $4);
-				}
-			| GLOBAL TEMPORARY opt_table qualified_name
-				{
-                            $$ = cat4($1, $2, $3, $4);
-				}
-			| GLOBAL TEMP opt_table qualified_name
-				{
-                            $$ = cat4($1, $2, $3, $4);
-				}
-			| TABLE qualified_name
-				{
-                            $$ = cat2($1, $2);
-				}
-			| qualified_name
-				{
-                            $$ = $1;
-				}
-		;
-
-opt_table:	TABLE									{ $$ = $1; }
-			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 opt_all:	ALL										{ $$ = $1; }
@@ -933,17 +879,17 @@ relation_expr:
 			| qualified_name MULT
 				{
 					/* inheritance query */
-                                        $$ = cat2($1, $2);
+                                        $$ = $1;
 				}
 			| ONLY qualified_name
 				{
 					/* no inheritance */
-                                        $$ = cat2($1, $2);
+                                        $$ = $2;
 				}
 			| ONLY LRPAR qualified_name RRPAR
 				{
 					/* no inheritance, SQL99-style syntax */
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = $3;
 				}
 		;
 
@@ -1356,7 +1302,6 @@ interval_second:
  */
 a_expr:		c_expr
             {
-                TRACE << "Found c_expr: " << $1->toString();
                 $$ = $1;
             }
 			| a_expr TYPECAST Typename
@@ -2144,11 +2089,11 @@ case_arg:	a_expr									{ $$ = $1->toCString(); }
  */
 columnref:	relation_name
 				{
-					$$ = new QtDataSource($1);
+					$$ = new QtColumn($1);
 				}
 			| relation_name indirection
 				{
-                                        $$ = new QtDot(new QtDataSourceRef($1), $2);
+                                        $$ = new QtColumn($1, $2);
 				}
 		;
 
@@ -2218,20 +2163,20 @@ target_el:
 			 */
 			| a_expr IDENT
 				{
-                                        $$ = new QtDataSourceRef($1, $2);
+                                        $$ = $1;
 				}
 			| a_expr
 				{
-                                        $$ = new QtDataSourceRef($1);
+                                        $$ = $1;
 				}
 			| MULT
 				{
-                                        $$ = new QtDataSourceRef(new QtString($1));
+                                        $$ = new QtColumn($1);
 				}
 /* AA: RaSQL expressions allowed in the SELECT clause */
                         | generalExp
                                 {
-                                        $$ = new QtDataSourceRef(new QtString($1));
+                                        $$ = new QtColumn($1);
                                 }
 		;
 
@@ -2243,8 +2188,8 @@ target_el:
  *****************************************************************************/
 
 relation_name:
-			SpecialRuleRelation						{ $$ = new QtString($1); }
-			| ColId									{ $$ = new QtString($1); }
+			SpecialRuleRelation		{ $$ = $1; }
+			| ColId				{ $$ = $1; }
 		;
 
 /*
@@ -2257,17 +2202,17 @@ relation_name:
 qualified_name:
 			relation_name
 				{
-                                        $$ = $1->toCString();
+                                        $$ = new QtColumn($1);
 				}
 			| relation_name indirection
 				{
-                                        $$ = cat2($1->toCString(), $2);
+                                        $$ = new QtColumn($1, $2);
 				}
 		;
 
 name_list:	name
 					{ $$ = $1; }
-			| name_list COMMA name
+                | name_list COMMA name
 					{ $$ = cat3($1, $2, $3); }
 		;
 
@@ -2287,7 +2232,7 @@ attr_name:	ColLabel								{ $$ = $1; };
 func_name:	type_function_name
 					{ $$ = $1; }
 			| relation_name indirection
-					{ $$ = cat2($1->toCString(), $2); }
+					{ $$ = cat2($1, $2); }
 		;
 
 

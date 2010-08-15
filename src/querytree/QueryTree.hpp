@@ -8,14 +8,17 @@
 #ifndef QUERYTREE_HPP
 #define	QUERYTREE_HPP
 
-#include "datasources/HqlTable.hpp"
-
-#include "QtString.hpp"
 #include "QtNode.hpp"
+
+#include "QtCartesianProduct.hpp"
+#include "QtString.hpp"
 #include "QtDataSource.hpp"
 #include "QtDataSourceRef.hpp"
 #include "QtDot.hpp"
 #include "QtSelectStatement.hpp"
+#include "QtColumn.hpp"
+
+class HqlTable;
 
 /* Singleton class for accessing the entire query tree. */
 class QueryTree
@@ -26,6 +29,9 @@ public:
 
     /* Load the whole query tree and prepare for execution. */
     void load(QtSelectStatement *newroot);
+
+    /* Return the query tree root. */
+    QtSelectStatement* getRoot();
 
     /* Execute the query and return the result. */
     void execute();

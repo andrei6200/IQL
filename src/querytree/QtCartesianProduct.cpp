@@ -57,3 +57,10 @@ HqlTable* QtCartesianProduct::execute()
     // FIXME: implement
     return NULL;
 }
+
+void QtCartesianProduct::print(ostream &o, string indent)
+{
+    o << indent << "CartesianProduct between: " << endl;
+    child1->print(o, indent + QTINDENT);
+    child2->print(o, indent + QTINDENT);
+}

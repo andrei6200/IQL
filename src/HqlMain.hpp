@@ -30,7 +30,7 @@
 #include <vector>
 #include <string>
 
-#include "querytree/QueryTree.hpp"
+#include "querytree/QtNode.hpp"
 #include "datasources/HqlTable.hpp"
 #include "datasources/PostgresDS.hpp"
 #include "datasources/RasdamanDS.hpp"

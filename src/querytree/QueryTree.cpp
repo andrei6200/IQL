@@ -1,4 +1,5 @@
 #include "QueryTree.hpp"
+#include "HqlMain.hpp"
 
 using namespace std;
 
@@ -37,8 +38,8 @@ QueryTree& QueryTree::getInstance()
 
 void QueryTree::execute()
 {
-    INFO << "Received SELECT structure: ";
-    DEBUG << root->toString();
+    DEBUG << "Query tree: ";
+    DEBUG << endl << root << endl;
     string status;
 
     try
@@ -73,4 +74,10 @@ void QueryTree::execute()
 
     /* And display the query execution status*/
     cout << RESPONSE_PROMPT << status << endl;
+}
+
+
+QtSelectStatement* QueryTree::getRoot()
+{
+    return root;
 }

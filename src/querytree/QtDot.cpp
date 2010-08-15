@@ -6,6 +6,7 @@
  */
 
 #include "QtDot.hpp"
+#include "HqlMain.hpp"
 
 using namespace std;
 
@@ -44,5 +45,42 @@ DbEnum QtDot::setupDbSource()
 
 HqlTable* QtDot::execute()
 {
-    return NULL;
+    setupDbSource();
+
+    HqlTable *result = NULL, *tmp = NULL;
+    string query;
+
+    TRACE << "starting execution... ";
+    
+    switch (db_source)
+    {
+        case POSTGRES:
+            tmp = base->execute();
+            TRACE << "Child table: " << endl << tmp;
+            query = "SELECT " + exp + " INTO " + this->id
+                         + " FROM " + tmp->getName();
+            delete tmp; 
+            result = HqlMain::getInstance().runSqlQuery(query);
+            result->setName(this->id);
+            TRACE << "Current node table" << endl << result;
+            break;
+            
+        case RASDAMAN:
+            WARN << "Executing rasdaman query ... ";
+            break;
+            
+        case MIXED:
+        default:
+            WARN << "Executing mixed query ... ";
+    }
+
+    TRACE << "execution finished... ";
+
+    return result;
+}
+
+void QtDot::print(ostream &o, std::string indent)
+{
+    o << indent << "QtDot (" << id << "): " << base->toString() << "." << exp << endl;
+    base->print(o, indent + QTINDENT);
 }

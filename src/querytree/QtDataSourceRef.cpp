@@ -9,19 +9,16 @@
 
 #include "QtDataSourceRef.hpp"
 #include "QtDot.hpp"
+#include "HqlMain.hpp"
 
 QtDataSourceRef::QtDataSourceRef(QtNode* b): base(b), alias(NULL), all(false)
 {
-    TRACE << "Initializing QtDataSourceRef: " << base->toString();
-    TRACE << "  Using base class: " << typeid(*b).name();
     if (b->toString() == "*")
         all = true;
 }
 
 QtDataSourceRef::QtDataSourceRef(QtNode* b, char* al) : base(b), alias(al), all(false)
 {
-    TRACE << "Initializing QtDataSourceRef: " << base->toString() << " as " << alias;
-    TRACE << "  Using base class: " << typeid(*b).name();
 }
 
 QtDataSourceRef::~QtDataSourceRef()
@@ -34,7 +31,51 @@ QtDataSourceRef::~QtDataSourceRef()
 
 HqlTable* QtDataSourceRef::execute()
 {
-    return NULL;
+    /* A DataSource Table reference is not supposed to create a new datasource object,
+     * contrary to expectations. In Postgres tables exist already, in Rasdaman
+     * collections exist already. The only exception is when we refer to a
+     * Rasdaman collection; then we want to create a SQl table to talk about it.
+     */
+    setupDbSource();
+
+    // TODO: what about "*" ?
+
+    // Table name can have alias
+
+    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
+    HqlTable *result = NULL, *tmp = NULL;
+    string tableName = base->toString();
+    string query;
+
+    switch (db_source)
+    {
+        case POSTGRES:
+            tmp = base->execute();
+            TRACE << "Child table: " << endl << tmp;
+            query = "SELECT * INTO " + this->id
+                         + " FROM " + tmp->getName();
+            delete tmp;
+            result = HqlMain::getInstance().runSqlQuery(query);
+            result->setName(this->id);
+            TRACE << "Current node table" << endl << result;
+            break;
+            
+        case RASDAMAN:
+            result = rman.getCollection(tableName, false);
+            result->setName(this->id);
+            TRACE << "Current node table: " << endl << result;
+
+            // now store this table in Postgres
+            HqlMain::getInstance().getSqlDataSource().insertData(result, this->id);
+            break;
+
+        default:
+            // FIXME: throw exception
+            throw string("Unknown data source for DataSourceRef node.");
+            break;
+    }
+
+    return result;
 }
 
 string QtDataSourceRef::toString()
@@ -43,7 +84,6 @@ string QtDataSourceRef::toString()
     string out(base->toString());
     if (alias)
         out += string(" AS ") + string(alias);
-    TRACE << "QtDataSourceRef :: toString() : " << out;
     return out;
 }
 
@@ -61,4 +101,10 @@ DbEnum QtDataSourceRef::setupDbSource()
 bool QtDataSourceRef::selectsAll()
 {
     return all;
+}
+
+void QtDataSourceRef::print(ostream &o, string indent)
+{
+    o << indent << "DataSourceRef (" << id << "): " << endl;
+    base->print(o, indent + QTINDENT);
 }

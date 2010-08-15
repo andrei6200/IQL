@@ -21,9 +21,7 @@ QtString::QtString(char* s)
 {
     if (s == NULL)
         s = (char*) "(null)";
-    TRACE << "Initializing QtString with: " << s;
     str = string(s);
-    TRACE << "Initialization ended: " << str;
 }
 
 QtString::~QtString()
@@ -32,7 +30,7 @@ QtString::~QtString()
 
 HqlTable* QtString::execute()
 {
-    return NULL;
+    return new HqlTable(str);
 }
 
 string QtString::toString()
@@ -43,7 +41,6 @@ string QtString::toString()
 char* QtString::toCString()
 {
     char* cstr = (char*) str.c_str();
-    TRACE << "QtDot :: toCString() : " << cstr;
     return cstr;
 }
 
@@ -58,7 +55,7 @@ DbEnum QtString::setupDbSource()
     switch (tables.count(str))
     {
     case 0:
-        WARN << "QtString::setupDbSource(): Coult not find table '" << str <<
+        WARN << "QtString::setupDbSource(): Could not find table '" << str <<
                 "' in global table dictionary";
         db_source = UNKNOWN_DB;
         break;
@@ -76,4 +73,9 @@ DbEnum QtString::setupDbSource()
 
     return db_source;
 
+}
+
+void QtString::print(ostream &o, std::string indent)
+{
+    o << indent << "QtString (" << id << "): " << str << endl;
 }

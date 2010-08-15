@@ -115,6 +115,7 @@ vector<string> RasdamanDS::getObjectNames()
         sqltr = new work(*sqlconn, string("Hql-Rasdaman-Conn"));
         result R(sqltr->exec(queryStr));
         table->importFromSql(R);
+        TRACE << table << endl;
         sqltr->abort();
         sqlconn->disconnect();
     }
