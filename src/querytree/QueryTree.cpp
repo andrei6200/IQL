@@ -48,6 +48,7 @@ void QueryTree::execute()
         root->setupDbSource();
         /* Execute the hybrid query, based on information about data sources. */
         HqlTable* table = root->execute();
+        HqlMain::getInstance().getSqlDataSource().commit();
         /* Print output */
         status = "ok";
         if (table)
@@ -61,9 +62,14 @@ void QueryTree::execute()
         ERROR << str;
         status = string("failed ... ") + str;
     }
-    catch (pqxx::sql_error &e)
+    catch (pqxx::failure &e)
     {
         ERROR << "Query execution exception: " << e.what();
+        status = string("failed ... ") + e.what();
+    }
+    catch (pqxx::usage_error &e)
+    {
+        ERROR << "Libpqxx usage exception: " << e.what();
         status = string("failed ... ") + e.what();
     }
     catch (exception &e)
@@ -71,6 +77,9 @@ void QueryTree::execute()
         ERROR << "Query execution exception: " << e.what();
         status = string("failed ... ") + e.what();
     }
+
+    /* In the end, remove temporary tables. */
+    HqlMain::getInstance().getSqlDataSource().removeTempTables();
 
     /* And display the query execution status*/
     cout << RESPONSE_PROMPT << status << endl;

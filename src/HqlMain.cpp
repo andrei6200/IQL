@@ -48,7 +48,7 @@ HqlMain::HqlMain()
     pg = new PostgresDS();
     pg->connect();
     rman = new RasdamanDS();
-    rman->connect();
+//    rman->connect();
 
     /* Rasdaman tables */
     vector<string> rasTables = rman->getObjectNames();

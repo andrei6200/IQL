@@ -71,6 +71,7 @@ int main(int argc, char** argv)
     /* Install signal handlers */
     (void) signal(SIGINT, signalHandler);
     (void) signal(SIGTSTP, signalHandler);
+    (void) signal(SIGPIPE, signalHandler);
 
     /* Analyze command-line arguments. */
     TRACE << "Command: " << argv[0];
@@ -107,7 +108,8 @@ int main(int argc, char** argv)
     {
         query = readQuery();
         allQueries += query;
-    } while (query != EMPTY_QUERY && !onlyOneQuery);
+    }
+    while (query != EMPTY_QUERY && !onlyOneQuery);
 
     /* And let the user know that we are exiting the application... */
     exitProgram(errorCount, allQueries);

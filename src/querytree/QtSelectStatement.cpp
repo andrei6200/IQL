@@ -53,10 +53,14 @@ HqlTable* QtSelectStatement::getCartesianProduct()
 {
     if (product == NULL)
     {
+        /* Evaluate the cartesian product. */
         TRACE << "Evaluating cartesian product between given tables...";
         product = from->multiplyResults();
         product->setName(from->getId());
         TRACE << "Cartesian product: " << product;
+        /* Insert the result into Postgres, to be available for QtColumn nodes. */
+        HqlMain::getInstance().getSqlDataSource().insertData(product, from->getId());
+        
     }
     return product;
 }

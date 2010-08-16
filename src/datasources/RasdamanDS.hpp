@@ -60,10 +60,15 @@ public:
 
     // Insert some data in a temporary table
     void insertData(HqlTable* table, std::string tableName);
+
+    // Drop tables that have been created during a query execution
+    void removeTempTables();
     
 private:
     r_Database *db;
     r_Transaction *tr;
+
+    std::vector<std::string> tempTables;
 };
 
 #endif	/* RASDAMANDS_HPP */

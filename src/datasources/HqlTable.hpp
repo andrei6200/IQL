@@ -53,6 +53,9 @@ public:
     /* Destructor */
     virtual ~HqlTable();
 
+    /* Return the column names as vector */
+    std::vector<std::string> getColumnNames();
+
     /* Return a certain column as a vector */
     std::vector<std::string> getColumn(int index);
 

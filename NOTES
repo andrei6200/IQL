@@ -2,18 +2,13 @@
 	- Write tests for all of them
 
 
-QUESTIONS
-- DataSourceRef nodes should not store data in a Table, right?
-- all other nodes store data in a DS
-
-
 TODO: 
 
-- integrate PostGIS grammar
-	- read PostGIS functions at init-time
-	- search them in the grammar parser
+- properly integrate PostGIS grammar
+    - read PostGIS functions at init-time
+    - search them in the grammar parser
 
-- allow several rasdaman results to be stored in one HqlTable
+
 
 - perform serious tests
 
@@ -30,7 +25,6 @@ TODO:
     - For the moment, HQL does not use unbounded domains for the newly created collections.
          - this a temporary workaround
 
-- extend the query tree classes to handle the HQL grammar
 
 - add the GROUP BY and HAVING clauses to the gramamr
 - complex combinations of SQL + RaSQL
@@ -52,3 +46,4 @@ DONE
     - modules, as described in architecture document
 - HqlTable: each row should have an internal ID
 	- helps with sorting
+- allow several rasdaman results to be stored in one HqlTable

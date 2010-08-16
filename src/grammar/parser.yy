@@ -403,41 +403,43 @@ stmtblock:	stmtmulti
 
 /* the thrashing around here is to discard "empty" statements... */
 stmtmulti:	stmtmulti SEMICOLON stmt
-				{ if ($3 != NULL)
-					{
-					$$ = cat3($1, (char*)"\n", $3->query);
-                                        DEBUG << "Parser matched query: " << $3->toString() << endl;
-                                        QueryTree::getInstance().load($3);
-                                        QueryTree::getInstance().execute();
-                                        cout << QUERY_PROMPT;
-					}
-				  else
-				  {
+				{
+                                    if ($3 != NULL)
+                                    {
+                                        $$ = cat3($1, (char*)"\n", $3->query);
+                                    }
+                                    else
+                                    {
 					$$ = $1;
-					}
+                                    }
 				}
 			| stmt
-					{ if ($1 != NULL)
 					{
-                                                DEBUG << "Parser matched query: " << $1->toString() << endl;
-						$$ = (char*) $1->toCString();
-                                                QueryTree::getInstance().load($1);
-                                                QueryTree::getInstance().execute();
-                                                cout << QUERY_PROMPT;
-						}
-					  else
-					  {
-						$$ = NULL;
-					  }
+                                            if ($1 != NULL)
+                                                $$ = $1->query;
 					}
 		;
 
-stmt:	SelectStmt  { $$ = $1; }
-        | // Empty
+stmt:	SelectStmt
+                {
+                    if ($1 != NULL)
+                    {
+                        DEBUG << "Parser matched query: " << $1->toString() << endl;
+                        $$ = $1;
+                        QueryTree::getInstance().load($1);
+                        QueryTree::getInstance().execute();
+                        cout << QUERY_PROMPT;
+                    }
+                    else
+                    {
+                        $$ = NULL;
+                    }
+                }
+        |  // Empty
                 {
                     $$ = NULL;
                 }
-
+            ;
 
 /*****************************************************************************
  *

@@ -39,6 +39,9 @@ public:
 
     // FIXME: Insert some data in a temporary table
     virtual void insertData(HqlTable* table, std::string tableName) = 0;
+
+    // Drop tables that have been created during a query execution
+    virtual void removeTempTables() = 0;
 };
 
 #endif	/* DATASOURCEINTERFACE_HPP */

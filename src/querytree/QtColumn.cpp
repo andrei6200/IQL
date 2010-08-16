@@ -39,33 +39,67 @@ HqlTable* QtColumn::execute()
     if (child != NULL)
     {
         tmp = child->execute();
-        // Result table should have one column ( + one HQL id hidden column )
-//        if (tmp->columns() != 2)
-//            throw string("Intermediate query result should contain only one column !");
         string q = "SELECT * INTO " + id + " FROM " + tmp->getName();
         TRACE << "Going to execute: " << q;
+        // FIXME: execute the query
     }
     else
     {
+        HqlTable *prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
         /* If we select all columns, then just copy the output of the "FROM" clause */
         if (column == "*")
         {
-            result = from->multiplyResults();
-            HqlMain::getInstance().getSqlDataSource().insertData(result, this->id);
-            result->setName(this->id);
+            HqlMain::getInstance().getSqlDataSource().insertData(prod, this->id);
+            result = new HqlTable(this->id);
         }
         else
         if (child == NULL)
         {
-            result = from->multiplyResults();
-            // Select just one column
-            string q = "SELECT " + column + " INTO " + id + " FROM " + result->getName();
-            tmp = HqlMain::getInstance().runSqlQuery(q);
-            delete tmp;
-            result = new HqlTable(id);
+            // The column names are prefixed with the table name
+            string col = table;
+            if (table != "")
+                col += "_" + this->column;
+            else
+            {
+                /* search for the source table */
+                TRACE << "Searching for column: " << this->column;
+                vector<string> names = prod->getColumnNames();
+                int colCount = 0;
+                // Start from 1 to skip the HQL id column
+                for (int i = 1; i < names.size(); i ++)
+                    if (
+                            // Format for Postgres columns : table_column
+                            names[i].rfind(this->column) == names[i].size() - this->column.size()
+                            ||
+                            // Format for Rasdaman columns: table_oid | table_filename
+                            names[i] == this->column + "_filename"
+                        )
+                    {
+                        TRACE << "Found column '" << this->column << "' under the name: " << names[i];
+                        colCount ++;
+                        col = names[i];
+                    }
+                switch (colCount)
+                {
+                    case 0:
+                        throw string("Column '" + this->column + "' could not be found.");
+                    case 1:
+                        // OK
+                        break;
+                    default:
+                        throw string("Too many columns named '" + this->column +
+                                "' found in the source tables.");
+                }
+            }
+            // Select just the one column
+            PostgresDS pg = HqlMain::getInstance().getSqlDataSource();
+            string q = "SELECT " + col + " INTO " + id + " FROM " + prod->getName();
+            result = pg.query(q);
+            pg.addTempTable(this->id);
+            result->setName(this->id);
         }
     }
-        
+
     return result;
 }
 
@@ -93,17 +127,17 @@ DbEnum QtColumn::setupDbSource()
     switch (tables.count(table))
     {
     case 0:
-        WARN << "QtString::setupDbSource(): Could not find table '" << table <<
+        WARN << "Could not find table '" << table <<
                 "' in global table dictionary";
         db_source = UNKNOWN_DB;
         break;
     case 1:
-        DEBUG << "QtString::setupDbSource(). Found String " << table << " as a table.";
+        DEBUG << "Found String " << table << " as a table.";
         DEBUG << "\tDatabase source: " << tables[table];
         db_source = tables.at(table);
         break;
     default:
-        TRACE << "QtString: Found " << tables.count(table) << " occurrences of '" << table
+        TRACE << "Found " << tables.count(table) << " occurrences of '" << table
                 << "' inside the global table dictionary!";
         db_source = UNKNOWN_DB;
         break;

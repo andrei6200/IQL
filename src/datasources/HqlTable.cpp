@@ -549,3 +549,8 @@ string HqlTable::getName()
 {
     return tableName;
 }
+
+vector<string> HqlTable::getColumnNames()
+{
+    return names;
+}

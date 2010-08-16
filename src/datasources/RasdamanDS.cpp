@@ -28,7 +28,7 @@ void RasdamanDS::connect()
         WARN << "RasdamanDS: Already connected. ";
         return;
     }
-    
+
     try
     {
         /* Init RMAN database connections */
@@ -46,6 +46,13 @@ void RasdamanDS::connect()
         }
         /* And Init RMAN database transaction */
         openTa();
+
+        TRACE << "Successfully connected to Rasdaman";
+        TRACE << "Server: " << RASDAMAN_SERVER;
+        TRACE << "Port: " << RASDAMAN_PORT;
+        TRACE << "Database: " << RASDAMAN_DATABASE;
+        TRACE << "Username: " << RASDAMAN_USERNAME;
+        TRACE << "Password: " << RASDAMAN_PASSWORD;
     }
     catch (r_Error e)
     {
@@ -84,6 +91,7 @@ void RasdamanDS::disconnect()
 
 RasdamanDS::~RasdamanDS()
 {
+    removeTempTables();
     disconnect();
     TRACE << "Rasdaman Data Source was now destroyed.";
 }
@@ -220,3 +228,30 @@ void RasdamanDS::insertData(HqlTable* table, string tableName)
     throw string("Inserting temporary tables into Rasdaman is not supported !");
 }
 
+void RasdamanDS::removeTempTables()
+{
+    /* Drop created tables. */
+    string q;
+    vector<string> temp;
+    for (int i = tempTables.size() - 1; i >= 0; i--)
+    {
+        q = "DROP COLLECTION " + tempTables[i];
+        try
+        {
+            connect();
+            HqlTable *t = query(q);
+            delete t;
+            commitTa();
+        }
+        catch (...)
+        {
+            WARN << "Got error while deleting Rasdaman collection: " << tempTables[i];
+            temp.push_back(tempTables[i]);
+        }
+    }
+
+    /* Clean up */
+    tempTables = temp;
+    if (temp.size() != 0)
+        ERROR << "Could not delete all temporary Rasdaman collections !";
+}
