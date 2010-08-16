@@ -36,6 +36,9 @@ public:
     /* Execute the query and return the result. */
     void execute();
 
+    /* Save the Rasdaman objects referenced in a HqlTable to files on disk. */
+    void saveRasdamanObjectsToDisk(HqlTable *table);
+
     /* Destructor */
     ~QueryTree();
 

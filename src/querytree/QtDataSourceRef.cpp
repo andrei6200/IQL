@@ -50,6 +50,8 @@ HqlTable* QtDataSourceRef::execute()
     switch (db_source)
     {
         case POSTGRES:
+        case RASDAMAN:
+
             tmp = base->execute();
             TRACE << "Child table: " << endl << tmp;
             query = "SELECT * INTO " + this->id
@@ -57,16 +59,18 @@ HqlTable* QtDataSourceRef::execute()
             delete tmp;
             result = HqlMain::getInstance().runSqlQuery(query);
             result->setName(this->id);
+            HqlMain::getInstance().getSqlDataSource().addTempTable(this->id);
             TRACE << "Current node table" << endl << result;
             break;
             
-        case RASDAMAN:
-            result = rman.getCollection(tableName, false);
-            result->setName(this->id);
-            TRACE << "Current node table: " << endl << result;
+            // Do not write the file to disk yet => "false"
+//            result = rman.getCollection(tableName, false);
+//            result->setName(this->id);
+//            TRACE << "Current node table: " << endl << result;
+
 
             // now store this table in Postgres
-            HqlMain::getInstance().getSqlDataSource().insertData(result, this->id);
+//            HqlMain::getInstance().getSqlDataSource().insertData(result, this->id);
             break;
 
         default:

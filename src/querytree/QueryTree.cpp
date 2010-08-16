@@ -48,6 +48,8 @@ void QueryTree::execute()
         root->setupDbSource();
         /* Execute the hybrid query, based on information about data sources. */
         HqlTable* table = root->execute();
+        /* Save required files to disk. */
+        saveRasdamanObjectsToDisk(table);
         /* Remove traces of execution */
         HqlMain::getInstance().getSqlDataSource().removeTempTables();
         HqlMain::getInstance().getSqlDataSource().commit();
@@ -92,4 +94,55 @@ void QueryTree::execute()
 QtSelectStatement* QueryTree::getRoot()
 {
     return root;
+}
+
+void QueryTree::saveRasdamanObjectsToDisk(HqlTable *table)
+{
+    /* Post-processing: parse the result table for references to Rasdaman objects,
+     * and create the corresponding files on disk */
+    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
+    vector<string> names = table->getColumnNames();
+    int fileIndex = 0;
+    for (int col = 0; col < names.size(); col++)
+    {
+        string::size_type pos = names[col].rfind("_oid");
+        if (pos == names[col].size() - 4)  // end with "_oid"
+        {
+            string collName = names[col].substr(0, pos);
+            TRACE << "Fetching MDDs from collection: " << collName;
+            /* This column contains Rasdaman OIDs. Need to save the referenced
+             * objects to disk. */
+            vector<string> oids = table->getColumn(col);
+            vector<string> fnameCol(oids);
+            map<string, string> oid2fname = map<string, string>();
+            for (int row = 0; row < oids.size(); row ++)
+            {
+                string oid = oids[row];
+                string filename = "";
+                if (oid2fname.count(oid) == 0)
+                {
+                    string q = "SELECT var FROM " + collName + " AS var " +
+                            "WHERE oid(var) = <\"" + oid + "\">";
+                    r_Ref<r_GMarray> mdd = rman.queryByOid(q);
+                    filename = rman.saveRasdamanMddToFile(mdd, true, ++fileIndex);
+
+                    // cache this oid->file link for later use
+                    oid2fname[oid] = filename;
+                }
+                else
+                    filename = oid2fname[oid];
+
+                fnameCol[row] = filename;
+            }
+
+            TRACE << endl << "Built map from Rasdaman OIDs to filenames:";
+            map<string,string>::iterator it;
+            for (it = oid2fname.begin(); it != oid2fname.end(); it ++)
+                TRACE << " filename[" << it->first << "] = " << it->second;
+            TRACE << endl;
+
+            table->setFilenames(fnameCol, col+1);
+            col++;
+        }
+    }
 }

@@ -13,6 +13,10 @@
 #include "logger.hpp"
 
 
+// Filename pattern, for Rasdaman coverages stored on disk
+#define DEFAULT_OUTFILE_MASK "hql_%d"
+
+
 using namespace std;
 using namespace pqxx;
 
@@ -200,8 +204,6 @@ HqlTable* RasdamanDS::query(string queryString, bool storeOnDisk)
         throw e;
     }
 
-    
-
     /* Return the data. */
     HqlTable *table = new HqlTable();
     table->importFromRasql(&result_set, storeOnDisk);
@@ -212,6 +214,40 @@ HqlTable* RasdamanDS::query(string queryString, bool storeOnDisk)
     return table;
 }
 
+r_Ref<r_GMarray> RasdamanDS::queryByOid(std::string queryString)
+{
+    connect();
+
+    DEBUG << "Executing RaSQL query: " << queryString;
+    r_OQL_Query query(queryString.c_str());
+
+    r_Set< r_Ref_Any > result_set;
+    r_Ref< r_GMarray > image;
+    r_Iterator< r_Ref_Any > iter;
+
+    /* Execute the actual query. */
+    try
+    {
+        TRACE << "Executing RaSQL ...";
+        r_oql_execute(query, result_set);
+        TRACE << "RaSQL execution ended. ";
+        DEBUG << "Result has " << result_set.cardinality() << " objects... ";
+        if (result_set.cardinality() != 1)
+            throw string("Query by OID did not fetch exactly one MDD object. ");
+        TRACE << "Finished executing RaSQL.";
+    }
+    catch (r_Error &e)
+    {
+        abortTa();
+        disconnect();
+        throw e;
+    }
+
+    iter = result_set.create_iterator();
+    // iter.not_done() seems to behave wrongly on empty set, therefore this additional check -- PB 2003-aug-16
+    image = r_Ref<r_GMarray> (*iter);
+    return image;
+}
 
 HqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk)
 {
@@ -254,4 +290,57 @@ void RasdamanDS::removeTempTables()
     tempTables = temp;
     if (temp.size() != 0)
         ERROR << "Could not delete all temporary Rasdaman collections !";
+}
+
+
+string RasdamanDS::saveRasdamanMddToFile(r_Ref<r_GMarray> mdd, bool storeOnDisk, int index)
+{
+    string result("");
+
+    char defFileName[FILENAME_MAX];
+    (void) snprintf(defFileName, sizeof (defFileName) - 1, DEFAULT_OUTFILE_MASK, index);
+
+    // special treatment only for DEFs
+    r_Data_Format mafmt = mdd->get_current_format();
+    switch (mafmt)
+    {
+        case r_TIFF:
+            strcat(defFileName, ".tif");
+            break;
+        case r_JPEG:
+            strcat(defFileName, ".jpg");
+            break;
+        case r_HDF:
+            strcat(defFileName, ".hdf");
+            break;
+        case r_PNG:
+            strcat(defFileName, ".png");
+            break;
+        case r_BMP:
+            strcat(defFileName, ".bmp");
+            break;
+        case r_VFF:
+            strcat(defFileName, ".vff");
+            break;
+        default:
+            strcat(defFileName, ".unknown");
+            break;
+    }
+
+    if (storeOnDisk)
+    {
+        DEBUG << "  MDD Result object " << index << ": going into file " << defFileName << "..." << flush;
+        FILE *tfile = fopen(defFileName, "wb");
+        char* output = mdd->get_array();
+        size_t size = mdd->get_array_size();
+        if (size == fwrite((void*) output, sizeof(char), size, tfile))
+            TRACE << "ok." << endl;
+        else
+            TRACE << "could not write data into file !" << flush;
+        fclose(tfile);
+
+        result = defFileName;
+    }
+
+    return result;
 }

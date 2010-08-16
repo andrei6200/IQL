@@ -54,6 +54,10 @@ public:
     // Execute a query on the current data source
     HqlTable* query(std::string query);
     HqlTable* query(std::string query, bool storeOnDisk);
+    r_Ref<r_GMarray> queryByOid(std::string);
+
+    // Save an array to disk
+    std::string saveRasdamanMddToFile(r_Ref<r_GMarray> mdd, bool storeOnDisk, int index);
 
     // Retrieve a collection by its name
     HqlTable* getCollection(std::string name, bool storeOnDisk = false);

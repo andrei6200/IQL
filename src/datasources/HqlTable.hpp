@@ -62,6 +62,9 @@ public:
     /* Return a certain column as a vector */
     std::vector<std::string> getColumn(std::string name);
 
+    /* Modify the filenames of Rasdaman objects. */
+    void setFilenames(std::vector<std::string> values, int colIndex);
+
     /* Display this table to stdout */
     void print(std::ostream& out);
 
@@ -85,7 +88,6 @@ private:
 
     /* The actual data, as strings */
     std::vector<std::vector<std::string> > data;
-
 
     /* Update the width information for printing. */
     void updateWidths();

@@ -60,11 +60,11 @@ HqlMain::HqlMain()
 
     /* Create the table dictionary */
     vector<string>::iterator iter;
-    for (iter = rasTables.begin(); iter != rasTables.end(); iter++)
-        tableMap[*iter] = RASDAMAN;
     for (iter = pgTables.begin(); iter != pgTables.end(); iter++)
+        tableMap[*iter] = POSTGRES;
+    for (iter = rasTables.begin(); iter != rasTables.end(); iter++)
         if (tableMap.count(*iter) == 0)
-            tableMap[*iter] = POSTGRES;
+            tableMap[*iter] = RASDAMAN;
         else
         {
             FATAL << "\n ERROR ! Table '" << *iter << "' is a coverage name in Rasdaman AND "

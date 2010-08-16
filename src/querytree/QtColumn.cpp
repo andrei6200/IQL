@@ -32,10 +32,6 @@ HqlTable* QtColumn::execute()
 {
     HqlTable *result = NULL, *tmp = NULL;
 
-    QtList *from = QueryTree::getInstance().getRoot()->getSourceTables();
-    
-    
-    
     if (child != NULL)
     {
         tmp = child->execute();

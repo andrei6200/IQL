@@ -20,8 +20,6 @@
 #define TABLE_COL_SEPARATOR     " | "
 #define TABLE_HEADER_SEPARATOR  '-'
 
-// Filename pattern, for Rasdaman coverages stored on disk
-#define DEFAULT_OUTFILE_MASK "hql_%d"
 
 
 
@@ -102,55 +100,9 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
         {
             case r_Type::MARRAYTYPE:
             {
-                char defFileName[FILENAME_MAX];
-                (void) snprintf(defFileName, sizeof (defFileName) - 1, DEFAULT_OUTFILE_MASK, i);
-//                TRACE << "filename for #" << i << " is: " << defFileName;
-
-                // special treatment only for DEFs
-                r_Data_Format mafmt = r_Ref<r_GMarray > (*iter)->get_current_format();
-                switch (mafmt)
-                {
-                    case r_TIFF:
-                        strcat(defFileName, ".tif");
-                        break;
-                    case r_JPEG:
-                        strcat(defFileName, ".jpg");
-                        break;
-                    case r_HDF:
-                        strcat(defFileName, ".hdf");
-                        break;
-                    case r_PNG:
-                        strcat(defFileName, ".png");
-                        break;
-                    case r_BMP:
-                        strcat(defFileName, ".bmp");
-                        break;
-                    case r_VFF:
-                        strcat(defFileName, ".vff");
-                        break;
-                    default:
-                        strcat(defFileName, ".unknown");
-                        break;
-                }
-
-                if (storeOnDisk)
-                {
-                    DEBUG << "  MDD Result object " << i << ": going into file " << defFileName << "..." << flush;
-                    FILE *tfile = fopen(defFileName, "wb");
-                    char* output = r_Ref<r_GMarray > (*iter)->get_array();
-                    size_t size = r_Ref<r_GMarray > (*iter)->get_array_size();
-                    if (size == fwrite((void*) output, sizeof(char), size, tfile))
-                        TRACE << "ok." << endl;
-                    else
-                        TRACE << "could not write data into file !" << flush;
-                    fclose(tfile);
-
-                    cell << defFileName;
-                }
-                else
-                    // Do not enter filenames into table if file does not exist
-                    cell << "";
-                
+                cell <<
+                        HqlMain::getInstance().getRasqlDataSource().
+                        saveRasdamanMddToFile(r_Ref<r_GMarray> (*iter), storeOnDisk, i);
                 break;
             }
 
@@ -553,4 +505,17 @@ string HqlTable::getName()
 vector<string> HqlTable::getColumnNames()
 {
     return names;
+}
+
+void HqlTable::setFilenames(vector<string> values, int colIndex)
+{
+    if (colIndex < 0 || colIndex >= rows)
+        throw string("Table column index out of range. ");
+    
+    string s("_filename");
+    if (names.at(colIndex).rfind(s) != names.at(colIndex).size() - s.size())
+        throw string("Internal Error: Setting non-filename columns is not "
+                "allowed for HqlTable. ");
+    for (int row = 0; row < rows; row++)
+        data[row][colIndex] = values[row];
 }
