@@ -14,7 +14,7 @@
 
 
 // Uncomment to print hidden columns of tables
-//#define PRINT_HIDDEN_COLUMNS
+#define PRINT_HIDDEN_COLUMNS
 
 // Printing helpers
 #define TABLE_COL_SEPARATOR     " | "

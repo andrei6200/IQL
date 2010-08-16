@@ -66,9 +66,11 @@ HqlTable* QtList::execute()
         if (table->dataAlsoInMemory == false)
         {
             /* This table only carries the tableName. Retrieve the table explicitly. */
-            string q = "SELECT * FROM " + table->getName();
-            pqxx::result R = HqlMain::getInstance().getSqlDataSource().regularQuery(q);
-            table->importFromSql(R);
+            string name = table->getName();
+            delete table;
+            string q = "SELECT * FROM " + name;
+            table = HqlMain::getInstance().getSqlDataSource().query(q);
+            table->setName(name);
         }
         /* Store the table for later processing */
         TRACE << "Table " << i << " of the list: " << endl << table;

@@ -30,6 +30,9 @@ public:
     // Returns the connection status
     bool isConnected();
 
+    // Public interface for commit current transaction
+    void commit();
+
     // Returns the list of available object names (tables/collections)
     std::vector<std::string> getObjectNames();
 
@@ -45,7 +48,30 @@ public:
     // Insert some data in a temporary table
     void insertData(HqlTable* table, std::string tableName);
 
+    // Remember the name of a temporary table
+    void addTempTable(std::string name);
+
+    // Drop tables that have been created during a query execution
+    void removeTempTables();
+
 private:
+
+    // Open transaction
+    void openTa();
+
+    // Abort transaction
+    void abortTa();
+
+    // Commit transaction
+    void commitTa();
+
+    // Open connection to base DB
+    void openConn();
+
+    // Close connection to base DB
+    void closeConn();
+
+    
     // Connection options
     std::string options;
 
@@ -54,6 +80,9 @@ private:
 
     // Transaction
     pqxx::work *tr;
+
+    // List of temporary table names
+    std::vector<std::string> tempTables;
 };
 
 #endif	/* POSTGRESDS_HPP */

@@ -48,7 +48,10 @@ void QueryTree::execute()
         root->setupDbSource();
         /* Execute the hybrid query, based on information about data sources. */
         HqlTable* table = root->execute();
+        /* Remove traces of execution */
+        HqlMain::getInstance().getSqlDataSource().removeTempTables();
         HqlMain::getInstance().getSqlDataSource().commit();
+        HqlMain::getInstance().getRasqlDataSource().removeTempTables();
         /* Print output */
         status = "ok";
         if (table)

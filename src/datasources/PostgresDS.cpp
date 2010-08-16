@@ -15,81 +15,183 @@ using namespace pqxx;
 PostgresDS::PostgresDS() : conn(NULL), tr(NULL),
         options(POSTGRES_CONN_OPTS)
 {
+    tempTables = vector<string>();
 }
 
 PostgresDS::PostgresDS(string opts) : conn(NULL), tr(NULL),
         options(opts)
 {
+    tempTables = vector<string>();
 }
 
 PostgresDS::~PostgresDS()
 {
+    TRACE << "Destroying Postgres Data Source ...";
+//    removeTempTables();
+    /* Remove pqxx connections to base DB. */
     disconnect();
     TRACE << "Postgres DataSource was now destroyed.";
 }
 
-bool PostgresDS::isConnected()
+void PostgresDS::removeTempTables()
 {
-    bool result = false;
-    if (conn)
-        result = conn->is_open();
-    TRACE << "Connection validity status: " << result;
-    if (!tr)
-        result = false;
-    TRACE << "Transaction validity status: " << result;
-    if (result)
+    TRACE << "Removing " << tempTables.size() << " temporary tables: " << tempTables;
+    /* Drop created tables. */
+    connect();
+    for (int i = tempTables.size() - 1; i >= 0; i--)
+    {
+        regularQuery("DROP TABLE " + tempTables[i]);
+        tempTables.pop_back();
+    }
+    commitTa();
+}
+
+void PostgresDS::abortTa()
+{
+    if (tr != NULL)
     {
         try
         {
-            TRACE << "Trying out test SQL statement to check transaction...";
-            pqxx::result R(tr->exec("SELECT * FROM pg_tables"));
-            if (R.empty())
-                result = false;
-            TRACE << "SELECT Statement executed ok.";
+            tr->abort();
         }
-        catch (...)
+        catch (pqxx_exception &e)
         {
-            result = false;
+            WARN << e.base().what();
         }
+        delete tr;
+        tr = NULL;
+        TRACE << "Aborted current transaction. ";
     }
-    TRACE << "Postgres Connection status: " << result;
+    else
+        WARN << "Could not abort transaction, no transaction active. ";
+}
+
+void PostgresDS::commitTa()
+{
+    if (tr != NULL)
+    {
+        try
+        {
+            tr->commit();
+        }
+        catch (pqxx::pqxx_exception &e)
+        {
+            WARN << e.base().what();
+        }
+        delete tr;
+        tr = NULL;
+        TRACE << "Commited current transaction. ";
+    }
+    else
+        WARN << "Could not commit transaction, no transaction active. ";
+}
+
+void PostgresDS::openTa()
+{
+    if (tr != NULL)
+    {
+        tr->commit();
+        delete tr;
+        tr = NULL;
+    }
+    if (tr == NULL)
+    {
+        TRACE << "Opening a new transaction ...";
+        tr = new work(*conn, string("Hql-Client-Conn"));
+        TRACE << "Transaction open.";
+    }
+}
+
+void PostgresDS::openConn()
+{
+    if ( conn == NULL || conn->is_open() == false )
+    {
+        /* Init PG database connections */
+        TRACE << "Connecting with options '" <<
+                options << "' ...";
+        conn = new connection(options);
+        TRACE << "Successfully connected to Postgres !";
+    }
+    else
+        WARN << "Connection already functional.";
+}
+
+void PostgresDS::closeConn()
+{
+    if (conn)
+    {
+//        conn->disconnect();
+        delete conn;
+        conn = NULL;
+        TRACE << "Connection closed.";
+    }
+}
+
+bool PostgresDS::isConnected()
+{
+    map<int,string> o;
+    o[0] = "broken";
+    o[1] = "ok";
+
+    bool result = false;
+    
+    if (conn)
+        result = conn->is_open();
+    TRACE << "Connection validity status: " << o[result];
+    if (tr == NULL)
+        result = false;
+    TRACE << "Transaction validity status: " << o[result];
+//    if (result)
+//    {
+//        try
+//        {
+//            pqxx::result R(tr->exec("SELECT * FROM pg_tables"));
+//            // The pg_tables table should never be empty
+//            if (R.empty())
+//                result = false;
+//            TRACE << "Test SELECT Statement executed ok.";
+//        }
+//        catch (...)
+//        {
+//            WARN << "Error while executing test SELECT statement. ";
+//            result = false;
+//        }
+//    }
+    TRACE << "Postgres Connection status: " << o[result];
     return result;
 }
 
 void PostgresDS::connect()
 {
-    if (isConnected())
-    {
-        WARN << "PostgresDS: Already connected. ";
-        return;
-    }
+//    if (isConnected())
+//    {
+//        WARN << "Already connected. ";
+//        return;
+//    }
 
     try
     {
-        disconnect();
-        /* Init PG database connections */
-        TRACE << "PostgresDS: Connecting with options '" <<
-                options << "' ...";
-        conn = new connection(options);
-        TRACE << "PostgresDS: Successfully connected to Postgres !";
-        TRACE << "PostgresDS: Opening a new transaction ...";
-        tr = new work(*conn, string("Hql-Client-Conn"));
-        TRACE << "PostgresDS: Transaction open.";
+//        disconnect();
+        openConn();
+        openTa();
 
         DEBUG << "Connected to SQL database: " << conn->dbname();
         TRACE << "SQL Backend version: " << conn->server_version();
         TRACE << "Protocol version: " << conn->protocol_version();
     }
-    catch (broken_connection e)
+    catch (broken_connection &e)
     {
         FATAL << "PostgresDS: Could not connect to Postgresql : " << e.what();
+        disconnect();
         throw;
     }
 }
 
 HqlTable* PostgresDS::query(string queryString)
 {
+    connect();
     result R = regularQuery(queryString);
+    commitTa();
     HqlTable *result = new HqlTable();
 
     if (R.empty())
@@ -102,13 +204,28 @@ HqlTable* PostgresDS::query(string queryString)
 
 result PostgresDS::regularQuery(string queryString)
 {
-    connect();
+    
 
     TRACE;
-    TRACE << "Executing SQL query: " << queryString;
+    TRACE << "Query: " << queryString;
 
     // Perform a query on the database, storing result tuples in R.
-    result R(tr->exec(queryString));
+    result R;
+    try
+    {
+        R = tr->exec(queryString);
+    }
+    catch (sql_error &e)
+    {
+        ERROR << e.query() << " : " << e.what();
+        throw;
+    }
+    catch (pqxx_exception &e)
+    {
+        abortTa();
+        throw;
+    }
+
     return R;
 }
 
@@ -123,70 +240,83 @@ vector<string> PostgresDS::getObjectNames()
     return table->getColumn("tablename");
 }
 
-
 void PostgresDS::disconnect()
 {
-    if (tr)
-    {
-        tr->abort();
-        delete tr;
-        tr = NULL;
-        TRACE << "Transaction aborted.";
-    }
-    if (conn)
-    {
-        conn->disconnect();
-        delete conn;
-        conn = NULL;
-        TRACE << "Connection closed.";
-    }
+    commitTa();
+    closeConn();
 }
-
 
 void PostgresDS::insertData(HqlTable* table, string tableName)
 {
     TRACE << "Insert table into SQL datasource: ";
     TRACE << table << endl;
 
+    /* (1) First drop old table, if it exists. */
     connect();
-    
-    /* (1) First drop old table, if it exists.
-    This will probably fail because the table shouldn't exist.  */
     try
     {
         tr->exec("DROP TABLE " + tableName);
-        tr->commit();
-        TRACE << "Dropped table " << tableName;
+        TRACE << "Dropped table" << tableName;
     }
-    catch (pqxx::pqxx_exception &e)
+    catch (pqxx_exception &e)
     {
+        // Query may fail because table may not exist.
+        // If so, libpqxx automatically aborts the transaction. We also need to reset it.
+        abortTa();
     }
-
-    delete tr;
-    tr = NULL;
-    TRACE << "Destroyed old transaction";
-    connect();
 
     /* (2) Create the table, with an appropriate structure. */
 
-    string query = "CREATE TABLE " + tableName + " (";
+    string query = "\nCREATE TABLE " + tableName + " (\n";
     // The first column always exists : it stores the HQL ID.
-    query += table->names[0] + " INTEGER";
+    query += "\t" + table->names[0] + " INTEGER \n";
     for (int i = 1; i < table->names.size(); i++)
-        query += string(", ") + table->names[i] + " VARCHAR";
+        query += string(", \n\t") + table->names[i] + " VARCHAR \n";
     query += ")";
 
-    TRACE << query;
-    tr->exec(query, "Create Table " + tableName);
-    TRACE << "Created new Table: " << tableName;
+    connect();
+    try
+    {
+        tr->exec(query);
+        TRACE << "Created table " << tableName;
+    }
+    catch (pqxx_exception &e)
+    {
+        ERROR << e.base().what();
+        abortTa();
+    }
     
     /* (3) Insert the data into the table. */
+    connect();
+    try
+    {
+        tablewriter W(*tr, tableName);
+        for (int row = 0; row < table->data.size(); row++)
+            W << table->data.at(row);
 
-    tablewriter W(*tr, tableName);
-    for (int row = 0; row < table->data.size(); row++)
-        W << table->data.at(row); 
+        W.complete();
+        TRACE << "Inserted data into the table: " << tableName;
+    }
+    catch (pqxx_exception &e)
+    {
+        ERROR << e.base().what();
+        abortTa();
+        throw;
+    }
 
-    W.complete();
-    TRACE << "Inserted data into the table: " << tableName;
+    /* (4) Commit data to db. */
+    commitTa();
 
+    // store the table for subequent deletion
+    tempTables.push_back(tableName);
+}
+
+void PostgresDS::addTempTable(string name)
+{
+    tempTables.push_back(name);
+}
+
+void PostgresDS::commit()
+{
+    commitTa();
 }

@@ -92,7 +92,7 @@ HqlTable* QtColumn::execute()
                 }
             }
             // Select just the one column
-            PostgresDS pg = HqlMain::getInstance().getSqlDataSource();
+            PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
             string q = "SELECT " + col + " INTO " + id + " FROM " + prod->getName();
             result = pg.query(q);
             pg.addTempTable(this->id);
