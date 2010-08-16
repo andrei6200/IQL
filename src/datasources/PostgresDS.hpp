@@ -10,6 +10,7 @@
 
 #include "DataSourceInterface.hpp"
 #include <pqxx/pqxx>
+#include <map>
 
 
 class PostgresDS : public DataSourceInterface
@@ -82,7 +83,7 @@ private:
     pqxx::work *tr;
 
     // List of temporary table names
-    std::vector<std::string> tempTables;
+    std::map<std::string, bool> tempTables;
 };
 
 #endif	/* POSTGRESDS_HPP */

@@ -44,14 +44,29 @@ QtList::~QtList()
 
 string QtList::toString()
 {
-    string out("");
+    string out = "";
     if (data.size() == 0)
         return out;
 
-    out += (data[0])->toString();
+    if (data[0] != NULL)
+    {
+        string s = (data[0])->toString();;
+        out += s;
+    }
+    else
+        out += "(null)";
 
     for (int i = 1; i < data.size(); i++)
-        out += ", " + data[i]->toString();
+    {
+        out += string(", ");
+        if (data[i] != NULL)
+        {
+            string s = data[i]->toString();
+            out += s;
+        }
+        else
+            out += "(null)";
+    }
 
     return out;
 }
@@ -63,6 +78,8 @@ HqlTable* QtList::execute()
     for (int i = 0; i < data.size(); i++)
     {
         table = data[i]->execute();
+        if (table == NULL)
+            throw string("Internal error: Received NULL intermediate result.");
         if (table->dataAlsoInMemory == false)
         {
             /* This table only carries the tableName. Retrieve the table explicitly. */

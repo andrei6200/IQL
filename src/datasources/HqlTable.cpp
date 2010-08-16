@@ -493,7 +493,8 @@ void HqlTable::setName(string name, bool updateColumnNames)
     if (updateColumnNames && this->dataAlsoInMemory)
     {
         for (int i = 1; i < names.size(); i ++)
-            names[i] = tableName + "_" + names[i];
+            if (names[i].find(name) != 0)
+                names[i] = tableName + "_" + names[i];
     }
 }
 
@@ -509,7 +510,7 @@ vector<string> HqlTable::getColumnNames()
 
 void HqlTable::setFilenames(vector<string> values, int colIndex)
 {
-    if (colIndex < 0 || colIndex >= rows)
+    if (colIndex < 0 || colIndex >= columns)
         throw string("Table column index out of range. ");
     
     string s("_filename");

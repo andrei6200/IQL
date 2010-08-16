@@ -172,6 +172,7 @@ void RasdamanDS::commitTa()
 
 HqlTable* RasdamanDS::query(string queryString)
 {
+    
     // By default, do not write files to disk
     HqlTable* result = this->query(queryString, false);
     return result;
@@ -255,6 +256,7 @@ HqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk)
     HqlTable* out = this->query(query, storeOnDisk);
     out->names[1] = name + "_" + out->names[1];
     out->names[2] = name + "_" + out->names[2];
+    out->setName(name);
     return out;
 }
 
@@ -266,30 +268,27 @@ void RasdamanDS::insertData(HqlTable* table, string tableName)
 
 void RasdamanDS::removeTempTables()
 {
+    TRACE << "Removing " << tempTables.size() << " temporary tables";
     /* Drop created tables. */
     string q;
-    vector<string> temp;
-    for (int i = tempTables.size() - 1; i >= 0; i--)
+    map<string,bool>::iterator it;
+    for (it = tempTables.begin(); it != tempTables.end(); it++)
     {
-        q = "DROP COLLECTION " + tempTables[i];
+        q = "DROP COLLECTION " + it->first;
         try
         {
             connect();
-            HqlTable *t = query(q);
-            delete t;
+            updateQuery(q);
             commitTa();
         }
         catch (...)
         {
-            WARN << "Got error while deleting Rasdaman collection: " << tempTables[i];
-            temp.push_back(tempTables[i]);
+            WARN << "Got error while deleting Rasdaman collection: " << it->first;
         }
     }
 
     /* Clean up */
-    tempTables = temp;
-    if (temp.size() != 0)
-        ERROR << "Could not delete all temporary Rasdaman collections !";
+    tempTables.clear();
 }
 
 
@@ -343,4 +342,39 @@ string RasdamanDS::saveRasdamanMddToFile(r_Ref<r_GMarray> mdd, bool storeOnDisk,
     }
 
     return result;
+}
+
+void RasdamanDS::addTempTable(std::string name)
+{
+    tempTables[name] = true;
+    TRACE << "Temporary tables: " << tempTables.size();
+    map<string,bool>::iterator it;
+    for (it = tempTables.begin(); it != tempTables.end(); it ++)
+        TRACE << " Collection " << it->first;
+    TRACE;
+}
+
+void RasdamanDS::updateQuery(std::string queryString)
+{
+    connect();
+
+    DEBUG << "Executing RaSQL update query: " << queryString;
+    r_OQL_Query query(queryString.c_str());
+
+    /* Execute the actual query. */
+    try
+    {
+        TRACE << "Executing RaSQL update ...";
+        r_oql_execute(query);
+        TRACE << "RaSQL update ended. ";
+    }
+    catch (r_Error &e)
+    {
+        abortTa();
+        disconnect();
+        throw e;
+    }
+
+    /* Close the transaction (after processing of data) */
+    commitTa();
 }

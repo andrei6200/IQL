@@ -135,7 +135,7 @@ void QueryTree::saveRasdamanObjectsToDisk(HqlTable *table)
                 fnameCol[row] = filename;
             }
 
-            TRACE << endl << "Built map from Rasdaman OIDs to filenames:";
+            TRACE << "Built map from Rasdaman OIDs to filenames:";
             map<string,string>::iterator it;
             for (it = oid2fname.begin(); it != oid2fname.end(); it ++)
                 TRACE << " filename[" << it->first << "] = " << it->second;

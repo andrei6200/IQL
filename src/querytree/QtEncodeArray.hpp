@@ -23,19 +23,21 @@ public:
     virtual ~QtEncodeArray();
 
     /* String representation */
-    std::string toString() = 0;
+    std::string toString();
 
     /* Recursively computes the value of the "db_source" field.
      * - If all the child nodes belong to the same DB, then this node also belongs to it
      * - If some child nodes belong to different DB, then this node will be "mixed"
      */
-    DbEnum setupDbSource() = 0;
+    DbEnum setupDbSource();
 
     /* Get the source system that can handle this node. */
     DbEnum getDbSource();
 
     /* Execute the operation of this node and return a HqlTable result. */
     HqlTable* execute();
+
+    virtual void print(ostream &o, std::string indent);
 
 private:
     std::string format;

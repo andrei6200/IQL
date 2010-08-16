@@ -74,6 +74,7 @@ HqlTable* QtColumn::execute()
                         TRACE << "Found column '" << this->column << "' under the name: " << names[i];
                         colCount ++;
                         col = names[i];
+                        table = names[i].substr(0, names[i].size() - this->column.size() - 1);
                     }
                 switch (colCount)
                 {
@@ -87,12 +88,34 @@ HqlTable* QtColumn::execute()
                                 "' found in the source tables.");
                 }
             }
-            // Select just the one column
+
+            setupDbSource();
+
             PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+            RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
             string q = "SELECT " + col + " INTO " + id + " FROM " + prod->getName();
-            result = pg.query(q);
-            pg.addTempTable(this->id);
-            result->setName(this->id);
+
+            switch (db_source)
+            {
+                case POSTGRES:
+                    // Select just the one column
+                    result = pg.query(q);
+                    pg.addTempTable(this->id);
+                    result->setName(this->id);
+
+                    break;
+
+                case RASDAMAN:
+                    q = "SELECT " + column + " INTO " + id + " FROM " + column;
+                    // Also insert the new coverage into Rasdaman
+                    rman.updateQuery(q);
+                    rman.addTempTable(this->id);
+                    // And retrieve the new OIDs
+                    result = rman.getCollection(this->id, false);
+                    // And store them in Postgres as well
+                    pg.insertData(result, this->id);
+                    break;
+            }
         }
     }
 
@@ -102,7 +125,7 @@ HqlTable* QtColumn::execute()
 string QtColumn::toString()
 {
     string str(table);
-    if (table != "")
+    if (table.size() > 0)
         str += ".";
     str += column;
     return str;
@@ -110,6 +133,8 @@ string QtColumn::toString()
 
 DbEnum QtColumn::setupDbSource()
 {
+    TRACE << toString();
+    
     /* Check the source tables. */
     if (column == "*")
     {
@@ -117,23 +142,28 @@ DbEnum QtColumn::setupDbSource()
         db_source = from->setupDbSource();
         return db_source;
     }
-    
+
+    string search = table;
+    if (table == "")
+        search = column;
+
+
     /* Else try to use the global data source dictionary. */
     map<string, DbEnum> tables = HqlMain::getInstance().tableMap;
-    switch (tables.count(table))
+    switch (tables.count(search))
     {
     case 0:
-        WARN << "Could not find table '" << table <<
+        WARN << "Could not find table '" << search <<
                 "' in global table dictionary";
         db_source = UNKNOWN_DB;
         break;
     case 1:
-        DEBUG << "Found String " << table << " as a table.";
-        DEBUG << "\tDatabase source: " << tables[table];
-        db_source = tables.at(table);
+        DEBUG << "Found String " << search << " as a table.";
+        DEBUG << "\tDatabase source: " << tables[search];
+        db_source = tables.at(search);
         break;
     default:
-        TRACE << "Found " << tables.count(table) << " occurrences of '" << table
+        TRACE << "Found " << tables.count(search) << " occurrences of '" << search
                 << "' inside the global table dictionary!";
         db_source = UNKNOWN_DB;
         break;

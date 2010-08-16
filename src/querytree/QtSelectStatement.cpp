@@ -107,8 +107,9 @@ HqlTable* QtSelectStatement::execute()
 
 std::string QtSelectStatement::toString()
 {
-    string out = string("SELECT ") + what->toString() +
-                 string(" FROM ") + from->toString();
+    string s = what->toString();
+    string f = from->toString();
+    string out = string("SELECT ") + s + string(" FROM ") + f;
     return out;
 }
 

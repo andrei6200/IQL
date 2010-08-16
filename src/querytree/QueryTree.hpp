@@ -17,6 +17,7 @@
 #include "QtDot.hpp"
 #include "QtSelectStatement.hpp"
 #include "QtColumn.hpp"
+#include "QtEncodeArray.hpp"
 
 class HqlTable;
 

@@ -15,13 +15,13 @@ using namespace pqxx;
 PostgresDS::PostgresDS() : conn(NULL), tr(NULL),
         options(POSTGRES_CONN_OPTS)
 {
-    tempTables = vector<string>();
+    tempTables = map<string, bool>();
 }
 
 PostgresDS::PostgresDS(string opts) : conn(NULL), tr(NULL),
         options(opts)
 {
-    tempTables = vector<string>();
+    tempTables = map<string, bool>();
 }
 
 PostgresDS::~PostgresDS()
@@ -35,15 +35,21 @@ PostgresDS::~PostgresDS()
 
 void PostgresDS::removeTempTables()
 {
-    TRACE << "Removing " << tempTables.size() << " temporary tables: " << tempTables;
+    TRACE << "Removing " << tempTables.size() << " temporary tables";
     /* Drop created tables. */
     connect();
-    for (int i = tempTables.size() - 1; i >= 0; i--)
-    {
-        regularQuery("DROP TABLE " + tempTables[i]);
-        tempTables.pop_back();
-    }
+    map<string,bool>::iterator it;
+    for (it = tempTables.begin(); it != tempTables.end(); it++)
+        try
+        {
+            regularQuery("DROP TABLE " + it->first);
+        }
+        catch (sql_error &e)
+        {
+            // do not react on this error
+        }
     commitTa();
+    tempTables.clear();
 }
 
 void PostgresDS::abortTa()
@@ -308,12 +314,17 @@ void PostgresDS::insertData(HqlTable* table, string tableName)
     commitTa();
 
     // store the table for subequent deletion
-    tempTables.push_back(tableName);
+    tempTables[tableName] = true;
 }
 
 void PostgresDS::addTempTable(string name)
 {
-    tempTables.push_back(name);
+    tempTables[name] = true;
+    TRACE << "Temporary tables: " << tempTables.size();
+    map<string,bool>::iterator it;
+    for (it = tempTables.begin(); it != tempTables.end(); it ++)
+        TRACE << " Collection " << it->first;
+    TRACE;
 }
 
 void PostgresDS::commit()

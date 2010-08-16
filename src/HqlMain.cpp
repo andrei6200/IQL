@@ -68,10 +68,10 @@ HqlMain::HqlMain()
         else
         {
             FATAL << "\n ERROR ! Table '" << *iter << "' is a coverage name in Rasdaman AND "
-                    << " a table in Postgres. Cannot continue. ";
+                    << " a table in Postgres. ";
             cerr << "\n ERROR ! Table '" << *iter << "' is a coverage name in Rasdaman AND "
-                    << " a table in Postgres. Cannot continue. ";
-            exit(1);
+                    << " a table in Postgres. " << endl;
+//            exit(1);
         }
 
     /* Print the Table dictionary */

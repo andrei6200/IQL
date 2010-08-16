@@ -44,6 +44,11 @@ string readQuery()
 
 void exitProgram(int code, string queries)
 {
+    TRACE << "Removing temporary tables ...";
+    HqlMain::getInstance().getSqlDataSource().removeTempTables();
+    HqlMain::getInstance().getRasqlDataSource().removeTempTables();
+    TRACE << "Removed temporary tables.";
+
     DEBUG << endl;
     if (queries != string(""))
     {
@@ -59,6 +64,8 @@ void exitProgram(int code, string queries)
 void signalHandler(int signal)
 {
     INFO << "Received signal: " << signal;
+    if (signal == 11)
+        cerr << "Received SIGSEGV : Segmentation fault. " << endl;
     INFO << "Terminating program gracefully ...";
     exitProgram(signal, string(""));
 }
@@ -72,6 +79,7 @@ int main(int argc, char** argv)
     (void) signal(SIGINT, signalHandler);
     (void) signal(SIGTSTP, signalHandler);
     (void) signal(SIGPIPE, signalHandler);
+    (void) signal(SIGSEGV, signalHandler);
 
     /* Analyze command-line arguments. */
     TRACE << "Command: " << argv[0];

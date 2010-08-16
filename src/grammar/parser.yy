@@ -367,19 +367,21 @@ char* hqlQueries;
 
 
 /* Rasql statements */
-%type <node> generalExp spatialOpList spatialOpList2
+%type <mynode> generalExp spatialOpList spatialOpList2
             spatialOp condenseOpLit inductionExp castType
             variable reduceIdent intLitExp generalLit
-            mddLit scalarLit atomicLit scalarLitList ivList
+            mddLit scalarLit atomicLit scalarLitList ivList iv
 
             mddExp trimExp reduceExp functionExp integerExp mintervalExp 
-            condenseExp  intervalExp Identifier
+            condenseExp  intervalExp
 
-            IntegerLit StringLit FloatLit oidLit dimensionLitList
+            complexLit marray_head
 
-            complexLit marray_head iv 
+%type <str> IntegerLit StringLit FloatLit oidLit dimensionLitList Identifier
+            
+            
 
-%type <node>    collectionIterator attributeIdent marrayVariable condenseVariable 
+%type <str>    collectionIterator attributeIdent marrayVariable condenseVariable
                 structSelection
 
 %type <boolean> BooleanLit
@@ -1319,7 +1321,7 @@ a_expr:		c_expr
 
                         | generalExp
                             {
-                                $$ = new QtString($1);
+                                $$ = $1;
                             }
 		/*
 		 * These operators must be called out explicitly in order to make use
@@ -2178,7 +2180,7 @@ target_el:
 /* AA: RaSQL expressions allowed in the SELECT clause */
                         | generalExp
                                 {
-                                        $$ = new QtColumn($1);
+                                        $$ = $1;
                                 }
 		;
 
@@ -2831,34 +2833,34 @@ generalExp: mddExp                          { $$ = $1; }
 
 integerExp: generalExp DOT LO
 	{
-            $$ = cat3($1, $2, $3);
+            $$ = $1;
 	}
 	| generalExp DOT HI
 	{
-            $$ = cat3($1, $2, $3);
+            $$ = $1;
 	};
 
 mintervalExp: LEPAR spatialOpList REPAR
 	{
-    $$ = cat3($1, $2, $3);
+            $$ = $2;
 	}
 	| SDOM LRPAR collectionIterator RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3, $4));
 	};
 
 spatialOpList:  // empty
 	{
-            $$ = (char*) "emptySpatialOpList";
+            $$ = new QtString("emptySpatialOpList");
 	}
 	| spatialOpList2
 	{
-	  $$ = $1;
+            $$ = $1;
 	};
 
 spatialOpList2: spatialOpList2 COMMA spatialOp
 	{
-            $$ = cat3($1, $2, $3);
+            $$ = $3;
 	}
 	| spatialOp
 	{
@@ -2869,390 +2871,424 @@ spatialOp: generalExp        { $$ = $1; };
 
 intervalExp: generalExp COLON generalExp
 	{
-            $$ = cat3($1, $2, $3);
+            $$ = $1;
 	}
 	| MULT COLON generalExp
 	{
-            $$ = cat3($1, $2, $3);
+            $$ = $3;
 	}
 	| generalExp COLON MULT
 	{
-            $$ = cat3($1, $2, $3);
+            $$ = $1;
 	}
 	| MULT COLON MULT
 	{
-            $$ = cat3($1, $2, $3);
+            $$ = new QtString(cat3($1, $2, $3));
 	};
 
 condenseExp: CONDENSE condenseOpLit OVER condenseVariable IN_P generalExp WHERE generalExp USING generalExp
 	{
-            $$ = cat10($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+            $$ = new QtString(cat10($1, $2->toCString(), $3, $4, $5, $6->toCString(),
+                    $7, $8->toCString(), $9, $10->toCString()));
 	}
 	| CONDENSE condenseOpLit OVER condenseVariable IN_P generalExp USING generalExp
 	{
-            $$ = cat8($1, $2, $3, $4, $5, $6, $7, $8);
+            $$ = new QtString(cat8($1, $2->toCString(), $3, $4, $5, $6->toCString(),
+                    $7, $8->toCString()));
 	};
 
 condenseOpLit: PLUS
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| MINUS
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| MULT
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| DIV
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| AND
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| OR
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	};
 
 functionExp: OID LRPAR collectionIterator RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString($1);
 	}
 	| SHIFT LRPAR generalExp COMMA generalExp RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5->toCString(), $6));
 	}
 	| EXTEND LRPAR generalExp COMMA generalExp RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5->toCString(), $6));
 	}
 	| SCALE LRPAR generalExp COMMA generalExp RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5->toCString(), $6));
 	}
 	| BIT LRPAR generalExp COMMA generalExp RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5->toCString(), $6));
 	}
 	| TIFF LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| TIFF LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| BMP LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| BMP LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| HDF LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| HDF LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| CSV LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| CSV LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| JPEG LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| JPEG LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| PNG LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| PNG LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| VFF LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| VFF LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| TOR LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| TOR LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| DEM LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| DEM LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+           $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_TIFF LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
 	}
 	| INV_TIFF LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 	}
 	| INV_BMP LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
 	}
 	| INV_BMP LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 	}
 	| INV_HDF LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
 	}
 	| INV_HDF LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 	}
 	| INV_CSV LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
 	}
 	| INV_CSV LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 	}
 	| INV_JPEG LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
 	}
 	| INV_JPEG LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 	}
 	| INV_PNG LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
 	}
 	| INV_PNG LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 	}
 	| INV_VFF LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
 	}
 	| INV_VFF LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 	}
 	| INV_TOR LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
 	}
 	| INV_TOR LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 	}
 	| INV_DEM LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = cat6($1, $2, $3, $4, $5, $6);
+            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
 	}
 	| INV_DEM LRPAR generalExp  RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 	};
 
 
 structSelection: DOT attributeIdent
 	{
-    $$ = cat2($1, $2);
+            $$ = cat2($1, $2);
 	}
 	| DOT intLitExp
 	{
-            $$ = cat2($1, $2);
+            $$ = cat2($1, $2->toCString());
 	};
 
 inductionExp: SQRT LRPAR generalExp RRPAR
 	{
-    $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
  	}
 	| ABS LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| EXP LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| RQLLOG LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| LN LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| SIN LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| COS LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| TAN LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| SINH LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| COSH LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| TANH LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| ARCSIN LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| ARCCOS LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
 	| ARCTAN LRPAR generalExp RRPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+//            $$ = cat4($1, $2, $3->toCString(), $4);
+            $$ = $3;
 	}
         | generalExp DOT RE
         {
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3);
+            $$ = $1;
         }
         | generalExp DOT IM
         {
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3);
+            $$ = $1;
         }
 	| NOT generalExp
 	{
-            $$ = cat2($1, $2);
+//            $$ = cat2($1, $2->toCString());
+            $$ = $2;
 	}
 	| generalExp OVERLAY generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp IS generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp AND generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp OR generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp XOR generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp PLUS generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp MINUS generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp MULT generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp DIV generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp EQUAL generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp LESS generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp GREATER generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
  	}
 	| generalExp LESSEQUAL generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp GREATEREQUAL generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
 	}
 	| generalExp NOTEQUAL generalExp
 	{
-            $$ = cat3($1, $2, $3);
+//            $$ = cat3($1->toCString(), $2, $3->toCString());
+            $$ = $3;
  	}
 	| PLUS  generalExp %prec UNARYOP
 	{
-	  $$ = $2;
+            $$ = $2;
 	}
 	| MINUS generalExp %prec UNARYOP
 	{
-            $$ = cat2($1, $2);
+            $$ = $2;
 	}
 	| LRPAR castType RRPAR generalExp %prec UNARYOP
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = $4;
 	}
 	| LRPAR generalExp RRPAR
 	{
-	  $$ = $2;
+            $$ = $2;
 	}
 	| generalExp structSelection
 	{
-            $$ = cat2($1, $2);
+            $$ = $1;
 	};
 
-castType: TBOOL			{ $$ = $1; }
-	| TCHAR			{ $$ = $1; }
-	| TOCTET		{ $$ = $1; }
-	| TSHORT		{ $$ = $1; }
-	| TUSHORT		{ $$ = $1; }
-	| TLONG			{ $$ = $1; }
-	| TULONG		{ $$ = $1; }
-	| TFLOAT		{ $$ = $1; }
-	| TDOUBLE		{ $$ = $1; }
-	| TUNSIG TSHORT	        { $$ = $1; }
-	| TUNSIG TLONG	        { $$ = $1; }
+castType: TBOOL			{ $$ = new QtString($1); }
+	| TCHAR			{ $$ = new QtString($1); }
+	| TOCTET		{ $$ = new QtString($1); }
+	| TSHORT		{ $$ = new QtString($1); }
+	| TUSHORT		{ $$ = new QtString($1); }
+	| TLONG			{ $$ = new QtString($1); }
+	| TULONG		{ $$ = new QtString($1); }
+	| TFLOAT		{ $$ = new QtString($1); }
+	| TDOUBLE		{ $$ = new QtString($1); }
+	| TUNSIG TSHORT	        { $$ = new QtString($1); }
+	| TUNSIG TLONG	        { $$ = new QtString($1); }
 
 //collectionList: collectionList COMMA iteratedCollection
 //	{
@@ -3278,7 +3314,7 @@ castType: TBOOL			{ $$ = $1; }
 
 variable: Identifier
 	{
-            $$ = $1;
+            $$ = new QtColumn($1);
 	};
 
 //namedCollection: Identifier;
@@ -3295,60 +3331,60 @@ condenseVariable: Identifier;
 
 reduceExp: reduceIdent LRPAR generalExp RRPAR
 	{
-    $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1->toCString(), $2, $3->toCString(), $4));
 	};
 
 reduceIdent: ALL
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| SOME
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| COUNTCELLS
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| ADDCELLS
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| AVGCELLS
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| MINCELLS
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| MAXCELLS
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	};
 
-intLitExp: IntegerLit                          { $$ = $1; };
+intLitExp: IntegerLit                          { $$ = new QtString($1); };
 
 generalLit: scalarLit                          { $$ = $1; }
 	| mddLit                               { $$ = $1; }
 	| StringLit
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
-	| oidLit                              { $$ = $1; };
+	| oidLit                              { $$ = new QtString($1); };
 
 oidLit: LESS StringLit GREATER
 	{
-    $$ = cat3($1, $2, $3);
+            $$ = cat3($1, $2, $3);
 	};
 
 mddLit: LESS mintervalExp dimensionLitList GREATER
 	{
-    $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2->toCString(), $3, $4));
 	}
 	| MDDPARAM
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	};
 
 dimensionLitList: dimensionLitList SEMICOLON scalarLitList
@@ -3356,7 +3392,7 @@ dimensionLitList: dimensionLitList SEMICOLON scalarLitList
 	}
 	| scalarLitList
 	{
-	  $$ = $1;
+	  $$ = $1->toCString();
 	};
 
 scalarLit: complexLit
@@ -3370,33 +3406,33 @@ scalarLit: complexLit
 
 atomicLit: BooleanLit
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| IntegerLit
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
 	| FloatLit
 	{
-            $$ = $1;
+            $$ = new QtString($1);
 	}
         | COMPLEX LRPAR FloatLit COMMA FloatLit RRPAR
         {
-            $$ = $1;
+            $$ = new QtString($1);
 	};
 
 complexLit: LCPAR scalarLitList RCPAR
 	{
-    $$ = cat3($1, $2, $3);
+            $$ = new QtString(cat3($1, $2->toCString(), $3));
 	}
 	| STRCT LCPAR scalarLitList RCPAR
 	{
-            $$ = cat4($1, $2, $3, $4);
+            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 	};
 
 scalarLitList: scalarLitList COMMA scalarLit
 	{
-    $$ = cat3($1, $2, $3);
+            $$ = $3;
 	}
 	| scalarLit
 	{
@@ -3406,27 +3442,27 @@ scalarLitList: scalarLitList COMMA scalarLit
 
 trimExp: generalExp mintervalExp
 	{
-    $$ = cat2($1, $2);
+            $$ = new QtString(cat2($1->toCString(), $2->toCString()));
 	};
 
 marray_head:
         MARRAY iv
 	{
-    $$ = cat2($1, $2);
+            $$ = $2;
 	};
 
 mddExp: marray_head VALUES generalExp
 	{
-    $$ = cat3($1, $2, $3);
+            $$ = $3;
 	}
 	| marray_head COMMA ivList VALUES generalExp
 	{
-            $$ = cat5($1, $2, $3, $4, $5);
+            $$ = $5;
 	};
 
 ivList: ivList COMMA iv
 	{
-    $$ = cat3($1, $2, $3);
+            $$ = $3;
 	}
 	| iv
 	{
@@ -3435,7 +3471,7 @@ ivList: ivList COMMA iv
 
 iv: marrayVariable IN_P generalExp
 	{
-    $$ = cat3($1, $2, $3);
+            $$ = new QtString(cat3($1, $2, $3->toCString()));
 	};
 
 

@@ -23,6 +23,8 @@
 /* Other includes */
 #include "DataSourceInterface.hpp"
 
+#include <map>
+
 class RasdamanDS : public DataSourceInterface
 {
 public:
@@ -51,10 +53,13 @@ public:
     void abortTa();
     void openTa();
 
-    // Execute a query on the current data source
+    // Execute a SELECT query on the current data source
     HqlTable* query(std::string query);
     HqlTable* query(std::string query, bool storeOnDisk);
     r_Ref<r_GMarray> queryByOid(std::string);
+
+    // Execute an update/insert query on the current datasource
+    void updateQuery(std::string query);
 
     // Save an array to disk
     std::string saveRasdamanMddToFile(r_Ref<r_GMarray> mdd, bool storeOnDisk, int index);
@@ -65,6 +70,9 @@ public:
     // Insert some data in a temporary table
     void insertData(HqlTable* table, std::string tableName);
 
+    // Mark a table for deletion on program exit
+    void addTempTable(std::string name);
+
     // Drop tables that have been created during a query execution
     void removeTempTables();
     
@@ -72,7 +80,7 @@ private:
     r_Database *db;
     r_Transaction *tr;
 
-    std::vector<std::string> tempTables;
+    std::map<std::string, bool> tempTables;
 };
 
 #endif	/* RASDAMANDS_HPP */
