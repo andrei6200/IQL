@@ -173,49 +173,56 @@ void HqlTable::importFromSql(result sqlResult)
     int startCol = 0;
     columns += newcols;
 
-    vector<bool> newhidden = vector<bool>(newcols, false);
-    newhidden[0] = true;
-
-    vector<string> newnames = vector<string > (newcols, "");
-    for (int i = 0; i < newcols; i++)
+    if (sqlResult.size() > 0)
     {
-        newnames[i] = sqlResult.column_name(i);
-    }
 
-    // If this is an HQL table, then the first column is "_hql_id" and should be hidden
-    if (string(sqlResult.column_name(0)) == string("_hql_id"))
-    {
-        columns --;
-        startCol = 1;
-        newnames.erase(newnames.begin());
-    }
+        vector<bool> newhidden = vector<bool>(newcols, false);
+        newhidden[0] = true;
 
-    if (sqlResult.size() == 0)
-        return;
-
-    result::const_iterator it;
-    vector<string> row;
-    // FIXME: clear the table before the import ? 
-//    data.clear();
-    for (it = sqlResult.begin(); it != sqlResult.end(); it++)
-    {
-        row.clear();
-        // Insert row ID
-        row.push_back(generateId());
-        // Insert actual data
-        result::tuple tuple = *it;
-        string val;
-        for (int col = startCol; col < tuple.size(); col++)
+        vector<string> newnames = vector<string > (newcols, "");
+        for (int i = 0; i < newcols; i++)
         {
-            val = tuple[col].as(string());
-            row.push_back(val);
+            newnames[i] = sqlResult.column_name(i);
+            // Hide OIDs
+            if (newnames[i].rfind("_oid") == newnames[i].length() - 4)
+            {
+                newhidden[i] = true;
+                hiddenCount ++;
+            }
         }
-        data.push_back(row);
-    }
 
-    // Append the new data
-    hidden.insert(hidden.end(), newcols, false);
-    names.insert(names.end(), newnames.begin(), newnames.end());
+        // If this is an HQL table, then the first column is "_hql_id" and should be hidden
+        if (string(sqlResult.column_name(0)) == string("_hql_id"))
+        {
+            columns --;
+            startCol = 1;
+            newnames.erase(newnames.begin());
+            newhidden.erase(newhidden.begin());
+        }
+
+        result::const_iterator it;
+        vector<string> row;
+        for (it = sqlResult.begin(); it != sqlResult.end(); it++)
+        {
+            row.clear();
+            // Insert row ID
+            row.push_back(generateId());
+            // Insert actual data
+            result::tuple tuple = *it;
+            string val;
+            for (int col = startCol; col < tuple.size(); col++)
+            {
+                val = tuple[col].as(string());
+                row.push_back(val);
+            }
+            data.push_back(row);
+        }
+
+        // Append the new data
+        hidden.insert(hidden.end(), newhidden.begin(), newhidden.end());
+        names.insert(names.end(), newnames.begin(), newnames.end());
+
+    }
 
     dataAlsoInMemory = true;
 
@@ -275,7 +282,7 @@ void HqlTable::print(ostream &out)
 
     if (dataAlsoInMemory == false)
     {
-        out << "Table is stored only in Postgresql SQL data source. ";
+        out << INDENT_PROMPT << "Internal error: Table is not in memory. " << endl;
         return;
     }
 

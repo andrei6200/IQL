@@ -30,6 +30,8 @@ QtColumn::~QtColumn()
 
 HqlTable* QtColumn::execute()
 {
+    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
     HqlTable *result = NULL, *tmp = NULL;
 
     if (child != NULL)
@@ -43,10 +45,30 @@ HqlTable* QtColumn::execute()
     {
         HqlTable *prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
         /* If we select all columns, then just copy the output of the "FROM" clause */
-        if (column == "*")
+        if (column == "*" && table == "")
         {
             HqlMain::getInstance().getSqlDataSource().insertData(prod, this->id);
             result = new HqlTable(this->id);
+        }
+        else if (column == "*" && table != "")
+        {
+            // We have the "table.*" syntax. Only select the columns from the referenced table.
+            vector<string> names = prod->getColumnNames();
+            vector<string> cols;
+            for (int col = 0 ; col < names.size(); col++)
+                if (names[col].find(table) == 0)
+                    cols.push_back(names[col]);
+            if (cols.size() == 0)
+                throw string("Internal error: No columns could retrieved for table '"
+                        + table + "' from The Cartesian Product");
+            
+            // Now execute the query
+            string q = "SELECT " + cols[0];
+            for (int i = 1; i < cols.size(); i++)
+                q += ", " + cols[i];
+            q += " INTO " + this->id + " FROM " + prod->getName();
+            result = pg.query(q);
+            result->setName(this->id, false);
         }
         else
         if (child == NULL)
@@ -61,21 +83,27 @@ HqlTable* QtColumn::execute()
                 TRACE << "Searching for column: " << this->column;
                 vector<string> names = prod->getColumnNames();
                 int colCount = 0;
+                string suffix("_filename");
                 // Start from 1 to skip the HQL id column
                 for (int i = 1; i < names.size(); i ++)
-                    if (
-                            // Format for Postgres columns : table_column
-                            names[i].rfind(this->column) == names[i].size() - this->column.size()
-                            ||
-                            // Format for Rasdaman columns: table_oid | table_filename
-                            names[i] == this->column + "_filename"
-                        )
+                {
+                    // Format for Rasdaman columns: table_oid | table_filename
+                    if (names[i] == this->column + suffix)
                     {
-                        TRACE << "Found column '" << this->column << "' under the name: " << names[i];
+                        TRACE << "Found Rasdaman column '" << this->column << "' under the name: " << names[i];
+                        colCount ++;
+                        col = names[i];
+                        table = names[i].substr(0, names[i].size() - suffix.size());
+                    }
+                    // Format for Postgres columns : table_column
+                    if (names[i].rfind(this->column) == names[i].size() - this->column.size())
+                    {
+                        TRACE << "Found Postgres column '" << this->column << "' under the name: " << names[i];
                         colCount ++;
                         col = names[i];
                         table = names[i].substr(0, names[i].size() - this->column.size() - 1);
                     }
+                }
                 switch (colCount)
                 {
                     case 0:
@@ -91,29 +119,40 @@ HqlTable* QtColumn::execute()
 
             setupDbSource();
 
-            PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-            RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
-            string q = "SELECT " + col + " INTO " + id + " FROM " + prod->getName();
+            
+            string q;
 
             switch (db_source)
             {
                 case POSTGRES:
-                    // Select just the one column
+                    q = "SELECT " + col + " FROM " + prod->getName();
+                    // Select just the necessary column
                     result = pg.query(q);
-                    pg.addTempTable(this->id);
+                    pg.insertData(result, this->id);
                     result->setName(this->id);
-
+                    TRACE << "Result table " << result;
                     break;
 
                 case RASDAMAN:
-                    q = "SELECT " + column + " INTO " + id + " FROM " + column;
-                    // Also insert the new coverage into Rasdaman
-                    rman.updateQuery(q);
-                    rman.addTempTable(this->id);
-                    // And retrieve the new OIDs
-                    result = rman.getCollection(this->id, false);
+                    /* Setup the SQL table */
+                    string col1 = table + "_oid";
+                    string col2 = table + "_filename";
+                    q = "SELECT " + col1 + ", " + col2 + " FROM " + prod->getName();
+                    result = pg.query(q);
+                    result->setName(this->id, false);
                     // And store them in Postgres as well
                     pg.insertData(result, this->id);
+
+                    /* But also create the RaSQL collection with the right number of rows */
+                    vector<string> oids = result->getColumn(col1);
+                    for (int row = 0 ; row < oids.size(); row ++)
+                    {
+                        string oid = oids[row];
+                        q = "SELECT " + table + " INTO " + this->id + " FROM " + table
+                                + " WHERE oid(" + table + ") = <\"" + oid + "\">";
+                        rman.updateQuery(q);
+                    }
+                    rman.addTempTable(this->id);
                     break;
             }
         }

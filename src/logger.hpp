@@ -73,7 +73,7 @@ public:
         if (level < GLOBAL_LOGGING_LEVEL)
             return *this;
         
-        os << t;
+        os << t << std::flush;
         return *this;
     }
 

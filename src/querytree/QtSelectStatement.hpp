@@ -10,7 +10,6 @@
 #ifndef QTSELECT_HPP
 #define	QTSELECT_HPP
 
-#include "QtDataSourceRef.hpp"
 #include "QtDataSource.hpp"
 #include "QtNode.hpp"
 #include "QtList.hpp"

@@ -202,16 +202,13 @@ HqlTable* PostgresDS::query(string queryString)
 
     if (R.empty())
         WARN << "No rows in query result. ";
-    else
-        result->importFromSql(R);
+    result->importFromSql(R);
     
     return result;
 }
 
 result PostgresDS::regularQuery(string queryString)
 {
-    
-
     TRACE;
     TRACE << "Query: " << queryString;
 

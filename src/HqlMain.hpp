@@ -36,6 +36,7 @@
 #include "datasources/RasdamanDS.hpp"
 
 
+
 /* Singleton class responsible for DB access. */
 class HqlMain
 {
@@ -43,19 +44,12 @@ public:
     /* Return (and initialize if needed) the singleton instance of HqlMain. */
     static HqlMain& getInstance();
 
-    /*
-     * This function receives a SelectStruct structure from the parser, and is
-     * responsable for the query execution and result delivery. 
-     */
-//    void executeHqlQuery(QtSelect *select);
-
     /* Public destructor. */
     ~HqlMain();
 
     /* Name Dictionary for available tables */
     std::map<std::string, DbEnum> tableMap;
 
-    
     HqlTable* runSqlQuery(std::string query);
 
     HqlTable* runRasqlQuery(std::string query);
@@ -65,6 +59,8 @@ public:
     RasdamanDS& getRasqlDataSource();
 
     long getId();
+
+    bool isPostGisFunction(char *);
     
 private:
     /*
@@ -73,12 +69,20 @@ private:
      */
     HqlMain();
 
+    /*
+     * Read the functions available for use with PostGIS, and make them available
+     * to the lexer.
+     */
+    void initPostgisFunctionList();
+
     /* The singleton instance. */
     static HqlMain *instance;
 
     /* Data Sources */
     PostgresDS *pg;
     RasdamanDS *rman;
+
+    std::vector<std::string> postgisKw;
 
     /* Integer ID */
     long id;

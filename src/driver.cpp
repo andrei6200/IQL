@@ -17,7 +17,7 @@ extern void yyparse();
 extern char* hqlQueries;
 extern void yyparse();
 extern char *yytext;
-
+extern int yydebug;
 
 
 using namespace std;
@@ -74,6 +74,8 @@ void signalHandler(int signal)
 int main(int argc, char** argv)
 {
     TRACE << "Start of main()" << endl;
+
+//    yydebug = 1;
 
     /* Install signal handlers */
     (void) signal(SIGINT, signalHandler);

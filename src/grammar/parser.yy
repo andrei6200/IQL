@@ -12,6 +12,8 @@
 #include "querytree/QueryTree.hpp"
 
 
+#define YYDEBUG 1
+
 extern int yylex();
 extern void yyerror(const char* msg);
 
@@ -49,6 +51,7 @@ char* hqlQueries;
 	char*				str;
 	char*				keyword;
         char*                           rasqlKeyword;
+        char*                           postgisKeyword;
 	char*				boolean;
 	char*				node;
 	char*				list;
@@ -65,7 +68,6 @@ char* hqlQueries;
 
         QtSelectStatement               *select;
         QtList                          *nodelist;
-        QtDataSourceRef                 *tableRef;
         QtDataSource                    *source;
         
         QtNode                          *mynode;        // dummy placeholder
@@ -143,17 +145,17 @@ char* hqlQueries;
 
 %type <ival>	Iconst
 %type <str>	Sconst
-%type <str>	ColId ColLabel type_function_name
+%type <str>	ColId ColLabel type_function_name postgis_func_name
 
 %type <keyword> unreserved_keyword type_func_name_keyword
 %type <keyword> col_name_keyword reserved_keyword
 
 
-%type <target>	xml_attribute_el
-%type <list>	xml_attribute_list xml_attributes
-%type <node>	xml_root_version opt_xml_root_standalone
-%type <ival>	document_or_content
-%type <boolean> xml_whitespace_option
+//%type <target>	xml_attribute_el
+//%type <list>	xml_attribute_list xml_attributes
+//%type <node>	xml_root_version opt_xml_root_standalone
+//%type <ival>	document_or_content
+//%type <boolean> xml_whitespace_option
 
 %type <windef>	over_clause
 
@@ -366,6 +368,12 @@ char* hqlQueries;
                 MDDPARAM
 
 
+%token <postgisKeyword> POSTGIS_FUNCTION
+
+
+
+
+
 /* Rasql statements */
 %type <mynode> generalExp spatialOpList spatialOpList2
             spatialOp condenseOpLit inductionExp castType
@@ -388,7 +396,7 @@ char* hqlQueries;
 
 %error-verbose
 %locations
-
+%debug
 
 %%
 
@@ -1587,7 +1595,7 @@ c_expr:		columnref								{ $$ = $1; }
 			| case_expr
 				{ $$ = new QtString($1); }
 			| func_expr
-				{ $$ = new QtString($1->toString()); }
+				{ $$ = $1; }
 /*
 // AA: We do not allow nested sub-queries to occur
 			| select_with_parens			%prec UMINUS
@@ -1602,6 +1610,13 @@ c_expr:		columnref								{ $$ = $1; }
 				}
 		;
 
+postgis_func_name:
+                        POSTGIS_FUNCTION
+                            {
+                                $$ = $1;
+                            }
+                        ;
+
 /*
  * func_expr is split out from c_expr just so that we have a classification
  * for "everything that is a function call or looks like one".  This isn't
@@ -1610,7 +1625,12 @@ c_expr:		columnref								{ $$ = $1; }
  * (Note that many of the special SQL functions wouldn't actually make any
  * sense as functional index entries, but we ignore that consideration here.)
  */
-func_expr:	func_name LRPAR RRPAR over_clause
+func_expr:
+                        postgis_func_name LRPAR a_expr RRPAR
+                                {
+                                    $$ = new QtPostGisFunction($1, $3);
+                                }
+                        | func_name LRPAR RRPAR over_clause
 				{
                                         $$ = new QtString(cat4($1, $2, $3, $4));
 				}
@@ -1754,96 +1774,96 @@ func_expr:	func_name LRPAR RRPAR over_clause
 				{
                                         $$ = new QtString(cat4($1, $2, $3, $4));
 				}
-			| XMLCONCAT LRPAR expr_list RRPAR
-				{
-                                        $$ = new QtString(cat4($1, $2, $3, $4));
-				}
-			| XMLELEMENT LRPAR NAME_P ColLabel RRPAR
-				{
-                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
-				}
-			| XMLELEMENT LRPAR NAME_P ColLabel COMMA xml_attributes RRPAR
-				{
-                                        $$ = new QtString(cat7($1, $2, $3, $4, $5, $6, $7));
-				}
-			| XMLELEMENT LRPAR NAME_P ColLabel COMMA expr_list RRPAR
-				{
-                                        $$ = new QtString(cat7($1, $2, $3, $4, $5, $6, $7));
-				}
-			| XMLELEMENT LRPAR NAME_P ColLabel COMMA xml_attributes COMMA expr_list RRPAR
-				{
-                                        $$ = new QtString(cat9($1, $2, $3, $4, $5, $6, $7, $8, $9));
-				}
-			| XMLFOREST LRPAR xml_attribute_list RRPAR
-				{
-                                        $$ = new QtString(cat4($1, $2, $3, $4));
-				}
-			| XMLPARSE LRPAR document_or_content a_expr xml_whitespace_option RRPAR
-				{
-                                        $$ = new QtString(cat6($1, $2, $3, $4->toCString(), $5, $6));
-				}
-			| XMLPI LRPAR NAME_P ColLabel RRPAR
-				{
-                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
-				}
-			| XMLPI LRPAR NAME_P ColLabel COMMA a_expr RRPAR
-				{
-                                        $$ = new QtString(cat7($1, $2, $3, $4, $5, $6->toCString(), $7));
-				}
-			| XMLROOT LRPAR a_expr COMMA xml_root_version opt_xml_root_standalone RRPAR
-				{
-                                        $$ = new QtString(cat7($1, $2, $3->toCString(), $4, $5, $6, $7));
-				}
-			| XMLSERIALIZE LRPAR document_or_content a_expr AS SimpleTypename RRPAR
-				{
-                                        $$ = new QtString(cat7($1, $2, $3, $4->toCString(), $5, $6, $7));
-				}
+//			| XMLCONCAT LRPAR expr_list RRPAR
+//				{
+//                                        $$ = new QtString(cat4($1, $2, $3, $4));
+//				}
+//			| XMLELEMENT LRPAR NAME_P ColLabel RRPAR
+//				{
+//                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
+//				}
+//			| XMLELEMENT LRPAR NAME_P ColLabel COMMA xml_attributes RRPAR
+//				{
+//                                        $$ = new QtString(cat7($1, $2, $3, $4, $5, $6, $7));
+//				}
+//			| XMLELEMENT LRPAR NAME_P ColLabel COMMA expr_list RRPAR
+//				{
+//                                        $$ = new QtString(cat7($1, $2, $3, $4, $5, $6, $7));
+//				}
+//			| XMLELEMENT LRPAR NAME_P ColLabel COMMA xml_attributes COMMA expr_list RRPAR
+//				{
+//                                        $$ = new QtString(cat9($1, $2, $3, $4, $5, $6, $7, $8, $9));
+//				}
+//			| XMLFOREST LRPAR xml_attribute_list RRPAR
+//				{
+//                                        $$ = new QtString(cat4($1, $2, $3, $4));
+//				}
+//			| XMLPARSE LRPAR document_or_content a_expr xml_whitespace_option RRPAR
+//				{
+//                                        $$ = new QtString(cat6($1, $2, $3, $4->toCString(), $5, $6));
+//				}
+//			| XMLPI LRPAR NAME_P ColLabel RRPAR
+//				{
+//                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
+//				}
+//			| XMLPI LRPAR NAME_P ColLabel COMMA a_expr RRPAR
+//				{
+//                                        $$ = new QtString(cat7($1, $2, $3, $4, $5, $6->toCString(), $7));
+//				}
+//			| XMLROOT LRPAR a_expr COMMA xml_root_version opt_xml_root_standalone RRPAR
+//				{
+//                                        $$ = new QtString(cat7($1, $2, $3->toCString(), $4, $5, $6, $7));
+//				}
+//			| XMLSERIALIZE LRPAR document_or_content a_expr AS SimpleTypename RRPAR
+//				{
+//                                        $$ = new QtString(cat7($1, $2, $3, $4->toCString(), $5, $6, $7));
+//				}
 		;
-
-/*
- * SQL/XML support
- */
-xml_root_version: VERSION_P a_expr
-				{ $$ = cat2($1, $2->toCString()); }
-			| VERSION_P NO VALUE_P
-				{ $$ = cat2($1, $2); }
-		;
-
-opt_xml_root_standalone: COMMA STANDALONE_P YES_P
-				{ $$ = cat3($1, $2, $3); }
-			| COMMA STANDALONE_P NO
-				{ $$ = cat3($1, $2, $3); }
-			| COMMA STANDALONE_P NO VALUE_P
-				{ $$ = cat3($1, $2, $3); }
-			| /*EMPTY*/
-				{ $$ = NULL; }
-		;
-
-xml_attributes: XMLATTRIBUTES LRPAR xml_attribute_list RRPAR	{ $$ = cat4($1, $2, $3, $4); }
-		;
-
-xml_attribute_list:	xml_attribute_el					{ $$ = $1; }
-			| xml_attribute_list COMMA xml_attribute_el	{ $$ = cat3($1, $2, $3); }
-		;
-
-xml_attribute_el: a_expr AS ColLabel
-				{
-                                        $$ = cat3($1->toCString(), $2, $3);
-				}
-			| a_expr
-				{
-					$$ = $1->toCString();
-				}
-		;
-
-document_or_content: DOCUMENT_P						{ $$ = $1; }
-			| CONTENT_P					{ $$ = $1; }
-		;
-
-xml_whitespace_option: PRESERVE WHITESPACE_P		{ $$ = (char*) "TRUE"; }
-			| STRIP_P WHITESPACE_P		{ $$ = (char*) "FALSE"; }
-			| /*EMPTY*/			{ $$ = (char*) "FALSE"; }
-		;
+//
+///*
+// * SQL/XML support
+// */
+//xml_root_version: VERSION_P a_expr
+//				{ $$ = cat2($1, $2->toCString()); }
+//			| VERSION_P NO VALUE_P
+//				{ $$ = cat2($1, $2); }
+//		;
+//
+//opt_xml_root_standalone: COMMA STANDALONE_P YES_P
+//				{ $$ = cat3($1, $2, $3); }
+//			| COMMA STANDALONE_P NO
+//				{ $$ = cat3($1, $2, $3); }
+//			| COMMA STANDALONE_P NO VALUE_P
+//				{ $$ = cat3($1, $2, $3); }
+//			| /*EMPTY*/
+//				{ $$ = NULL; }
+//		;
+//
+//xml_attributes: XMLATTRIBUTES LRPAR xml_attribute_list RRPAR	{ $$ = cat4($1, $2, $3, $4); }
+//		;
+//
+//xml_attribute_list:	xml_attribute_el					{ $$ = $1; }
+//			| xml_attribute_list COMMA xml_attribute_el	{ $$ = cat3($1, $2, $3); }
+//		;
+//
+//xml_attribute_el: a_expr AS ColLabel
+//				{
+//                                        $$ = cat3($1->toCString(), $2, $3);
+//				}
+//			| a_expr
+//				{
+//					$$ = $1->toCString();
+//				}
+//		;
+//
+//document_or_content: DOCUMENT_P						{ $$ = $1; }
+//			| CONTENT_P					{ $$ = $1; }
+//		;
+//
+//xml_whitespace_option: PRESERVE WHITESPACE_P		{ $$ = (char*) "TRUE"; }
+//			| STRIP_P WHITESPACE_P		{ $$ = (char*) "FALSE"; }
+//			| /*EMPTY*/			{ $$ = (char*) "FALSE"; }
+//		;
 
 
 over_clause:
@@ -1882,7 +1902,7 @@ all_Op:		Op										{ $$ = $1; }
 			| MathOp								{ $$ = $1; }
 		;
 
-MathOp:		 PLUS									{ $$ = $1; }
+MathOp:                 PLUS									{ $$ = $1; }
 			| MINUS									{ $$ = $1; }
 			| MULT									{ $$ = $1; }
 			| DIV									{ $$ = $1; }
@@ -2155,7 +2175,8 @@ target_list:
 target_el:	
                         a_expr AS ColLabel
 				{
-                                        $$ = new QtDataSourceRef($1, $3);
+                                        // FIXME: allow the column label
+                                        $$ = new QtColumn($1->toCString());
 				}
 			/*
 			 * We support omitting AS only for column labels that aren't
@@ -2940,7 +2961,7 @@ functionExp: OID LRPAR collectionIterator RRPAR
 	}
 	| BIT LRPAR generalExp COMMA generalExp RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5->toCString(), $6));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| TIFF LRPAR generalExp COMMA StringLit RRPAR
 	{
@@ -3016,75 +3037,75 @@ functionExp: OID LRPAR collectionIterator RRPAR
 	}
 	| INV_TIFF LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_TIFF LRPAR generalExp  RRPAR
 	{
-            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_BMP LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_BMP LRPAR generalExp  RRPAR
 	{
-            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_HDF LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_HDF LRPAR generalExp  RRPAR
 	{
-            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_CSV LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_CSV LRPAR generalExp  RRPAR
 	{
-            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_JPEG LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_JPEG LRPAR generalExp  RRPAR
 	{
-            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_PNG LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_PNG LRPAR generalExp  RRPAR
 	{
-            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_VFF LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_VFF LRPAR generalExp  RRPAR
 	{
-            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_TOR LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_TOR LRPAR generalExp  RRPAR
 	{
-            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_DEM LRPAR generalExp COMMA StringLit RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5, $6));
+            $$ = new QtEncodeArray($3, $1);
 	}
 	| INV_DEM LRPAR generalExp  RRPAR
 	{
-            $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+            $$ = new QtEncodeArray($3, $1);
 	};
 
 

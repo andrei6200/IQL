@@ -23,6 +23,7 @@ using namespace pqxx;
 
 RasdamanDS::RasdamanDS() : db(NULL), tr(NULL)
 {
+    tempTables.clear();
 }
 
 void RasdamanDS::connect()

@@ -4,15 +4,12 @@
 
 TODO: 
 
-- properly integrate PostGIS grammar
-    - read PostGIS functions at init-time
-    - search them in the grammar parser
+- allow a variable number of parameters to PostGIS functions
+    - since they are dynamic functions
 
-
-
-- perform serious tests
 
 - allow WHERE clauses
+
 
 - bug request for Rasdaman docs
     - query examples for oid(...) == <system|db|localOid>  are not correct
@@ -47,3 +44,6 @@ DONE
 - HqlTable: each row should have an internal ID
 	- helps with sorting
 - allow several rasdaman results to be stored in one HqlTable
+- properly integrate PostGIS grammar
+    - read PostGIS functions at init-time
+    - search them in the grammar parser

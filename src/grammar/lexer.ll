@@ -12,6 +12,7 @@ int errorCount = 0;
 
 //#include "parser/gramparse.h"
 #include "parser/keywords.h"
+#include "HqlMain.hpp"
 /* Not needed now that this file is compiled as part of gram.y */
 /* #include "parser/gram.h" */
 #include "parser/scansup.h"
@@ -896,6 +897,15 @@ other			.
                                             yylval.keyword = (char*) keyword2->name;
                                             return keyword2->value;
                                         }
+
+                                        /* Is it a PostGIS function name ? */
+                                        bool postgisOk = HqlMain::getInstance().isPostGisFunction(yytext);
+                                        if (postgisOk)
+                                        {
+                                            yylval.keyword = strdup(yytext);
+                                            return POSTGIS_FUNCTION;
+                                        }
+
 					/*
 					 * No.  Convert the identifier to lower case, and truncate
 					 * if necessary.

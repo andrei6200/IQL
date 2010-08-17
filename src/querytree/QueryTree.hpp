@@ -13,11 +13,11 @@
 #include "QtCartesianProduct.hpp"
 #include "QtString.hpp"
 #include "QtDataSource.hpp"
-#include "QtDataSourceRef.hpp"
 #include "QtDot.hpp"
 #include "QtSelectStatement.hpp"
 #include "QtColumn.hpp"
 #include "QtEncodeArray.hpp"
+#include "QtPostGisFunction.hpp"
 
 class HqlTable;
 
