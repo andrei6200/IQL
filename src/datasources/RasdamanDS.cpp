@@ -72,12 +72,7 @@ void RasdamanDS::connect()
 
 void RasdamanDS::openTa()
 {
-    if (tr != NULL)
-    {
-        tr->abort();
-        tr = NULL;
-    }
-    
+    abortTa();
     tr = new r_Transaction();
     tr->begin();
 }
@@ -173,7 +168,6 @@ void RasdamanDS::commitTa()
 
 HqlTable* RasdamanDS::query(string queryString)
 {
-    
     // By default, do not write files to disk
     HqlTable* result = this->query(queryString, false);
     return result;
@@ -183,7 +177,7 @@ HqlTable* RasdamanDS::query(string queryString, bool storeOnDisk)
 {
     connect();
 
-    DEBUG << "Executing RaSQL query: " << queryString;
+    DEBUG << "RaSQL query: " << queryString;
     r_OQL_Query query(queryString.c_str());
 
     r_Set< r_Ref_Any > result_set;
@@ -193,11 +187,10 @@ HqlTable* RasdamanDS::query(string queryString, bool storeOnDisk)
     /* Execute the actual query. */
     try
     {
-        TRACE << "Executing RaSQL ...";
+        TRACE << "Executing query ...";
         r_oql_execute(query, result_set);
-        TRACE << "RaSQL execution ended. ";
+        TRACE << "Query execution ended. ";
         DEBUG << "Result has " << result_set.cardinality() << " objects... ";
-        TRACE << "Finished executing RaSQL.";
     }
     catch (r_Error &e)
     {
@@ -220,7 +213,7 @@ r_Ref<r_GMarray> RasdamanDS::queryByOid(std::string queryString)
 {
     connect();
 
-    DEBUG << "Executing RaSQL query: " << queryString;
+    DEBUG << "RaSQL query: " << queryString;
     r_OQL_Query query(queryString.c_str());
 
     r_Set< r_Ref_Any > result_set;
@@ -230,13 +223,12 @@ r_Ref<r_GMarray> RasdamanDS::queryByOid(std::string queryString)
     /* Execute the actual query. */
     try
     {
-        TRACE << "Executing RaSQL ...";
+        TRACE << "Executing query ...";
         r_oql_execute(query, result_set);
-        TRACE << "RaSQL execution ended. ";
+        TRACE << "Query execution ended. ";
         DEBUG << "Result has " << result_set.cardinality() << " objects... ";
         if (result_set.cardinality() != 1)
             throw string("Query by OID did not fetch exactly one MDD object. ");
-        TRACE << "Finished executing RaSQL.";
     }
     catch (r_Error &e)
     {
@@ -359,13 +351,13 @@ void RasdamanDS::updateQuery(std::string queryString)
 {
     connect();
 
-    DEBUG << "Executing RaSQL update query: " << queryString;
+    DEBUG << "RaSQL query (update): " << queryString;
     r_OQL_Query query(queryString.c_str());
 
     /* Execute the actual query. */
     try
     {
-        TRACE << "Executing RaSQL update ...";
+        TRACE << "Executing query ...";
         r_oql_execute(query);
         TRACE << "RaSQL update ended. ";
     }

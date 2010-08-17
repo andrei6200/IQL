@@ -125,11 +125,11 @@ HqlTable* QtColumn::execute()
             switch (db_source)
             {
                 case POSTGRES:
-                    q = "SELECT " + col + " FROM " + prod->getName();
+                    q = "SELECT " + col + ", _hql_id_ INTO " + this->id + " FROM " + prod->getName();
                     // Select just the necessary column
                     result = pg.query(q);
-                    pg.insertData(result, this->id);
                     result->setName(this->id);
+                    pg.addTempTable(this->id);
                     TRACE << "Result table " << result;
                     break;
 

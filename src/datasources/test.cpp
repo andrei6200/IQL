@@ -45,6 +45,7 @@ void testCartesianProd()
         throw string("Error, query result is NULL.");
 }
 
+/* Test the insertion of a table into Postgresql. */
 void testInsertIntoPostgres()
 {
     pg->insertData(mr, "testMr");
@@ -58,6 +59,26 @@ void testInsertIntoPostgres()
     }
     else
         throw string("Error, query result is NULL.");
+}
+
+/* Test a RaSQL query that retrieves an mmd object from a collection by Oid. */
+void testGetOid()
+{
+    rman->connect();
+
+    string oid = "PostgreSQL|RASBASE|513";
+    string queryString = string("SELECT var FROM mr AS var ") +
+                "WHERE oid(var) = <\"" + oid + "\">";
+    r_Set<r_Ref< r_GMarray > > mddSet;
+    r_OQL_Query query(queryString.c_str());
+    r_oql_execute(query, mddSet);
+
+    rman->commitTa();
+
+    if (mddSet.cardinality() == 1)
+        cout << "Successfully retrieved Rasdaman object: " << oid << endl;
+    else
+        cerr << "Failed to retrieve Rasdaman object: " << oid << endl;
 }
 
 void endProgram()
@@ -88,11 +109,10 @@ int main()
     try
     {
         rman = new RasdamanDS();
-        rman->connect();
         TRACE << "Connected to rasdaman !!!" << endl;
 
         pg = new PostgresDS();
-        pg->connect();
+        TRACE << "Connected to postgres !!!" << endl;
 
         mr = rman->getCollection(string("mr"));
         rgb = rman->getCollection(string("rgb"));
@@ -106,7 +126,10 @@ int main()
 
         testInsertIntoPostgres();
 
+        testGetOid();
+
         rman->disconnect();
+        pg->disconnect();
 
         cout << "Exiting gracefully..." << endl;
 

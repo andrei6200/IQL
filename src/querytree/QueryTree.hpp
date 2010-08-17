@@ -18,6 +18,7 @@
 #include "QtColumn.hpp"
 #include "QtEncodeArray.hpp"
 #include "QtPostGisFunction.hpp"
+#include "QtBinaryOperation.hpp"
 
 class HqlTable;
 

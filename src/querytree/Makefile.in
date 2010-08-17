@@ -53,8 +53,8 @@ am_libquerytree_a_OBJECTS = QtCartesianProduct.$(OBJEXT) \
 	QtCreateArray.$(OBJEXT) QtJoin.$(OBJEXT) \
 	QtSelectStatement.$(OBJEXT) QtDataSource.$(OBJEXT) \
 	QtList.$(OBJEXT) QueryTree.$(OBJEXT) QtNode.$(OBJEXT) \
-	QtColumn.$(OBJEXT) QtDot.$(OBJEXT) QtPaginate.$(OBJEXT) \
-	QtSort.$(OBJEXT)
+	QtColumn.$(OBJEXT) QtBinaryOperation.$(OBJEXT) QtDot.$(OBJEXT) \
+	QtPaginate.$(OBJEXT) QtSort.$(OBJEXT)
 libquerytree_a_OBJECTS = $(am_libquerytree_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -170,7 +170,7 @@ libquerytree_a_SOURCES = \
 		QtPostGisFunction.cpp	QtInducedOperation.cpp  QtString.cpp			\
 		QtCreateArray.cpp       QtJoin.cpp              QtSelectStatement.cpp  		\
 		QtDataSource.cpp        QtList.cpp              QueryTree.cpp		\
-		QtNode.cpp              QtColumn.cpp 		\
+		QtNode.cpp              QtColumn.cpp 		QtBinaryOperation.cpp	\
 		QtDot.cpp               QtPaginate.cpp          QtSort.cpp            
 
 AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include
@@ -222,6 +222,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtBinaryOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtCartesianProduct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtColumn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtCreateArray.Po@am__quote@

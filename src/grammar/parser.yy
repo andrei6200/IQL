@@ -1345,17 +1345,17 @@ a_expr:		c_expr
 			| MINUS a_expr					%prec UMINUS
 				{ $$ = new QtString(cat2($1, $2->toCString())); }
 			| a_expr PLUS a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| a_expr MINUS a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| a_expr MULT a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| a_expr DIV a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| a_expr MOD a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| a_expr POWER a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| a_expr LESS a_expr
 				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
                         | a_expr LESSEQUAL a_expr

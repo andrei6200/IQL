@@ -90,7 +90,7 @@ HqlTable* QtList::execute()
             table->setName(name);
         }
         /* Store the table for later processing */
-        TRACE << "Table " << i << " of the list: " << endl << table;
+//        TRACE << "Table " << i << " of the list: " << endl << table;
         results.push_back(table);
     }
     // Return NULL, because no action is specified. These intermediate results
@@ -109,12 +109,13 @@ HqlTable* QtList::multiplyResults()
             return NULL;
     }
 
-    HqlTable *t = results[0];
-    if (t == NULL)
+    if (results[0] == NULL)
     {
         ERROR << "Cannot compute cross product, intermediate result was NULL.";
         throw string("Intermediate result was NULL. ");
     }
+    HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(results[0]->getName());
+    string tableList = results[0]->getName();
     for (int i = 1; i < results.size(); i++)
         if (results[i] == NULL)
         {
@@ -123,13 +124,18 @@ HqlTable* QtList::multiplyResults()
         }
         else
         {
-            HqlTable *t2 = t->crossProduct(results[i]);
-            t = t2;
+            HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(results[i]->getName());
+            tableList += ", " + results[i]->getName();
         }
-    
-    TRACE << "The cross product between " << data.size() << " HqlTables is " << t;
 
-    return t;
+    string q = "SELECT * INTO " + this->id + " FROM " + tableList;
+    HqlTable *result = HqlMain::getInstance().runSqlQuery(q);
+    HqlMain::getInstance().getSqlDataSource().addTempTable(this->id);
+    result->setName(this->id, false);
+
+    TRACE << "The cross product between " << data.size() << " HqlTables is " << result;
+
+    return result;
 }
 
 HqlTable* QtList::addResults()
@@ -142,6 +148,8 @@ HqlTable* QtList::addResults()
         if (results.size() == 0)
             return NULL;
     }
+
+    // TODO: Implement column addition via SQL query
 
     HqlTable *t = results[0];
     if (t == NULL)

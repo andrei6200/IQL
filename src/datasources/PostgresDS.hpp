@@ -55,6 +55,9 @@ public:
     // Drop tables that have been created during a query execution
     void removeTempTables();
 
+    // Insert an HQL id column to the named table
+    void insertHqlIdToTable(std::string table);
+
 private:
 
     // Open transaction

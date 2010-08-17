@@ -48,10 +48,15 @@ void QueryTree::execute()
         root->setupDbSource();
         /* Execute the hybrid query, based on information about data sources. */
         HqlTable* table = root->execute();
+        /* Read the result table from postgres. */
+        string name = table->getName();
+        string queryString = "SELECT * FROM " + name;
+        delete table;
+        table = HqlMain::getInstance().getSqlDataSource().query(queryString);
         /* Save required files to disk. */
         saveRasdamanObjectsToDisk(table);
         /* Remove traces of execution */
-        HqlMain::getInstance().getSqlDataSource().removeTempTables();
+//        HqlMain::getInstance().getSqlDataSource().removeTempTables();
         HqlMain::getInstance().getSqlDataSource().commit();
         HqlMain::getInstance().getRasqlDataSource().removeTempTables();
         /* Print output */
@@ -83,8 +88,8 @@ void QueryTree::execute()
         status = string("failed ... ") + e.what();
     }
 
-    /* In the end, remove temporary tables. */
-    HqlMain::getInstance().getSqlDataSource().removeTempTables();
+//    /* In the end, remove temporary tables. */
+//    HqlMain::getInstance().getSqlDataSource().removeTempTables();
 
     /* And display the query execution status*/
     cout << RESPONSE_PROMPT << status << endl;
@@ -102,6 +107,7 @@ void QueryTree::saveRasdamanObjectsToDisk(HqlTable *table)
      * and create the corresponding files on disk */
     RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
     vector<string> names = table->getColumnNames();
+    map<string, string> oid2fname = map<string, string>();
     int fileIndex = 0;
     for (int col = 0; col < names.size(); col++)
     {
@@ -114,7 +120,6 @@ void QueryTree::saveRasdamanObjectsToDisk(HqlTable *table)
              * objects to disk. */
             vector<string> oids = table->getColumn(col);
             vector<string> fnameCol(oids);
-            map<string, string> oid2fname = map<string, string>();
             for (int row = 0; row < oids.size(); row ++)
             {
                 string oid = oids[row];

@@ -39,12 +39,13 @@ QtDataSource::QtDataSource(QtNode* name)
 
 QtDataSource::~QtDataSource()
 {
-	TRACE << "Destructor ... " << flush;
+	TRACE << "Destructor ... ";
 }
 
 HqlTable* QtDataSource::execute()
 {
-    HqlTable* table = NULL;
+    HqlTable* table = NULL, *tmp = NULL;
+    vector<string> cols;
     string q;
     
     setupDbSource();
@@ -52,22 +53,37 @@ HqlTable* QtDataSource::execute()
     switch (db_source)
     {
         case POSTGRES:
-            q = string("SELECT * FROM ") + tableName;
-            TRACE << "Going to execute: " << q;
+            TRACE << q;
+            q = "SELECT * FROM " + tableName;
+            tmp = HqlMain::getInstance().runSqlQuery(q);
+            cols = tmp->getColumnNames();
+
+            TRACE << q;
+            q = "SELECT " + cols[1] + " AS " + tableName + "_" + cols[1];
+            for (int i = 2; i < cols.size(); i++)
+                q += ", " + cols[i] + " AS " + tableName + "_" + cols[i];
+            q += " INTO " + this->id + " FROM " + tableName;
+
             table = HqlMain::getInstance().runSqlQuery(q);
+            HqlMain::getInstance().getSqlDataSource().addTempTable(this->id);
+            delete table;
+            table = tmp;
             table->setName(tableName, true);
+            table->setName(this->id, false);
             break;
+            
         case RASDAMAN:
+            TRACE << q;
             q = string("SELECT ") + tableName + " FROM " + tableName;
-            TRACE << "Going to execute: " << q;
             table = HqlMain::getInstance().runRasqlQuery(q);
-            table->setName(tableName, true);
+            table->setName(this->id, true);
 
             // Store the HqlTable in Postgres for subsequent calculations
             HqlMain::getInstance().getSqlDataSource().insertData(table, tableName);
             // Now we can safely return from this function.
 
             break;
+            
         default:
             q = "Cannot retrieve table '" + tableName +
                     "' because of unknown DataSource system.";

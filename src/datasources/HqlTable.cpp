@@ -359,8 +359,8 @@ void HqlTable::print(ostream &out)
 
 HqlTable* HqlTable::crossProduct(HqlTable* other)
 {
-    TRACE << "Cross product between two HqlTables." << endl
-            << this << endl << endl << other << endl;
+//    TRACE << "Cross product between two HqlTables." << endl
+//            << this << endl << endl << other << endl;
 
     HqlTable *output = new HqlTable();
 
@@ -410,8 +410,8 @@ HqlTable* HqlTable::crossProduct(HqlTable* other)
 
 HqlTable* HqlTable::addColumns(HqlTable* other)
 {
-    TRACE << "Column addition between two HqlTables: " << endl <<
-            this << endl << endl << other << endl;
+//    TRACE << "Column addition between two HqlTables: " << endl <<
+//            this << endl << endl << other << endl;
 
     if (this->rows != other->rows)
     {

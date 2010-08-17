@@ -33,7 +33,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = test$(EXEEXT) test2$(EXEEXT)
+bin_PROGRAMS = test$(EXEEXT)
 subdir = src/datasources
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -59,12 +59,6 @@ am_test_OBJECTS = test.$(OBJEXT) logger.$(OBJEXT) RasdamanDS.$(OBJEXT) \
 test_OBJECTS = $(am_test_OBJECTS)
 test_LDADD = $(LDADD)
 test_DEPENDENCIES =
-am_test2_OBJECTS = test2.$(OBJEXT) logger.$(OBJEXT) \
-	RasdamanDS.$(OBJEXT) DataSourceInterface.$(OBJEXT) \
-	HqlTable.$(OBJEXT) PostgresDS.$(OBJEXT) HqlMain.$(OBJEXT)
-test2_OBJECTS = $(am_test2_OBJECTS)
-test2_LDADD = $(LDADD)
-test2_DEPENDENCIES =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -74,9 +68,8 @@ CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 CXXLD = $(CXX)
 CXXLINK = $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) \
 	-o $@
-SOURCES = $(libdatasources_a_SOURCES) $(test_SOURCES) $(test2_SOURCES)
-DIST_SOURCES = $(libdatasources_a_SOURCES) $(test_SOURCES) \
-	$(test2_SOURCES)
+SOURCES = $(libdatasources_a_SOURCES) $(test_SOURCES)
+DIST_SOURCES = $(libdatasources_a_SOURCES) $(test_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -179,9 +172,6 @@ libdatasources_a_SOURCES = DataSourceInterface.cpp  PostgresDS.cpp  RasdamanDS.c
 test_SOURCES = test.cpp ../logger.cpp RasdamanDS.cpp DataSourceInterface.cpp \
 		HqlTable.cpp PostgresDS.cpp ../HqlMain.cpp
 
-test2_SOURCES = test2.cpp ../logger.cpp RasdamanDS.cpp DataSourceInterface.cpp \
-		HqlTable.cpp PostgresDS.cpp ../HqlMain.cpp
-
 AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG
 LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto -lpqxx
 AM_LDFLAGS = -L$(RASDAMAN)/lib 
@@ -266,9 +256,6 @@ clean-binPROGRAMS:
 test$(EXEEXT): $(test_OBJECTS) $(test_DEPENDENCIES) 
 	@rm -f test$(EXEEXT)
 	$(CXXLINK) $(test_OBJECTS) $(test_LDADD) $(LIBS)
-test2$(EXEEXT): $(test2_OBJECTS) $(test2_DEPENDENCIES) 
-	@rm -f test2$(EXEEXT)
-	$(CXXLINK) $(test2_OBJECTS) $(test2_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -283,7 +270,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RasdamanDS.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logger.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test2.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

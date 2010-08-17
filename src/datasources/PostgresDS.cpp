@@ -27,7 +27,8 @@ PostgresDS::PostgresDS(string opts) : conn(NULL), tr(NULL),
 PostgresDS::~PostgresDS()
 {
     TRACE << "Destroying Postgres Data Source ...";
-//    removeTempTables();
+    /* Just in case there are temp tables still lying around ...*/
+    removeTempTables();
     /* Remove pqxx connections to base DB. */
     disconnect();
     TRACE << "Postgres DataSource was now destroyed.";
@@ -94,12 +95,7 @@ void PostgresDS::commitTa()
 
 void PostgresDS::openTa()
 {
-    if (tr != NULL)
-    {
-        tr->commit();
-        delete tr;
-        tr = NULL;
-    }
+    commitTa();
     if (tr == NULL)
     {
         TRACE << "Opening a new transaction ...";
@@ -202,29 +198,34 @@ HqlTable* PostgresDS::query(string queryString)
 
     if (R.empty())
         WARN << "No rows in query result. ";
-    result->importFromSql(R);
+    /* Only import data in memory if table does not contain an "INTO" */
+    if (queryString.find("INTO") == string::npos)
+        result->importFromSql(R);
     
     return result;
 }
 
 result PostgresDS::regularQuery(string queryString)
 {
-    TRACE;
-    TRACE << "Query: " << queryString;
+    DEBUG << "SQL Query: " << queryString;
 
     // Perform a query on the database, storing result tuples in R.
     result R;
     try
     {
+        TRACE << "Executing query ...";
         R = tr->exec(queryString);
+        TRACE << "Query execution ended.";
     }
     catch (sql_error &e)
     {
         ERROR << e.query() << " : " << e.what();
+        abortTa();
         throw;
     }
     catch (pqxx_exception &e)
     {
+        ERROR << "General libpqxx exception: " << e.base().what();
         abortTa();
         throw;
     }
@@ -327,4 +328,14 @@ void PostgresDS::addTempTable(string name)
 void PostgresDS::commit()
 {
     commitTa();
+}
+
+void PostgresDS::insertHqlIdToTable(string table)
+{
+    string q = "CREATE SEQUENCE hqlid; \n";
+    q += "ALTER TABLE " + table + " ADD COLUMN _hql_id_ integer; \n";
+    q += "UPDATE " + table + " SET _hql_id_ = nextval('hqlid'); \n";
+    q += "DROP SEQUENCE hqlid; ";
+    HqlTable *result = this->query(q);
+    delete result;
 }
