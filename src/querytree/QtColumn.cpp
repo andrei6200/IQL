@@ -47,8 +47,10 @@ HqlTable* QtColumn::execute()
         /* If we select all columns, then just copy the output of the "FROM" clause */
         if (column == "*" && table == "")
         {
-            HqlMain::getInstance().getSqlDataSource().insertData(prod, this->id);
-            result = new HqlTable(this->id);
+            string q = "SELECT * INTO " + this->id + " FROM " + prod->getName();
+            result = HqlMain::getInstance().runSqlQuery(q);
+            result->setName(this->id);
+            pg.addTempTable(this->id);
         }
         else if (column == "*" && table != "")
         {
@@ -66,9 +68,10 @@ HqlTable* QtColumn::execute()
             string q = "SELECT " + cols[0];
             for (int i = 1; i < cols.size(); i++)
                 q += ", " + cols[i];
-            q += " INTO " + this->id + " FROM " + prod->getName();
+            q += ", _hql_id_ INTO " + this->id + " FROM " + prod->getName();
             result = pg.query(q);
             result->setName(this->id, false);
+            pg.addTempTable(this->id);
         }
         else
         if (child == NULL)
@@ -104,6 +107,21 @@ HqlTable* QtColumn::execute()
                         table = names[i].substr(0, names[i].size() - this->column.size() - 1);
                     }
                 }
+//                if (colCount == 0)
+//                {
+//                    // Try to search the alias dictionary
+//                    try
+//                    {
+//                        table = QueryTree::getInstance().getAliasFromTable(this->column);
+//                        TRACE << "Found table '" << table << "' for the alias: " << this->column;
+//                        col = table;
+//                        colCount ++;
+//                    }
+//                    catch (std::out_of_range)
+//                    {
+//                        TRACE << "No alias '" << this->column << "' exists.";
+//                    }
+//                }
                 switch (colCount)
                 {
                     case 0:
@@ -134,17 +152,21 @@ HqlTable* QtColumn::execute()
                     break;
 
                 case RASDAMAN:
-                    /* Setup the SQL table */
-                    string col1 = table + "_oid";
-                    string col2 = table + "_filename";
-                    q = "SELECT " + col1 + ", " + col2 + " FROM " + prod->getName();
+//                    /* Setup the SQL table */
+//                    string col1 = table + "_oid", alias1 = " AS " + this->id + "_oid";
+//                    string col2 = table + "_filename", alias2 = " AS " + this->id + "_filename";
+//                    q = "SELECT " + col1 + alias1 + " , " + col2 + alias2 + ", _hql_id_ INTO "
+//                            + this->id +  " FROM " + prod->getName();
+//                    result = pg.query(q);
+//                    pg.addTempTable(this->id);
+//                    /* Fetch a copy in memory */
+//                    delete result;
+                    q = "SELECT " + table + "_oid FROM " + prod->getName();
                     result = pg.query(q);
-                    result->setName(this->id, false);
-                    // And store them in Postgres as well
-                    pg.insertData(result, this->id);
+                    result->setName(this->id);
 
-                    /* But also create the RaSQL collection with the right number of rows */
-                    vector<string> oids = result->getColumn(col1);
+                    /* Create the RaSQL collection with the right number of rows */
+                    vector<string> oids = result->getColumn(table + "_oid");
                     for (int row = 0 ; row < oids.size(); row ++)
                     {
                         string oid = oids[row];
@@ -153,6 +175,15 @@ HqlTable* QtColumn::execute()
                         rman.updateQuery(q);
                     }
                     rman.addTempTable(this->id);
+
+                    /* Retrieve the OIDs into memory */
+                    result = rman.getCollection(this->id, false, true);
+                    // here i could rename the local ID into the original collection name
+//                    result->setName(table, true);
+                    /* And setup the corresponding SQL table with the proper OIDs */
+                    pg.insertData(result, this->id);
+                    pg.insertHqlIdToTable(this->id);
+                    
                     break;
             }
         }
@@ -182,10 +213,21 @@ DbEnum QtColumn::setupDbSource()
         return db_source;
     }
 
-    string search = table;
+    string search = table, newsearch;
     if (table == "")
         search = column;
 
+//    /* First check if this is an alias */
+//    try
+//    {
+//        newsearch = QueryTree::getInstance().getTableFromAlias(search);
+//        TRACE << "Using alias '" << newsearch << "' for table '" << search << "'";
+//        search = newsearch;
+//    }
+//    catch (std::out_of_range)
+//    {
+//
+//    }
 
     /* Else try to use the global data source dictionary. */
     map<string, DbEnum> tables = HqlMain::getInstance().tableMap;

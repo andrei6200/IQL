@@ -114,7 +114,6 @@ HqlTable* QtList::multiplyResults()
         ERROR << "Cannot compute cross product, intermediate result was NULL.";
         throw string("Intermediate result was NULL. ");
     }
-    HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(results[0]->getName());
     string tableList = results[0]->getName();
     for (int i = 1; i < results.size(); i++)
         if (results[i] == NULL)
@@ -124,13 +123,13 @@ HqlTable* QtList::multiplyResults()
         }
         else
         {
-            HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(results[i]->getName());
             tableList += ", " + results[i]->getName();
         }
 
     string q = "SELECT * INTO " + this->id + " FROM " + tableList;
     HqlTable *result = HqlMain::getInstance().runSqlQuery(q);
     HqlMain::getInstance().getSqlDataSource().addTempTable(this->id);
+    HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(this->id);
     result->setName(this->id, false);
 
     TRACE << "The cross product between " << data.size() << " HqlTables is " << result;
@@ -149,14 +148,13 @@ HqlTable* QtList::addResults()
             return NULL;
     }
 
-    // TODO: Implement column addition via SQL query
-
-    HqlTable *t = results[0];
-    if (t == NULL)
+    if (results[0] == NULL)
     {
         ERROR << "Cannot add columns of tables, intermediate result was NULL.";
         throw string("Intermediate result was NULL. ");
     }
+    string tableList = results[0]->getName();
+//    HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(results[0]->getName());
     for (int i = 1; i < results.size(); i++)
         if (results[i] == NULL)
         {
@@ -164,11 +162,29 @@ HqlTable* QtList::addResults()
             throw string("Intermediate result was NULL. ");
         }
         else
-            t->addColumns(results[i]);
+        {
+            tableList += " JOIN " + results[i]->getName() + " USING (_hql_id_)";
+//            HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(results[i]->getName());
+        }
 
-    TRACE << "The column addition between " << data.size() << " HqlTables is " << t;
+    string q;
+    HqlTable *result = NULL;
+    if (results.size() == 1)
+    {
+        // Only one table, query does not have join.
+        q = "SELECT * INTO " + this->id + " FROM " + results[0]->getName();
+        result = HqlMain::getInstance().runSqlQuery(q);
+    }
+    else
+    {
+        q = "SELECT * INTO " + this->id + " FROM " + tableList;
+        result = HqlMain::getInstance().runSqlQuery(q);
+    }
+    result->setName(this->id);
+    HqlMain::getInstance().getSqlDataSource().addTempTable(this->id);
+    TRACE << "The column addition between " << data.size() << " HqlTables is " << result;
 
-    return t;
+    return result;
 }
 
 DbEnum QtList::setupDbSource()

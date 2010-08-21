@@ -30,12 +30,16 @@ HqlTable* QtPostGisFunction::execute()
     HqlTable *result = NULL, *tmp = NULL;
 
     tmp = child->execute();
-    string col = tmp->getColumnNames()[1];
-    string q = "SELECT " + function + " ( " + col + " ) FROM " + tmp->getName();;
+    string childTableName = tmp->getName();
     delete tmp;
+    string q = "SELECT * FROM " + childTableName;
+    tmp = pg.query(q);
+    string col = tmp->getColumnNames()[0];
+    delete tmp;
+    q = "SELECT " + function + " ( " + col + " ) AS " + this->id + "_" + function
+            + ", _hql_id_ INTO " + this->id + " FROM " + childTableName;
     result = pg.query(q);
-
-    pg.insertData(result, this->id);
+    pg.addTempTable(this->id);
     result->setName(this->id);
 
     return result;

@@ -252,7 +252,7 @@ void PostgresDS::disconnect()
 
 void PostgresDS::insertData(HqlTable* table, string tableName)
 {
-    TRACE << "Insert table into SQL datasource: ";
+    TRACE << "Insert into SQL table '" << tableName << "': ";
     TRACE << table << endl;
 
     /* (1) First drop old table, if it exists. */
@@ -273,7 +273,7 @@ void PostgresDS::insertData(HqlTable* table, string tableName)
 
     string query = "\nCREATE TABLE " + tableName + " (\n";
     // The first column always exists : it stores the HQL ID.
-    query += "\t" + table->names[0] + " INTEGER \n";
+    query += "\t" + table->names[0] + " VARCHAR \n";
     for (int i = 1; i < table->names.size(); i++)
         query += string(", \n\t") + table->names[i] + " VARCHAR \n";
     query += ")";

@@ -36,35 +36,35 @@ using namespace pqxx;
 
 
 HqlTable::HqlTable(storageType type)
-    : rows(0), columns(1), hiddenCount(1), lastId(0), storage(type), 
+    : rows(0), columns(0), hiddenCount(0), lastId(0), storage(type),
         tableName(""), dataAlsoInMemory(false)
 {
     TRACE << "Created HqlTable '" << tableName << "' with " << rows << " rows and "
             << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden)";
-    string id("_hql_id");
+//    string id("_hql_id");
     names = vector<string>();
-    names.push_back(id);
+//    names.push_back(id);
     widths = vector<int>();
-    widths.push_back(id.length());
+//    widths.push_back(id.length());
     hidden = vector<bool>();
-    hidden.push_back(true);
+//    hidden.push_back(true);
     data = vector<vector<string> >();
 }
 
 
 HqlTable::HqlTable(string name)
-    : rows(0), columns(1), hiddenCount(1), lastId(0), storage(POSTGRES),
+    : rows(0), columns(0), hiddenCount(0), lastId(0), storage(POSTGRES),
         tableName(name), dataAlsoInMemory(false)
 {
     TRACE << "Created HqlTable '" << tableName << "' with " << rows << " rows and "
             << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden)";
-    string id("_hql_id");
+//    string id("_hql_id");
     names = vector<string>();
-    names.push_back(id);
+//    names.push_back(id);
     widths = vector<int>();
-    widths.push_back(id.length());
+//    widths.push_back(id.length());
     hidden = vector<bool>();
-    hidden.push_back(true);
+//    hidden.push_back(true);
     data = vector<vector<string> >();
 }
 
@@ -139,8 +139,6 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
 
 
         row.clear();
-        // First generate ID of current row
-        row.push_back(generateId());
 
         /* Add the ObjectID (OID) of the current result to the table */
         r_Ref_Any ref = *iter;
@@ -166,7 +164,8 @@ void HqlTable::importFromRasql(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
 /* Import data from the result of an SQL query. */
 void HqlTable::importFromSql(result sqlResult)
 {
-    TRACE << "Importing from Postgres result ... ";
+    TRACE << "Importing from Postgres result with " << sqlResult.size() 
+            << " rows and " << sqlResult.columns() << " columns ... ";
     
     rows = sqlResult.size();
     int newcols = sqlResult.columns();
@@ -191,22 +190,11 @@ void HqlTable::importFromSql(result sqlResult)
             }
         }
 
-        // If this is an HQL table, then the first column is "_hql_id" and should be hidden
-        if (string(sqlResult.column_name(0)) == string("_hql_id"))
-        {
-            columns --;
-            startCol = 1;
-            newnames.erase(newnames.begin());
-            newhidden.erase(newhidden.begin());
-        }
-
         result::const_iterator it;
         vector<string> row;
         for (it = sqlResult.begin(); it != sqlResult.end(); it++)
         {
             row.clear();
-            // Insert row ID
-            row.push_back(generateId());
             // Insert actual data
             result::tuple tuple = *it;
             string val;
@@ -238,7 +226,6 @@ vector<string> HqlTable::getColumn(int index)
         vec.push_back(data[i][index]);
     return vec;
 }
-
 
 vector<string> HqlTable::getColumn(string name)
 {
@@ -299,7 +286,7 @@ void HqlTable::print(ostream &out)
 #endif
             {
                 l = names[i].size();
-                if ((widths[i]+l) % 2 == 1 xor (widths[i]-l) % 2 == 1)
+                if ((widths[i]+l) % 2 == 1 ^ (widths[i]-l) % 2 == 1)
                     out << " ";
                 out << sep << setw((widths[i]+l)/2) << names[i]
                         << setw((widths[i]-l)/2) << "";
@@ -366,18 +353,15 @@ HqlTable* HqlTable::crossProduct(HqlTable* other)
 
     output->hidden = this->hidden;
     vector<bool> h2 = other->hidden;
-    h2.erase(h2.begin());
     output->hidden.insert(output->hidden.end(), h2.begin(), h2.end());
-    // "-1" so that we do not count the HQL id column twice
-    output->hiddenCount = this->hiddenCount + other->hiddenCount - 1;
-    output->columns = this->columns + other->columns - 1;
+    output->hiddenCount = this->hiddenCount + other->hiddenCount;
+    output->columns = this->columns + other->columns;
     output->rows = this->rows * other->rows;
 
     int r1, r2;
     /* Copy column names */
     output->names = this->names;
     vector<string> names2 = other->names;
-    names2.erase(names2.begin());   // erase the "HQL ID" column
     output->names.insert(output->names.end(), names2.begin(), names2.end());
 
     /* Compute the actual cross product */
@@ -389,9 +373,6 @@ HqlTable* HqlTable::crossProduct(HqlTable* other)
             row = this->data[r1];
             row2 = other->data[r2];
             /* Update the IDs */
-            row.erase(row.begin());
-            row2.erase(row2.begin());
-            row.insert(row.begin(), generateId());
             row.insert(row.end(), row2.begin(), row2.end());
             output->data.push_back(row);
 //            TRACE << "Just inserted row: ";
@@ -420,24 +401,20 @@ HqlTable* HqlTable::addColumns(HqlTable* other)
     }
 
     vector<bool> h2 = other->hidden;
-    h2.erase(h2.begin());
     this->hidden.insert(this->hidden.end(), h2.begin(), h2.end());
-    // "-1" so that we do not count the HQL id column twice
-    this->hiddenCount += other->hiddenCount - 1;
-    this->columns += other->columns - 1;
+    this->hiddenCount += other->hiddenCount;
+    this->columns += other->columns;
     TRACE << "Result table has " << columns - hiddenCount << " columns ( + "
             << hiddenCount << " hidden ) and " << hidden.size() << " elements in the 'hidden' vector";
     
     /* Copy column names */
     vector<string> names2 = other->names;
-    names2.erase(names2.begin());   // erase the "HQL ID" column
     this->names.insert(this->names.end(), names2.begin(), names2.end());
 
     /* Copy the data */
     for (int row = 0; row < this->rows; row++)
     {
         vector<string> otherrow = other->data[row];
-        otherrow.erase(otherrow.begin());
         this->data[row].insert(this->data[row].end(), otherrow.begin(), otherrow.end());
 //        TRACE << "Just inserted row: ";
 //        vector<string>::iterator i;
@@ -499,7 +476,7 @@ void HqlTable::setName(string name, bool updateColumnNames)
     // Prefix the field names with the table name, if possible
     if (updateColumnNames && this->dataAlsoInMemory)
     {
-        for (int i = 1; i < names.size(); i ++)
+        for (int i = 0; i < names.size(); i ++)
             if (names[i].find(name) != 0)
                 names[i] = tableName + "_" + names[i];
     }

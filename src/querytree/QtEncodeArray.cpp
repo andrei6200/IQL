@@ -60,7 +60,8 @@ HqlTable* QtEncodeArray::execute()
             " FROM " + tmp->getName();
     delete tmp;
     rman.updateQuery(query);
-    tmp = rman.getCollection(this->id);
+    tmp = rman.getCollection(this->id, false);
+    tmp->setName(this->id, true);
     rman.addTempTable(this->id);
 
     // Store the OID table in Postgres as well

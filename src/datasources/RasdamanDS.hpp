@@ -65,7 +65,7 @@ public:
     std::string saveRasdamanMddToFile(r_Ref<r_GMarray> mdd, bool storeOnDisk, int index);
 
     // Retrieve a collection by its name
-    HqlTable* getCollection(std::string name, bool storeOnDisk = false);
+    HqlTable* getCollection(std::string name, bool storeOnDisk = false, bool updateCols = false);
 
     // Insert some data in a temporary table
     void insertData(HqlTable* table, std::string tableName);

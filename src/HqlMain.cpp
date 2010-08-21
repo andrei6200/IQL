@@ -50,9 +50,6 @@ HqlMain::HqlMain() {
     /* Connect to Rasdaman only when needed. */
 //    rman->connect();
 
-    /* Initialize the PostGIS keywords */
-    initPostgisFunctionList();
-
     /* Rasdaman tables */
     vector<string> rasTables = rman->getObjectNames();
     DEBUG << "Found " << rasTables.size() << " Rasdaman tables. ";
@@ -83,6 +80,9 @@ HqlMain::HqlMain() {
     for (tuple = tableMap.begin(); tuple != tableMap.end(); tuple++)
         TRACE << " - " << (*tuple).first << " -> " << (*tuple).second;
     TRACE;
+
+    /* Initialize the PostGIS keywords */
+    initPostgisFunctionList();
 
     INFO << " Initialization complete. ";
 }
@@ -141,6 +141,7 @@ void HqlMain::initPostgisFunctionList() {
             "('pg_catalog', 'information_schema') " +
             "AND type_udt_name != 'trigger' " +
             "ORDER BY routine_name ASC;";
+    pg->connect();
     pqxx::result sqlResult(pg->regularQuery(q));
 
     postgisKw.clear();

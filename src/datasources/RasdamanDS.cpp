@@ -227,6 +227,8 @@ r_Ref<r_GMarray> RasdamanDS::queryByOid(std::string queryString)
         r_oql_execute(query, result_set);
         TRACE << "Query execution ended. ";
         DEBUG << "Result has " << result_set.cardinality() << " objects... ";
+        if (result_set.cardinality() == 0)
+            throw string("Query by OID did not return any MDD object. ");
         if (result_set.cardinality() != 1)
             throw string("Query by OID did not fetch exactly one MDD object. ");
     }
@@ -243,12 +245,14 @@ r_Ref<r_GMarray> RasdamanDS::queryByOid(std::string queryString)
     return image;
 }
 
-HqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk)
+HqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk, bool updateCols)
 {
     string query = "SELECT " + name + " FROM " + name;
     HqlTable* out = this->query(query, storeOnDisk);
-    out->names[1] = name + "_" + out->names[1];
-    out->names[2] = name + "_" + out->names[2];
+    if (updateCols)
+        for (int i = 0; i < out->getColumnNames().size(); i++)
+            if (out->names[i] != "_hql_id_")
+                out->names[i] = name + "_" + out->names[i];
     out->setName(name);
     return out;
 }

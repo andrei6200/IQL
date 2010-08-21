@@ -141,8 +141,8 @@ LOGGER<char, char_traits < char > >& operator <<
 #define DEBUG   LOG.debug() << "[" << formatClassName(__PRETTY_FUNCTION__) << " - " << __LINE__ << "] "
 #define INFO    LOG.info() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
 #define WARN    LOG.warn() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
-#define ERROR   LOG.error() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
-#define FATAL   LOG.fatal() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "
+#define ERROR   LOG.error() << "[" << formatClassName(__PRETTY_FUNCTION__) << " - " << __LINE__ << "] "
+#define FATAL   LOG.fatal() << "[" << formatClassName(__PRETTY_FUNCTION__) << " - " << __LINE__ << "] "
 
 
 #endif	/* LOGGER_HPP */

@@ -8,6 +8,7 @@
 #include <map>
 #include "QtDataSource.hpp"
 #include "HqlMain.hpp"
+#include "QueryTree.hpp"
 
 using namespace std;
 
@@ -53,14 +54,15 @@ HqlTable* QtDataSource::execute()
     switch (db_source)
     {
         case POSTGRES:
-            TRACE << q;
             q = "SELECT * FROM " + tableName;
+            TRACE << q;
             tmp = HqlMain::getInstance().runSqlQuery(q);
+            TRACE << tmp;
             cols = tmp->getColumnNames();
 
             TRACE << q;
-            q = "SELECT " + cols[1] + " AS " + tableName + "_" + cols[1];
-            for (int i = 2; i < cols.size(); i++)
+            q = "SELECT " + cols[0] + " AS " + tableName + "_" + cols[0];
+            for (int i = 1; i < cols.size(); i++)
                 q += ", " + cols[i] + " AS " + tableName + "_" + cols[i];
             q += " INTO " + this->id + " FROM " + tableName;
 
@@ -73,14 +75,24 @@ HqlTable* QtDataSource::execute()
             break;
             
         case RASDAMAN:
-            TRACE << q;
-            q = string("SELECT ") + tableName + " FROM " + tableName;
-            table = HqlMain::getInstance().runRasqlQuery(q);
-            table->setName(this->id, true);
+            /* Create a new rasdaman collection */
+//            q = string("SELECT ") + tableName + " INTO " + this->id + " FROM " + tableName;
+//            TRACE << q;
+//            HqlMain::getInstance().getRasqlDataSource().updateQuery(q);
+//            HqlMain::getInstance().getRasqlDataSource().addTempTable(this->id);
 
-            // Store the HqlTable in Postgres for subsequent calculations
-            HqlMain::getInstance().getSqlDataSource().insertData(table, tableName);
-            // Now we can safely return from this function.
+            /* And fetch the OIDs */
+            table = HqlMain::getInstance().getRasqlDataSource().getCollection(tableName, false, true);
+            table->setName(this->id, false);
+//            table->setName(tableName, true);
+//            table->setName(tableName, true);
+//            table->setName(this->id, true);
+
+            /* Store the HqlTable in Postgres for subsequent calculations */
+            HqlMain::getInstance().getSqlDataSource().insertData(table, this->id);
+
+            /* And remember the alias */
+//            QueryTree::getInstance().addAlias(tableName, this->id);
 
             break;
             
