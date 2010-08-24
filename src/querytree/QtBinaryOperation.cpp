@@ -56,13 +56,13 @@ HqlTable* QtBinaryOperation::execute()
     delete tmp2;
     tmp1 = pg.query("SELECT * FROM " + t1);
     tmp2 = pg.query("SELECT * FROM " + t2);
-    string col1 = tmp1->getColumnNames().at(1);
-    string col2 = tmp2->getColumnNames().at(1);
+    string col1 = tmp1->getColumnNames().at(0);
+    string col2 = tmp2->getColumnNames().at(0);
     delete tmp1;
     delete tmp2;
     string q = "SELECT t1." + col1 + " " + op + " t2." + col2 +
-            " AS " + opname + ", t1._hql_id_ INTO " + this->id +
-            " FROM " + t1 + " AS t1 JOIN " + t2 + " AS t2 ON t1._hql_id_=t2._hql_id_;";
+            " AS " + opname + ", t1." + HQL_COL + " INTO " + this->id +
+            " FROM " + t1 + " AS t1 JOIN " + t2 + " AS t2 ON t1." + HQL_COL + "=t2." + HQL_COL + ";";
     
     result = pg.query(q);
     pg.addTempTable(this->id);

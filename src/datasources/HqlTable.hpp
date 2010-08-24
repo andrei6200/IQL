@@ -19,6 +19,11 @@
 
 #include "logger.hpp"
 
+
+// Internal HQL id
+#define HQL_COL "hql"
+
+
 class HqlTable
 {
 public:

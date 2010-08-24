@@ -163,7 +163,7 @@ HqlTable* QtList::addResults()
         }
         else
         {
-            tableList += " JOIN " + results[i]->getName() + " USING (_hql_id_)";
+            tableList += " JOIN " + results[i]->getName() + " USING (" + HQL_COL + ")";
 //            HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(results[i]->getName());
         }
 

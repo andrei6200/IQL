@@ -37,7 +37,7 @@ HqlTable* QtPostGisFunction::execute()
     string col = tmp->getColumnNames()[0];
     delete tmp;
     q = "SELECT " + function + " ( " + col + " ) AS " + this->id + "_" + function
-            + ", _hql_id_ INTO " + this->id + " FROM " + childTableName;
+            + ", " + HQL_COL + " INTO " + this->id + " FROM " + childTableName;
     result = pg.query(q);
     pg.addTempTable(this->id);
     result->setName(this->id);

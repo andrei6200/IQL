@@ -68,7 +68,7 @@ HqlTable* QtColumn::execute()
             string q = "SELECT " + cols[0];
             for (int i = 1; i < cols.size(); i++)
                 q += ", " + cols[i];
-            q += ", _hql_id_ INTO " + this->id + " FROM " + prod->getName();
+            q += string(", ") + HQL_COL + " INTO " + this->id + " FROM " + prod->getName();
             result = pg.query(q);
             result->setName(this->id, false);
             pg.addTempTable(this->id);
@@ -87,8 +87,7 @@ HqlTable* QtColumn::execute()
                 vector<string> names = prod->getColumnNames();
                 int colCount = 0;
                 string suffix("_filename");
-                // Start from 1 to skip the HQL id column
-                for (int i = 1; i < names.size(); i ++)
+                for (int i = 0; i < names.size(); i ++)
                 {
                     // Format for Rasdaman columns: table_oid | table_filename
                     if (names[i] == this->column + suffix)
@@ -143,7 +142,7 @@ HqlTable* QtColumn::execute()
             switch (db_source)
             {
                 case POSTGRES:
-                    q = "SELECT " + col + ", _hql_id_ INTO " + this->id + " FROM " + prod->getName();
+                    q = "SELECT " + col + ", " + HQL_COL + " INTO " + this->id + " FROM " + prod->getName();
                     // Select just the necessary column
                     result = pg.query(q);
                     result->setName(this->id);
@@ -155,7 +154,7 @@ HqlTable* QtColumn::execute()
 //                    /* Setup the SQL table */
 //                    string col1 = table + "_oid", alias1 = " AS " + this->id + "_oid";
 //                    string col2 = table + "_filename", alias2 = " AS " + this->id + "_filename";
-//                    q = "SELECT " + col1 + alias1 + " , " + col2 + alias2 + ", _hql_id_ INTO "
+//                    q = "SELECT " + col1 + alias1 + " , " + col2 + alias2 + ", " + HQL_COL + " INTO "
 //                            + this->id +  " FROM " + prod->getName();
 //                    result = pg.query(q);
 //                    pg.addTempTable(this->id);

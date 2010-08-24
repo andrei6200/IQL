@@ -333,8 +333,8 @@ void PostgresDS::commit()
 void PostgresDS::insertHqlIdToTable(string table)
 {
     string q = "CREATE SEQUENCE hqlid; \n";
-    q += "ALTER TABLE " + table + " ADD COLUMN _hql_id_ integer; \n";
-    q += "UPDATE " + table + " SET _hql_id_ = nextval('hqlid'); \n";
+    q += "ALTER TABLE " + table + " ADD COLUMN " + HQL_COL + " integer; \n";
+    q += "UPDATE " + table + " SET " + HQL_COL + " = nextval('hqlid'); \n";
     q += "DROP SEQUENCE hqlid; ";
     HqlTable *result = this->query(q);
     delete result;

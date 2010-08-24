@@ -1385,29 +1385,29 @@ a_expr:		c_expr
 
 			| a_expr LIKE a_expr
 				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
-			| a_expr LIKE a_expr ESCAPE a_expr
-				{ $$ = new QtString(cat5($1->toCString(), $2, $3->toCString(), $4, $5->toCString())); }
+//			| a_expr LIKE a_expr ESCAPE a_expr
+//				{ $$ = new QtString(cat5($1->toCString(), $2, $3->toCString(), $4, $5->toCString())); }
 			| a_expr NOT LIKE a_expr
 				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString())); }
-			| a_expr NOT LIKE a_expr ESCAPE a_expr
-				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString())); }
-			| a_expr ILIKE a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
-			| a_expr ILIKE a_expr ESCAPE a_expr
-				{ $$ = new QtString(cat5($1->toCString(), $2, $3->toCString(), $4, $5->toCString())); }
-			| a_expr NOT ILIKE a_expr
-				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString())); }
-			| a_expr NOT ILIKE a_expr ESCAPE a_expr
-				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString())); }
-
-			| a_expr SIMILAR TO a_expr				%prec SIMILAR
-				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString())); }
-			| a_expr SIMILAR TO a_expr ESCAPE a_expr
-				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString())); }
-			| a_expr NOT SIMILAR TO a_expr			%prec SIMILAR
-				{ $$ = new QtString(cat5($1->toCString(), $2, $3, $4, $5->toCString())); }
-			| a_expr NOT SIMILAR TO a_expr ESCAPE a_expr
-				{ $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5->toCString(), $6, $7->toCString())); }
+//			| a_expr NOT LIKE a_expr ESCAPE a_expr
+//				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString())); }
+//			| a_expr ILIKE a_expr
+//				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+//			| a_expr ILIKE a_expr ESCAPE a_expr
+//				{ $$ = new QtString(cat5($1->toCString(), $2, $3->toCString(), $4, $5->toCString())); }
+//			| a_expr NOT ILIKE a_expr
+//				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString())); }
+//			| a_expr NOT ILIKE a_expr ESCAPE a_expr
+//				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString())); }
+//
+//			| a_expr SIMILAR TO a_expr				%prec SIMILAR
+//				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString())); }
+//			| a_expr SIMILAR TO a_expr ESCAPE a_expr
+//				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString())); }
+//			| a_expr NOT SIMILAR TO a_expr			%prec SIMILAR
+//				{ $$ = new QtString(cat5($1->toCString(), $2, $3, $4, $5->toCString())); }
+//			| a_expr NOT SIMILAR TO a_expr ESCAPE a_expr
+//				{ $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5->toCString(), $6, $7->toCString())); }
 
 			/* NullTest clause
 			 * Define SQL92-style Null test clause.
@@ -1418,91 +1418,91 @@ a_expr:		c_expr
 			 *	a ISNULL
 			 *	a NOTNULL
 			 */
-			| a_expr IS NULL_P
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
-			| a_expr ISNULL
-				{ $$ = new QtString(cat2($1->toCString(), $2)); }
-			| a_expr IS NOT NULL_P
-				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
-			| a_expr NOTNULL
-				{ $$ = new QtString(cat2($1->toCString(), $2)); }
-			| row OVERLAPS row
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
-			| a_expr IS TRUE_P
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
-			| a_expr IS NOT TRUE_P
-				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
-			| a_expr IS FALSE_P
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
-			| a_expr IS NOT FALSE_P
-				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
-			| a_expr IS UNKNOWN
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
-			| a_expr IS NOT UNKNOWN
-				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
-			| a_expr IS DISTINCT FROM a_expr			%prec IS
-				{
-                                        $$ = new QtString(cat5($1->toCString(), $2, $3, $4, $5->toCString()));
-				}
-			| a_expr IS NOT DISTINCT FROM a_expr		%prec IS
-				{
-                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5, $6->toCString()));
-				}
-			| a_expr IS OF LRPAR type_list RRPAR			%prec IS
-				{
-                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5->toCString(), $6));
-				}
-			| a_expr IS NOT OF LRPAR type_list RRPAR		%prec IS
-				{
-                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5, $6->toCString(), $7));
-				}
-			/*
-			 *	Ideally we would not use hard-wired operators below but instead use
-			 *	opclasses.  However, mixed data types and other issues make this
-			 *	difficult:  http://archives.postgresql.org/pgsql-hackers/2008-08/msg01142.php
-			 */
-			| a_expr BETWEEN opt_asymmetric b_expr AND b_expr		%prec BETWEEN
-				{
-                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString()));
-				}
-			| a_expr NOT BETWEEN opt_asymmetric b_expr AND b_expr	%prec BETWEEN
-				{
-                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5->toCString(), $6, $7->toCString()));
-				}
-			| a_expr BETWEEN SYMMETRIC b_expr AND b_expr			%prec BETWEEN
-				{
-                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString()));
-				}
-			| a_expr NOT BETWEEN SYMMETRIC b_expr AND b_expr		%prec BETWEEN
-				{
-                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5->toCString(), $6, $7->toCString()));
-				}
-			| a_expr IN_P in_expr
-				{
-                            $$ = new QtString(cat3($1->toCString(), $2, $3->toCString()));
-				}
-			| a_expr NOT IN_P in_expr
-				{
-                            $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString()));
-				}
-/*
-// AA: We do not allow nested sub-queries to occur
-			| a_expr subquery_Op sub_type select_with_parens	%prec Op
-*/
-			| a_expr subquery_Op sub_type LRPAR a_expr RRPAR		%prec Op
-				{
-                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5->toCString(), $6));
-				}
-// AA: We do not allow nested sub-queries to occur
-//			| UNIQUE select_with_parens
-			| a_expr IS DOCUMENT_P					%prec IS
-				{
-                            $$ = new QtString(cat3($1->toCString(), $2, $3));
-				}
-			| a_expr IS NOT DOCUMENT_P				%prec IS
-				{
-                            $$ = new QtString(cat4($1->toCString(), $2, $3, $4));
-				}
+//			| a_expr IS NULL_P
+//				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
+//			| a_expr ISNULL
+//				{ $$ = new QtString(cat2($1->toCString(), $2)); }
+//			| a_expr IS NOT NULL_P
+//				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
+//			| a_expr NOTNULL
+//				{ $$ = new QtString(cat2($1->toCString(), $2)); }
+//			| row OVERLAPS row
+//				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+//			| a_expr IS TRUE_P
+//				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
+//			| a_expr IS NOT TRUE_P
+//				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
+//			| a_expr IS FALSE_P
+//				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
+//			| a_expr IS NOT FALSE_P
+//				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
+//			| a_expr IS UNKNOWN
+//				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
+//			| a_expr IS NOT UNKNOWN
+//				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4)); }
+//			| a_expr IS DISTINCT FROM a_expr			%prec IS
+//				{
+//                                        $$ = new QtString(cat5($1->toCString(), $2, $3, $4, $5->toCString()));
+//				}
+//			| a_expr IS NOT DISTINCT FROM a_expr		%prec IS
+//				{
+//                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5, $6->toCString()));
+//				}
+//			| a_expr IS OF LRPAR type_list RRPAR			%prec IS
+//				{
+//                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5->toCString(), $6));
+//				}
+//			| a_expr IS NOT OF LRPAR type_list RRPAR		%prec IS
+//				{
+//                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5, $6->toCString(), $7));
+//				}
+//			/*
+//			 *	Ideally we would not use hard-wired operators below but instead use
+//			 *	opclasses.  However, mixed data types and other issues make this
+//			 *	difficult:  http://archives.postgresql.org/pgsql-hackers/2008-08/msg01142.php
+//			 */
+//			| a_expr BETWEEN opt_asymmetric b_expr AND b_expr		%prec BETWEEN
+//				{
+//                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString()));
+//				}
+//			| a_expr NOT BETWEEN opt_asymmetric b_expr AND b_expr	%prec BETWEEN
+//				{
+//                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5->toCString(), $6, $7->toCString()));
+//				}
+//			| a_expr BETWEEN SYMMETRIC b_expr AND b_expr			%prec BETWEEN
+//				{
+//                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString()));
+//				}
+//			| a_expr NOT BETWEEN SYMMETRIC b_expr AND b_expr		%prec BETWEEN
+//				{
+//                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5->toCString(), $6, $7->toCString()));
+//				}
+//			| a_expr IN_P in_expr
+//				{
+//                            $$ = new QtString(cat3($1->toCString(), $2, $3->toCString()));
+//				}
+//			| a_expr NOT IN_P in_expr
+//				{
+//                            $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString()));
+//				}
+///*
+//// AA: We do not allow nested sub-queries to occur
+//			| a_expr subquery_Op sub_type select_with_parens	%prec Op
+//*/
+//			| a_expr subquery_Op sub_type LRPAR a_expr RRPAR		%prec Op
+//				{
+//                            $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5->toCString(), $6));
+//				}
+//// AA: We do not allow nested sub-queries to occur
+////			| UNIQUE select_with_parens
+//			| a_expr IS DOCUMENT_P					%prec IS
+//				{
+//                            $$ = new QtString(cat3($1->toCString(), $2, $3));
+//				}
+//			| a_expr IS NOT DOCUMENT_P				%prec IS
+//				{
+//                            $$ = new QtString(cat4($1->toCString(), $2, $3, $4));
+//				}
 		;
 
 /*
@@ -1552,26 +1552,26 @@ b_expr:		c_expr
 				{ $$ = new QtString(cat2($1, $2->toCString())); }
 			| b_expr qual_Op					%prec POSTFIXOP
 				{ $$ = new QtString(cat2($1->toCString(), $2)); }
-			| b_expr IS DISTINCT FROM b_expr		%prec IS
-				{ $$ = new QtString(cat5($1->toCString(), $2, $3, $4, $5->toCString())); }
-			| b_expr IS NOT DISTINCT FROM b_expr	%prec IS
-				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5, $6->toCString())); }
-			| b_expr IS OF LRPAR type_list RRPAR		%prec IS
-				{
-                                        $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5->toCString(), $6));
-				}
-			| b_expr IS NOT OF LRPAR type_list RRPAR	%prec IS
-				{
-                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5, $6->toCString(), $7));
-				}
-			| b_expr IS DOCUMENT_P					%prec IS
-				{
-                            $$ = new QtString(cat3($1->toCString(), $2, $3));
-				}
-			| b_expr IS NOT DOCUMENT_P				%prec IS
-				{
-                            $$ = new QtString(cat4($1->toCString(), $2, $3, $4));
-				}
+//			| b_expr IS DISTINCT FROM b_expr		%prec IS
+//				{ $$ = new QtString(cat5($1->toCString(), $2, $3, $4, $5->toCString())); }
+//			| b_expr IS NOT DISTINCT FROM b_expr	%prec IS
+//				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5, $6->toCString())); }
+//			| b_expr IS OF LRPAR type_list RRPAR		%prec IS
+//				{
+//                                        $$ = new QtString(cat6($1->toCString(), $2, $3, $4, $5->toCString(), $6));
+//				}
+//			| b_expr IS NOT OF LRPAR type_list RRPAR	%prec IS
+//				{
+//                            $$ = new QtString(cat7($1->toCString(), $2, $3, $4, $5, $6->toCString(), $7));
+//				}
+//			| b_expr IS DOCUMENT_P					%prec IS
+//				{
+//                            $$ = new QtString(cat3($1->toCString(), $2, $3));
+//				}
+//			| b_expr IS NOT DOCUMENT_P				%prec IS
+//				{
+//                            $$ = new QtString(cat4($1->toCString(), $2, $3, $4));
+//				}
 		;
 
 /*
@@ -2264,7 +2264,7 @@ func_name:	type_function_name
 /*
  * Constants
  */
-AexprConst: Iconst
+AexprConst:             Iconst
 				{
 					$$ = new QtString($1);
 				}

@@ -53,6 +53,7 @@ void QueryTree::execute()
         string queryString = "SELECT * FROM " + name;
         delete table;
         table = HqlMain::getInstance().getSqlDataSource().query(queryString);
+        table->setName(name);
         /* Save required files to disk. */
         saveRasdamanObjectsToDisk(table);
         /* Remove traces of execution */
@@ -90,6 +91,7 @@ void QueryTree::execute()
 
 //    /* In the end, remove temporary tables. */
 //    HqlMain::getInstance().getSqlDataSource().removeTempTables();
+//    HqlMain::getInstance().getRasqlDataSource().removeTempTables();
 
     /* And display the query execution status*/
     cout << RESPONSE_PROMPT << status << endl;
@@ -112,7 +114,7 @@ void QueryTree::saveRasdamanObjectsToDisk(HqlTable *table)
     for (int col = 0; col < names.size(); col++)
     {
         string::size_type pos = names[col].rfind("_oid");
-        if (pos == names[col].size() - 4)  // end with "_oid"
+        if (pos != string::npos && pos == names[col].size() - 4)  // end with "_oid"
         {
             string collName = names[col].substr(0, pos);
             TRACE << "Fetching MDDs from collection: " << collName;

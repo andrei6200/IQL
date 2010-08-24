@@ -251,7 +251,7 @@ HqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk, bool updateCo
     HqlTable* out = this->query(query, storeOnDisk);
     if (updateCols)
         for (int i = 0; i < out->getColumnNames().size(); i++)
-            if (out->names[i] != "_hql_id_")
+            if (out->names[i] != HQL_COL)
                 out->names[i] = name + "_" + out->names[i];
     out->setName(name);
     return out;
