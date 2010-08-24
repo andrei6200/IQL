@@ -52,8 +52,9 @@ am_libquerytree_a_OBJECTS = QtCartesianProduct.$(OBJEXT) \
 	QtInducedOperation.$(OBJEXT) QtString.$(OBJEXT) \
 	QtCreateArray.$(OBJEXT) QtJoin.$(OBJEXT) \
 	QtSelectStatement.$(OBJEXT) QtDataSource.$(OBJEXT) \
-	QtList.$(OBJEXT) QueryTree.$(OBJEXT) QtNode.$(OBJEXT) \
-	QtColumn.$(OBJEXT) QtBinaryOperation.$(OBJEXT) QtDot.$(OBJEXT) \
+	QtList.$(OBJEXT) QueryTree.$(OBJEXT) QtConst.$(OBJEXT) \
+	QtNode.$(OBJEXT) QtColumn.$(OBJEXT) \
+	QtBinaryOperation.$(OBJEXT) QtDot.$(OBJEXT) \
 	QtPaginate.$(OBJEXT) QtSort.$(OBJEXT)
 libquerytree_a_OBJECTS = $(am_libquerytree_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -169,7 +170,7 @@ libquerytree_a_SOURCES = \
 		QtCartesianProduct.cpp  QtEncodeArray.cpp       QtRasqlFunction.cpp    QtSqlFunction.cpp	\
 		QtPostGisFunction.cpp	QtInducedOperation.cpp  QtString.cpp			\
 		QtCreateArray.cpp       QtJoin.cpp              QtSelectStatement.cpp  		\
-		QtDataSource.cpp        QtList.cpp              QueryTree.cpp		\
+		QtDataSource.cpp        QtList.cpp              QueryTree.cpp		QtConst.cpp		\
 		QtNode.cpp              QtColumn.cpp 		QtBinaryOperation.cpp	\
 		QtDot.cpp               QtPaginate.cpp          QtSort.cpp            
 
@@ -225,6 +226,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtBinaryOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtCartesianProduct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtColumn.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtConst.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtCreateArray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtDataSource.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtDot.Po@am__quote@

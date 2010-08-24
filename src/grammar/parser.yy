@@ -2266,55 +2266,55 @@ func_name:	type_function_name
  */
 AexprConst:             Iconst
 				{
-					$$ = new QtString($1);
+					$$ = new QtConst($1, "integer");
 				}
 			| FCONST
 				{
-					$$ = new QtString($1);
+					$$ = new QtConst($1, "float");
 				}
 			| Sconst
 				{
-					$$ = new QtString($1);
+					$$ = new QtConst($1, "string");
 				}
 			| BCONST
 				{
-					$$ = new QtString($1);
+					$$ = new QtConst($1, "bool");
                                 }
 			| XCONST
 				{
-					$$ = new QtString($1);
+					$$ = new QtConst($1, "hex");
                                 }
 			| func_name Sconst
 				{
-                                        $$ = new QtString(cat2($1, $2));
+                                        $$ = new QtConst(cat2($1, $2), "func");
                                 }
-			| func_name LRPAR expr_list RRPAR Sconst
-				{
-                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
-                                }
-			| ConstTypename Sconst
-				{
-                                        $$ = new QtString(cat2($1, $2));
-                                }
-			| ConstInterval Sconst opt_interval
-				{
-                                        $$ = new QtString(cat3($1, $2, $3));
-                                }
-			| ConstInterval LRPAR Iconst RRPAR Sconst opt_interval
-				{
-                                        $$ = new QtString(cat6($1, $2, $3, $4, $5, $6));
-                                }
+//			| func_name LRPAR expr_list RRPAR Sconst
+//				{
+//                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
+//                                }
+//			| ConstTypename Sconst
+//				{
+//                                        $$ = new QtConst(cat2($1, $2), "cast string");
+//                                }
+//			| ConstInterval Sconst opt_interval
+//				{
+//                                        $$ = new QtString(cat3($1, $2, $3));
+//                                }
+//			| ConstInterval LRPAR Iconst RRPAR Sconst opt_interval
+//				{
+//                                        $$ = new QtString(cat6($1, $2, $3, $4, $5, $6));
+//                                }
 			| TRUE_P
 				{
-					$$ = new QtString($1);
+					$$ = new QtConst($1, "bool");
                                 }
 			| FALSE_P
 				{
-					$$ = new QtString($1);
+					$$ = new QtConst($1, "bool");
                                 }
 			| NULL_P
 				{
-					$$ = new QtString($1);
+					$$ = new QtConst($1, "null");
                                 }
 		;
 
