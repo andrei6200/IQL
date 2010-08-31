@@ -76,7 +76,7 @@ int main(int argc, char** argv)
     TRACE << "Start of main()" << endl;
 
     /* Uncomment this line if you want to see debug messages from the Bison parser.*/
-    yydebug = 1;
+//    yydebug = 1;
 
     /* Install signal handlers */
     (void) signal(SIGINT, signalHandler);

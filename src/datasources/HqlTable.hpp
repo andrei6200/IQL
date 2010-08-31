@@ -21,7 +21,7 @@
 
 
 // Internal HQL id
-#define HQL_COL "internal_id"
+#define HQL_COL "internal_id_hql"
 
 
 class HqlTable
