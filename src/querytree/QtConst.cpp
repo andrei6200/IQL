@@ -31,7 +31,7 @@ HqlTable* QtConst::execute()
 
     prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
 
-    string q = "SELECT " + toString() + ", " + HQL_COL + " INTO "
+    string q = "SELECT " + toString() + this->id + ", " + HQL_COL + " INTO "
             + this->id + " FROM " + prod->getName();
     
     result = pg.query(q);

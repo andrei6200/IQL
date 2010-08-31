@@ -375,7 +375,8 @@ char* hqlQueries;
 
 
 /* Rasql statements */
-%type <mynode> generalExp spatialOpList spatialOpList2
+%type <nodelist> spatialOpList2
+%type <mynode> generalExp spatialOpList 
             spatialOp condenseOpLit inductionExp castType
             variable reduceIdent intLitExp generalLit
             mddLit scalarLit atomicLit scalarLitList ivList iv
@@ -2847,10 +2848,8 @@ generalExp: mddExp                          { $$ = $1; }
 	| variable                          { $$ = $1; }
 	| mintervalExp                      { $$ = $1; }
 	| intervalExp                       { $$ = $1; }
-	| generalLit
-	{
-            $$ = $1;
-	};
+	| generalLit                        { $$ = $1; }
+        ;
 
 integerExp: generalExp DOT LO
 	{
@@ -2881,30 +2880,31 @@ spatialOpList:  // empty
 
 spatialOpList2: spatialOpList2 COMMA spatialOp
 	{
-            $$ = $3;
+            $$->add($3);
 	}
 	| spatialOp
 	{
-            $$ = $1;
+            $$ = new QtList();
+            $$->add($1);
 	};
 
 spatialOp: generalExp        { $$ = $1; };
 
 intervalExp: generalExp COLON generalExp
 	{
-            $$ = $1;
+            $$ = new QtRasqlInterval($1, $3);
 	}
 	| MULT COLON generalExp
 	{
-            $$ = $3;
+            $$ = new QtRasqlInterval("*", $3);
 	}
 	| generalExp COLON MULT
 	{
-            $$ = $1;
+            $$ = new QtRasqlInterval($1, "*");
 	}
 	| MULT COLON MULT
 	{
-            $$ = new QtString(cat3($1, $2, $3));
+            $$ = new QtRasqlInterval("*", "*");
 	};
 
 condenseExp: CONDENSE condenseOpLit OVER condenseVariable IN_P generalExp WHERE generalExp USING generalExp
@@ -3427,19 +3427,19 @@ scalarLit: complexLit
 
 atomicLit: BooleanLit
 	{
-            $$ = new QtString($1);
+            $$ = new QtConst($1, "bool");
 	}
 	| IntegerLit
 	{
-            $$ = new QtString($1);
+            $$ = new QtConst($1, "integer");
 	}
 	| FloatLit
 	{
-            $$ = new QtString($1);
+            $$ = new QtConst($1, "float");
 	}
         | COMPLEX LRPAR FloatLit COMMA FloatLit RRPAR
         {
-            $$ = new QtString($1);
+            $$ = new QtConst(cat3($3, " + i*", $5), "complex");
 	};
 
 complexLit: LCPAR scalarLitList RCPAR
@@ -3463,7 +3463,8 @@ scalarLitList: scalarLitList COMMA scalarLit
 
 trimExp: generalExp mintervalExp
 	{
-            $$ = new QtString(cat2($1->toCString(), $2->toCString()));
+//            $$ = new QtString(cat2($1->toCString(), $2->toCString()));
+            $$ = new QtTrimOperation($1, $2);
 	};
 
 marray_head:

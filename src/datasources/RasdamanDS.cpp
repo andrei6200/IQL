@@ -355,7 +355,7 @@ void RasdamanDS::updateQuery(std::string queryString)
 {
     connect();
 
-    DEBUG << "RaSQL query (update): " << queryString;
+    DEBUG << "RaSQL update query: " << queryString;
     r_OQL_Query query(queryString.c_str());
 
     /* Execute the actual query. */

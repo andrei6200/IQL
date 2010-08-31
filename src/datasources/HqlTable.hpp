@@ -21,7 +21,7 @@
 
 
 // Internal HQL id
-#define HQL_COL "hql"
+#define HQL_COL "internal_id"
 
 
 class HqlTable
@@ -79,6 +79,9 @@ public:
     /* Get the name of this table, as it is stored in the DataSources. */
     std::string getName();
 
+    /* Return the data stored inside this table*/
+    std::vector<std::vector<std::string > > getData();
+
 private:
 
     /* The column names.  */
@@ -105,16 +108,16 @@ private:
     string tableName;
 
 
-    /*** Functions for tuple-id generation ***/
-
-    /* Reset the ID counter. */
-    void resetId();
-
-    /* Generates a new ID, unique for this table. */
-    string generateId();
-
-    /* Last used id */
-    long lastId;
+//    /*** Functions for tuple-id generation ***/
+//
+//    /* Reset the ID counter. */
+//    void resetId();
+//
+//    /* Generates a new ID, unique for this table. */
+//    string generateId();
+//
+//    /* Last used id */
+//    long lastId;
 };
 
 

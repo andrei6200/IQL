@@ -26,7 +26,6 @@ QtPostGisFunction::~QtPostGisFunction()
 HqlTable* QtPostGisFunction::execute()
 {
     PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
     HqlTable *result = NULL, *tmp = NULL;
 
     tmp = child->execute();

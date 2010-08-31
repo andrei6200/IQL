@@ -71,7 +71,7 @@ string QtList::toString()
     return out;
 }
 
-HqlTable* QtList::execute()
+void QtList::executeChildren()
 {
     results.clear();
     HqlTable *table = NULL;
@@ -86,6 +86,7 @@ HqlTable* QtList::execute()
             string name = table->getName();
             delete table;
             string q = "SELECT * FROM " + name;
+            TRACE << q;
             table = HqlMain::getInstance().getSqlDataSource().query(q);
             table->setName(name);
         }
@@ -93,9 +94,17 @@ HqlTable* QtList::execute()
 //        TRACE << "Table " << i << " of the list: " << endl << table;
         results.push_back(table);
     }
-    // Return NULL, because no action is specified. These intermediate results
-    // can be processed with the multiplyResults() or addResults() functions.
-    return NULL;
+}
+
+HqlTable* QtList::execute()
+{
+    executeChildren();
+
+    /* Default action: add columns of the results. One can also use the multiplyResults()
+     * function for different processing.
+     */
+    HqlTable *result = addResults();
+    return result;
 }
 
 HqlTable* QtList::multiplyResults()
@@ -104,7 +113,7 @@ HqlTable* QtList::multiplyResults()
 
     if (results.size() == 0)
     {
-        execute();
+        executeChildren();
         if (results.size() == 0)
             return NULL;
     }
@@ -143,7 +152,7 @@ HqlTable* QtList::addResults()
 
     if (results.size() == 0)
     {
-        execute();
+        executeChildren();
         if (results.size() == 0)
             return NULL;
     }
