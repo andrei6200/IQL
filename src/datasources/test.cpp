@@ -24,9 +24,9 @@ void testAddColumns()
     if (rgb == NULL || mr2 == NULL)
         throw string("Error, test input is NULL.");
     
-    rgb->addColumns(mr2);
-    if (rgb)
-        cout << rgb << endl;
+//    rgb->addColumns(mr2);
+//    if (rgb)
+//        cout << rgb << endl;
 }
 
 /* Compute the cartesian product of two tables. */
@@ -35,14 +35,14 @@ void testCartesianProd()
     if (mr == NULL || rgb == NULL)
         throw string("Error, test input is NULL.");
 
-    HqlTable* prod = mr->crossProduct(rgb);
-    if (prod)
-    {
-        cout << prod << endl;
-        delete prod;
-    }
-    else
-        throw string("Error, query result is NULL.");
+//    HqlTable* prod = mr->crossProduct(rgb);
+//    if (prod)
+//    {
+//        cout << prod << endl;
+//        delete prod;
+//    }
+//    else
+//        throw string("Error, query result is NULL.");
 }
 
 /* Test the insertion of a table into Postgresql. */

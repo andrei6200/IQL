@@ -36,7 +36,7 @@ using namespace pqxx;
 
 
 HqlTable::HqlTable(storageType type)
-    : rows(0), columns(0), hiddenCount(0), lastId(0), storage(type),
+    : rows(0), columns(0), hiddenCount(0), storage(type),
         tableName(""), dataAlsoInMemory(false)
 {
     TRACE << "Created HqlTable '" << tableName << "' with " << rows << " rows and "
@@ -53,7 +53,7 @@ HqlTable::HqlTable(storageType type)
 
 
 HqlTable::HqlTable(string name)
-    : rows(0), columns(0), hiddenCount(0), lastId(0), storage(POSTGRES),
+    : rows(0), columns(0), hiddenCount(0), storage(POSTGRES),
         tableName(name), dataAlsoInMemory(false)
 {
     TRACE << "Created HqlTable '" << tableName << "' with " << rows << " rows and "
@@ -344,104 +344,104 @@ void HqlTable::print(ostream &out)
 }
 
 
-HqlTable* HqlTable::crossProduct(HqlTable* other)
-{
-//    TRACE << "Cross product between two HqlTables." << endl
-//            << this << endl << endl << other << endl;
-
-    HqlTable *output = new HqlTable();
-
-    output->hidden = this->hidden;
-    vector<bool> h2 = other->hidden;
-    output->hidden.insert(output->hidden.end(), h2.begin(), h2.end());
-    output->hiddenCount = this->hiddenCount + other->hiddenCount;
-    output->columns = this->columns + other->columns;
-    output->rows = this->rows * other->rows;
-
-    int r1, r2;
-    /* Copy column names */
-    output->names = this->names;
-    vector<string> names2 = other->names;
-    output->names.insert(output->names.end(), names2.begin(), names2.end());
-
-    /* Compute the actual cross product */
-    resetId();
-    vector<string> row, row2;
-    for (r1 = 0; r1 < this->rows; r1++)
-        for (r2 = 0; r2 < other->rows; r2++)
-        {
-            row = this->data[r1];
-            row2 = other->data[r2];
-            /* Update the IDs */
-            row.insert(row.end(), row2.begin(), row2.end());
-            output->data.push_back(row);
-//            TRACE << "Just inserted row: ";
-//            vector<string>::iterator i;
-//            for (i = row.begin(); i != row.end(); i++)
-//                TRACE << "- " << *i;
-        }
-
-    output->dataAlsoInMemory = true;
-
-    TRACE << "Cross product has been evaluated.";
-
-    return output;
-}
-
-
-HqlTable* HqlTable::addColumns(HqlTable* other)
-{
-//    TRACE << "Column addition between two HqlTables: " << endl <<
-//            this << endl << endl << other << endl;
-
-    if (this->rows != other->rows)
-    {
-        ERROR << "The two tables have different number of rows ! Cannot combine the columns !";
-        throw string("Two intermediate tables have different number of rows ! Cannot combine the columns !");
-    }
-
-    vector<bool> h2 = other->hidden;
-    this->hidden.insert(this->hidden.end(), h2.begin(), h2.end());
-    this->hiddenCount += other->hiddenCount;
-    this->columns += other->columns;
-    TRACE << "Result table has " << columns - hiddenCount << " columns ( + "
-            << hiddenCount << " hidden ) and " << hidden.size() << " elements in the 'hidden' vector";
-    
-    /* Copy column names */
-    vector<string> names2 = other->names;
-    this->names.insert(this->names.end(), names2.begin(), names2.end());
-
-    /* Copy the data */
-    for (int row = 0; row < this->rows; row++)
-    {
-        vector<string> otherrow = other->data[row];
-        this->data[row].insert(this->data[row].end(), otherrow.begin(), otherrow.end());
-//        TRACE << "Just inserted row: ";
-//        vector<string>::iterator i;
-//        for (i = otherrow.begin(); i != otherrow.end(); i++)
-//            TRACE << "- " << *i;
-//        TRACE << "Combined row: ";
-//        for (i = data[row].begin(); i != data[row].end(); i++)
-//            TRACE << "- " << *i;
-    }
-
-    TRACE << "Column addition has been evaluated.";
-
-    return this;
-}
-
-
-string HqlTable::generateId()
-{
-    stringstream stream;
-    stream << ++lastId;
-    return stream.str();
-}
-
-void HqlTable::resetId()
-{
-    lastId = 0;
-}
+//HqlTable* HqlTable::crossProduct(HqlTable* other)
+//{
+////    TRACE << "Cross product between two HqlTables." << endl
+////            << this << endl << endl << other << endl;
+//
+//    HqlTable *output = new HqlTable();
+//
+//    output->hidden = this->hidden;
+//    vector<bool> h2 = other->hidden;
+//    output->hidden.insert(output->hidden.end(), h2.begin(), h2.end());
+//    output->hiddenCount = this->hiddenCount + other->hiddenCount;
+//    output->columns = this->columns + other->columns;
+//    output->rows = this->rows * other->rows;
+//
+//    int r1, r2;
+//    /* Copy column names */
+//    output->names = this->names;
+//    vector<string> names2 = other->names;
+//    output->names.insert(output->names.end(), names2.begin(), names2.end());
+//
+//    /* Compute the actual cross product */
+//    resetId();
+//    vector<string> row, row2;
+//    for (r1 = 0; r1 < this->rows; r1++)
+//        for (r2 = 0; r2 < other->rows; r2++)
+//        {
+//            row = this->data[r1];
+//            row2 = other->data[r2];
+//            /* Update the IDs */
+//            row.insert(row.end(), row2.begin(), row2.end());
+//            output->data.push_back(row);
+////            TRACE << "Just inserted row: ";
+////            vector<string>::iterator i;
+////            for (i = row.begin(); i != row.end(); i++)
+////                TRACE << "- " << *i;
+//        }
+//
+//    output->dataAlsoInMemory = true;
+//
+//    TRACE << "Cross product has been evaluated.";
+//
+//    return output;
+//}
+//
+//
+//HqlTable* HqlTable::addColumns(HqlTable* other)
+//{
+////    TRACE << "Column addition between two HqlTables: " << endl <<
+////            this << endl << endl << other << endl;
+//
+//    if (this->rows != other->rows)
+//    {
+//        ERROR << "The two tables have different number of rows ! Cannot combine the columns !";
+//        throw string("Two intermediate tables have different number of rows ! Cannot combine the columns !");
+//    }
+//
+//    vector<bool> h2 = other->hidden;
+//    this->hidden.insert(this->hidden.end(), h2.begin(), h2.end());
+//    this->hiddenCount += other->hiddenCount;
+//    this->columns += other->columns;
+//    TRACE << "Result table has " << columns - hiddenCount << " columns ( + "
+//            << hiddenCount << " hidden ) and " << hidden.size() << " elements in the 'hidden' vector";
+//
+//    /* Copy column names */
+//    vector<string> names2 = other->names;
+//    this->names.insert(this->names.end(), names2.begin(), names2.end());
+//
+//    /* Copy the data */
+//    for (int row = 0; row < this->rows; row++)
+//    {
+//        vector<string> otherrow = other->data[row];
+//        this->data[row].insert(this->data[row].end(), otherrow.begin(), otherrow.end());
+////        TRACE << "Just inserted row: ";
+////        vector<string>::iterator i;
+////        for (i = otherrow.begin(); i != otherrow.end(); i++)
+////            TRACE << "- " << *i;
+////        TRACE << "Combined row: ";
+////        for (i = data[row].begin(); i != data[row].end(); i++)
+////            TRACE << "- " << *i;
+//    }
+//
+//    TRACE << "Column addition has been evaluated.";
+//
+//    return this;
+//}
+//
+//
+//string HqlTable::generateId()
+//{
+//    stringstream stream;
+//    stream << ++lastId;
+//    return stream.str();
+//}
+//
+//void HqlTable::resetId()
+//{
+//    lastId = 0;
+//}
 
 void HqlTable::updateWidths()
 {
@@ -503,4 +503,12 @@ void HqlTable::setFilenames(vector<string> values, int colIndex)
                 "allowed for HqlTable. ");
     for (int row = 0; row < rows; row++)
         data[row][colIndex] = values[row];
+}
+
+vector<vector<string> > HqlTable::getData()
+{
+    if (dataAlsoInMemory == false)
+        WARN << "Trying to retrieve data for HqlTable, but table was not retrieved in memory.";
+
+    return data;
 }

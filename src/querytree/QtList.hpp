@@ -26,6 +26,7 @@ public:
 
     DbEnum setupDbSource();
 
+    
     /* Return the cartesian product of the HqlTables of its children. No restrictions. */
     HqlTable* multiplyResults();
     /* Return a table with all the columns of the HqlTables of its children. All tables
@@ -36,6 +37,10 @@ public:
     int length();
     QtNode* get(int index);
 private:
+
+    /* Compute the results of the children nodes. */
+    void executeChildren();
+
     std::vector<QtNode*> data;
     std::vector<HqlTable*> results;
 };

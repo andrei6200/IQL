@@ -20,6 +20,8 @@
 #include "QtPostGisFunction.hpp"
 #include "QtBinaryOperation.hpp"
 #include "QtConst.hpp"
+#include "QtRasqlInterval.hpp"
+#include "QtTrimOperation.hpp"
 
 class HqlTable;
 
