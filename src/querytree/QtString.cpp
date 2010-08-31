@@ -5,6 +5,7 @@
  * Created on July 2, 2010, 7:16 PM
  */
 
+#include "QueryTree.hpp"
 #include "querytree/QtString.hpp"
 #include "HqlMain.hpp"
 
@@ -30,7 +31,19 @@ QtString::~QtString()
 
 HqlTable* QtString::execute()
 {
-    return new HqlTable(str);
+    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+    HqlTable *result = NULL, *prod = NULL;
+
+    prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
+
+    string q = "SELECT " + str + ", " + HQL_COL + " INTO "
+            + this->id + " FROM " + prod->getName();
+
+    result = pg.query(q);
+    pg.addTempTable(this->id);
+    result->setName(this->id);
+
+    return result;
 }
 
 string QtString::toString()

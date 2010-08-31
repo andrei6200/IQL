@@ -20,6 +20,7 @@
 #include "QtPostGisFunction.hpp"
 #include "QtBinaryOperation.hpp"
 #include "QtConst.hpp"
+#include "QtSqlFunction.hpp"
 
 class HqlTable;
 

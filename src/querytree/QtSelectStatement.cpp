@@ -109,8 +109,13 @@ HqlTable* QtSelectStatement::execute()
 std::string QtSelectStatement::toString()
 {
     string s = what->toString();
-    string f = from->toString();
-    string out = string("SELECT ") + s + string(" FROM ") + f;
+    
+    string out = string("SELECT ") + s;
+    if (from != NULL)
+    {
+        string f = from->toString();
+        out += string(" FROM ") + f;
+    }
     return out;
 }
 
@@ -120,8 +125,11 @@ void QtSelectStatement::print(ostream &o, std::string indent)
     o << indent << "QtSelectStatement (" << id << ") : " << toString() << endl;
     o << indent << QTINDENT << "what: " << endl;
     what->print(o, indent + QTINDENT + QTINDENT);
-    o << indent << QTINDENT << "from: " << endl;
-    from->print(o, indent + QTINDENT + QTINDENT);
+    if (from != NULL)
+    {
+        o << indent << QTINDENT << "from: " << endl;
+        from->print(o, indent + QTINDENT + QTINDENT);
+    }
 }
 
 QtList* QtSelectStatement::getSourceTables()

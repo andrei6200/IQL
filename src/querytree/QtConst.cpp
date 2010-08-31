@@ -26,7 +26,6 @@ QtConst::~QtConst()
 HqlTable* QtConst::execute()
 {
     PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
     HqlTable *result = NULL, *prod = NULL;
 
     prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
