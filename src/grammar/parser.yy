@@ -95,7 +95,8 @@ char* hqlQueries;
 
 %type <list>	sort_clause opt_sort_clause sortby_list
                 name_list  
-                expr_list attrs
+                 attrs
+%type <nodelist>  expr_list
 %type <nodelist> target_list from_list from_clause
 //%type <mynode>  
 
@@ -1016,7 +1017,7 @@ GenericType:
 				}
 		;
 
-opt_type_modifiers: LRPAR expr_list RRPAR				{ $$ = cat3($1, $2, $3); }
+opt_type_modifiers: LRPAR expr_list RRPAR				{ $$ = cat3($1, $2->toCString(), $3); }
 					| /* EMPTY */					{ $$ = NULL; }
 		;
 
@@ -1108,12 +1109,12 @@ ConstBit:	BitWithLength
 BitWithLength:
 			BIT VARYING LRPAR expr_list RRPAR
 				{
-                                        $$ = cat5($1, $2, $3, $4, $5);
+                                        $$ = cat5($1, $2, $3, $4->toCString(), $5);
 				}
                         |
                         BIT LRPAR expr_list RRPAR
                                 {
-                                        $$ = cat4($1, $2, $3, $4);
+                                        $$ = cat4($1, $2, $3->toCString(), $4);
 				}
 		;
 
@@ -1632,32 +1633,32 @@ func_expr:
                                 }
                         | func_name LRPAR RRPAR over_clause
 				{
-                                        $$ = new QtString(cat4($1, $2, $3, $4));
+                                        $$ = new QtSqlFunction($1, NULL);
 				}
 			| func_name LRPAR expr_list RRPAR over_clause
 				{
-                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
+                                        $$ = new QtSqlFunction($1, $3);
 				}
-			| func_name LRPAR VARIADIC a_expr RRPAR over_clause
-				{
-                                        $$ = new QtString(cat6($1, $2, $3, $4->toCString(), $5, $6));
-				}
-			| func_name LRPAR expr_list COMMA VARIADIC a_expr RRPAR over_clause
-				{
-                                        $$ = new QtString(cat8($1, $2, $3, $4, $5, $6->toCString(), $7, $8));
-				}
-			| func_name LRPAR ALL expr_list RRPAR over_clause
-				{
-                                        $$ = new QtString(cat6($1, $2, $3, $4, $5, $6));
-				}
-			| func_name LRPAR DISTINCT expr_list RRPAR over_clause
-				{
-                                        $$ = new QtString(cat6($1, $2, $3, $4, $5, $6));
-				}
-			| func_name LRPAR MULT RRPAR over_clause
-				{
-                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
-				}
+//			| func_name LRPAR VARIADIC a_expr RRPAR over_clause
+//				{
+//                                        $$ = new QtString(cat6($1, $2, $3, $4->toCString(), $5, $6));
+//				}
+//			| func_name LRPAR expr_list COMMA VARIADIC a_expr RRPAR over_clause
+//				{
+//                                        $$ = new QtString(cat8($1, $2, $3->toCString(), $4, $5, $6->toCString(), $7, $8));
+//				}
+//			| func_name LRPAR ALL expr_list RRPAR over_clause
+//				{
+//                                        $$ = new QtString(cat6($1, $2, $3, $4->toCString(), $5, $6));
+//				}
+//			| func_name LRPAR DISTINCT expr_list RRPAR over_clause
+//				{
+//                                        $$ = new QtString(cat6($1, $2, $3, $4->toCString(), $5, $6));
+//				}
+//			| func_name LRPAR MULT RRPAR over_clause
+//				{
+//                                        $$ = new QtString(cat5($1, $2, $3, $4, $5));
+//				}
 			| CURRENT_DATE
 				{
                                         $$ = new QtString($1);
@@ -1764,15 +1765,15 @@ func_expr:
 				}
 			| COALESCE LRPAR expr_list RRPAR
 				{
-                                        $$ = new QtString(cat4($1, $2, $3, $4));
+                                        $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 				}
 			| GREATEST LRPAR expr_list RRPAR
 				{
-                                        $$ = new QtString(cat4($1, $2, $3, $4));
+                                        $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 				}
 			| LEAST LRPAR expr_list RRPAR
 				{
-                                        $$ = new QtString(cat4($1, $2, $3, $4));
+                                        $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
 				}
 //			| XMLCONCAT LRPAR expr_list RRPAR
 //				{
@@ -1888,9 +1889,9 @@ over_clause:
  * without conflicting with the parenthesized a_expr production.  Without the
  * ROW keyword, there must be more than one a_expr inside the parens.
  */
-row:		ROW LRPAR expr_list RRPAR					{ $$ = new QtString(cat4($1, $2, $3, $4)); }
+row:		ROW LRPAR expr_list RRPAR					{ $$ = new QtString(cat4($1, $2, $3->toCString(), $4)); }
 			| ROW LRPAR RRPAR					{ $$ = NULL; }
-			| LRPAR expr_list COMMA a_expr RRPAR			{ $$ = new QtString(cat5($1, $2, $3, $4->toCString(), $5)); }
+			| LRPAR expr_list COMMA a_expr RRPAR			{ $$ = new QtString(cat5($1, $2->toCString(), $3, $4->toCString(), $5)); }
 		;
 
 sub_type:	ANY										{ $$ = $1; }
@@ -1954,11 +1955,12 @@ subquery_Op:
 
 expr_list:	a_expr
 				{
-					$$ = $1->toCString();
+                                        $$ = new QtList();
+                                        $$->add($1);
 				}
 			| expr_list COMMA a_expr
 				{
-					$$ = cat3($1, $2, $3->toCString());
+                                        $$->add($3);
 				}
 		;
 
@@ -2045,7 +2047,7 @@ substr_list:
 				}
 			| expr_list
 				{
-					$$ = $1;
+					$$ = $1->toCString();
 				}
 			| /*EMPTY*/
 				{ $$ = NULL; }
@@ -2058,9 +2060,9 @@ substr_from:
 substr_for: FOR a_expr								{ $$ = cat2($1, $2->toCString()); }
 		;
 
-trim_list:	a_expr FROM expr_list					{ $$ = cat3($1->toCString(), $2, $3); }
-			| FROM expr_list						{ $$ = cat2($1, $2); }
-			| expr_list								{ $$ = $1; }
+trim_list:	a_expr FROM expr_list					{ $$ = cat3($1->toCString(), $2, $3->toCString()); }
+			| FROM expr_list						{ $$ = cat2($1, $2->toCString()); }
+			| expr_list								{ $$ = $1->toCString(); }
 		;
 
 in_expr:	
@@ -2068,7 +2070,7 @@ in_expr:
 /*                select_with_parens
 			|
 */
-                LRPAR expr_list RRPAR						{ $$ = new QtString(cat3($1, $2, $3)); }
+                LRPAR expr_list RRPAR						{ $$ = new QtString(cat3($1, $2->toCString(), $3)); }
 		;
 
 /*
@@ -2342,7 +2344,7 @@ ColId:		IDENT									{ $$ = $1; }
 
 /* Type/function identifier --- names that can be type or function names.
  */
-type_function_name:	IDENT							{ $$ = $1; }
+type_function_name:	IDENT							{ $$ = strdup($1); }
 			| unreserved_keyword					{ $$ = strdup($1); }
 			| type_func_name_keyword				{ $$ = strdup($1); }
 		;

@@ -9,16 +9,22 @@
 #define	QTSQLFUNCTION_HPP
 
 #include "QtNode.hpp"
+#include "QtList.hpp"
 
 class QtSqlFunction : public QtNode
 {
 public:
-    QtSqlFunction();
-    QtSqlFunction(const QtSqlFunction& orig);
-    virtual ~QtSqlFunction();
-private:
+    QtSqlFunction(char* fname, QtList *args);
+    ~QtSqlFunction();
 
+    HqlTable* execute();
+    std::string toString();
+    void print(ostream &o, std::string indent);
+
+    DbEnum setupDbSource();
+private:
+    string name;
+    QtList* arguments;
 };
 
 #endif	/* QTSQLFUNCTION_HPP */
-
