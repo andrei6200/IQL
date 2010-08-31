@@ -22,6 +22,7 @@
 #include "QtConst.hpp"
 #include "QtRasqlInterval.hpp"
 #include "QtTrimOperation.hpp"
+#include "QtSqlFunction.hpp"
 
 class HqlTable;
 
