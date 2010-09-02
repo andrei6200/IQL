@@ -2951,15 +2951,15 @@ functionExp: OID LRPAR collectionIterator RRPAR
 	}
 	| SHIFT LRPAR generalExp COMMA generalExp RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5->toCString(), $6));
+            $$ = new QtRasqlFunction($1, $3, $5);
 	}
 	| EXTEND LRPAR generalExp COMMA generalExp RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5->toCString(), $6));
+            $$ = new QtRasqlFunction($1, $3, $5);
 	}
 	| SCALE LRPAR generalExp COMMA generalExp RRPAR
 	{
-            $$ = new QtString(cat6($1, $2, $3->toCString(), $4, $5->toCString(), $6));
+            $$ = new QtRasqlFunction($1, $3, $5);
 	}
 	| BIT LRPAR generalExp COMMA generalExp RRPAR
 	{
