@@ -198,7 +198,7 @@ HqlTable* PostgresDS::query(string queryString)
 
     if (R.empty())
         WARN << "No rows in query result. ";
-    /* Only import data in memory if table does not contain an "INTO" */
+    /* Only import data in memory if query string does not contain an "INTO" */
     if (queryString.find("INTO") == string::npos)
         result->importFromSql(R);
     

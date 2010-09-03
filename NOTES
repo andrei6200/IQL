@@ -1,29 +1,28 @@
-- Make lists of restrictions for grammar (take from thesis)
-	- Write tests for all of them
+=============
+    TODO:
+=============
 
-
-TODO:
-
+- allow a variable number of parameters to PostGIS functions
+    - since they are dynamic functions
 
 - unary ops + binary ops in rasql + sql
+
 - always use SELECT INTO
-    - so that integer columns can propagate !!! :-)
     - rasdaman always returns 
         - MDDs -> file
         - scalars -> convert to floats
             - always convert to float, then round to an integer
             - except when operator is avg_cells()
+
 - ignore sdom(), complex numbers
 - can assume that ArrayEncode is the root node of an array expression
     - cool :-)
 
 
 
-- allow a variable number of parameters to PostGIS functions
-    - since they are dynamic functions
 
 
-- allow WHERE clauses
+
 
 
 - bug request for Rasdaman docs
@@ -38,11 +37,9 @@ TODO:
          - this a temporary workaround
 
 
-- add the GROUP BY and HAVING clauses to the gramamr
-- complex combinations of SQL + RaSQL
-
-
-DONE
+============
+    DONE
+============
 - simple RaSQL queries
 - Ambiguous queries
     - can be matched by both RaSQL and SQL
@@ -62,3 +59,4 @@ DONE
 - properly integrate PostGIS grammar
     - read PostGIS functions at init-time
     - search them in the grammar parser
+- allow WHERE clauses

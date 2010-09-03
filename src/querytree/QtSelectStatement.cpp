@@ -71,6 +71,7 @@ HqlTable* QtSelectStatement::getCartesianProduct()
 HqlTable* QtSelectStatement::execute()
 {
     PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+    HqlTable* result = NULL;
     INFO << "ID: " << getId();
 
     /* First compute the cartesian product between the available tables. */
@@ -88,36 +89,41 @@ HqlTable* QtSelectStatement::execute()
                 " JOIN " + tmp->getName() + " USING (" + HQL_COL + ")";
         HqlTable *tmp2 = pg.query(q);
         pg.addTempTable(newName);
-        tmp2->setName(newName);
         delete tmp;
+        delete tmp2;
         delete product;
-        product = tmp2;
+        
+        q = "SELECT * FROM " + newName;
+        product = pg.query(q);
+        product->setName(newName);
     }
 
-    /* Pre-processing */
-    setupDbSource();
+    result = product;
 
-    /* Query evaluation */
-    HqlTable* result = NULL;
-    result = what->addResults();
-    switch (db_source)
+    if (product->rowCount() > 0)
     {
-    case POSTGRES:
-        cout << RESPONSE_PROMPT << "Executing postgres query ..." << endl;
-        break;
-    case RASDAMAN:
-        cout << RESPONSE_PROMPT << "Executing rasdaman query ..." << endl;
-        break;
-    case MIXED:
-        cout << RESPONSE_PROMPT << "Executing mixed query ..." << endl;
-        break;
-    default:
-        cout << RESPONSE_PROMPT << "Cannot execute query, unknown data source. " << endl;
-        result = NULL;
-        break;
-    }
+        /* Pre-processing */
+        setupDbSource();
 
-    
+        /* Query evaluation */
+        result = what->addResults();
+        switch (db_source)
+        {
+        case POSTGRES:
+            cout << RESPONSE_PROMPT << "Executing postgres query ..." << endl;
+            break;
+        case RASDAMAN:
+            cout << RESPONSE_PROMPT << "Executing rasdaman query ..." << endl;
+            break;
+        case MIXED:
+            cout << RESPONSE_PROMPT << "Executing mixed query ..." << endl;
+            break;
+        default:
+            cout << RESPONSE_PROMPT << "Cannot execute query, unknown data source. " << endl;
+            result = NULL;
+            break;
+        }
+    }
 
     if (result)
         INFO << result;

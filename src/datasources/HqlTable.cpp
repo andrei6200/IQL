@@ -172,24 +172,27 @@ void HqlTable::importFromSql(result sqlResult)
     int startCol = 0;
     columns += newcols;
 
+    vector<bool> newhidden = vector<bool>(newcols, false);
+    newhidden[0] = true;
+
+    vector<string> newnames = vector<string > (newcols, "");
+    for (int i = 0; i < newcols; i++)
+    {
+        newnames[i] = sqlResult.column_name(i);
+        // Hide OIDs
+        if (newnames[i].rfind("_oid") == newnames[i].length() - 4)
+        {
+            newhidden[i] = true;
+            hiddenCount ++;
+        }
+    }
+
+    // Append the new data
+    hidden.insert(hidden.end(), newhidden.begin(), newhidden.end());
+    names.insert(names.end(), newnames.begin(), newnames.end());
+
     if (sqlResult.size() > 0)
     {
-
-        vector<bool> newhidden = vector<bool>(newcols, false);
-        newhidden[0] = true;
-
-        vector<string> newnames = vector<string > (newcols, "");
-        for (int i = 0; i < newcols; i++)
-        {
-            newnames[i] = sqlResult.column_name(i);
-            // Hide OIDs
-            if (newnames[i].rfind("_oid") == newnames[i].length() - 4)
-            {
-                newhidden[i] = true;
-                hiddenCount ++;
-            }
-        }
-
         result::const_iterator it;
         vector<string> row;
         for (it = sqlResult.begin(); it != sqlResult.end(); it++)
@@ -205,11 +208,6 @@ void HqlTable::importFromSql(result sqlResult)
             }
             data.push_back(row);
         }
-
-        // Append the new data
-        hidden.insert(hidden.end(), newhidden.begin(), newhidden.end());
-        names.insert(names.end(), newnames.begin(), newnames.end());
-
     }
 
     dataAlsoInMemory = true;
@@ -513,4 +511,11 @@ vector<vector<string> > HqlTable::getData()
         WARN << "Trying to retrieve data for HqlTable, but table was not retrieved in memory.";
 
     return data;
+}
+
+int HqlTable::rowCount()
+{
+    if (dataAlsoInMemory)
+        return rows;
+    return -1;
 }

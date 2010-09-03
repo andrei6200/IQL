@@ -82,6 +82,9 @@ public:
     /* Return the data stored inside this table*/
     std::vector<std::vector<std::string > > getData();
 
+    /* Returns the number of rows of the current table. */
+    int rowCount();
+
 private:
 
     /* The column names.  */
