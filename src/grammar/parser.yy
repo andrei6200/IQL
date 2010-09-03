@@ -1633,6 +1633,10 @@ func_expr:
                                 {
                                     $$ = new QtPostGisFunction($1, $3);
                                 }
+                        | postgis_func_name LRPAR expr_list RRPAR
+                                {
+                                    $$ = new QtPostGisFunction($1, $3);
+                                }
                         | func_name LRPAR RRPAR over_clause
 				{
                                         $$ = new QtSqlFunction($1, NULL);

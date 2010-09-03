@@ -9,12 +9,13 @@
 #define	QTPOSTGISFUNCTION_HPP
 
 #include "QtNode.hpp"
-
+#include "QtList.hpp"
 
 class QtPostGisFunction : public QtNode
 {
 public:
     QtPostGisFunction(char *fname, QtNode *node);
+    QtPostGisFunction(char *fname, QtList *node);
     virtual ~QtPostGisFunction();
 
     HqlTable* execute();
@@ -25,6 +26,7 @@ public:
 private:
     std::string function;
     QtNode *child;
+    QtList *children;
 };
 
 #endif	/* QTPOSTGISFUNCTION_HPP */
