@@ -13,6 +13,7 @@
 QtSqlFunction::QtSqlFunction(char *fname, QtList *args)
     : name(strdup(fname)), arguments(args)
 {
+    TRACE << "Name: " << name;
 }
 
 QtSqlFunction::~QtSqlFunction()
@@ -27,8 +28,11 @@ QtSqlFunction::~QtSqlFunction()
 void QtSqlFunction::print(ostream& o, std::string indent)
 {
     o << indent << "QtSqlFunction (" << id << "): " << name << endl;
-    o << indent << QTINDENT << "arguments: " << endl;
-    arguments->print(o, indent + QTINDENT + QTINDENT);
+    if (arguments)
+    {
+        o << indent << QTINDENT << "arguments: " << endl;
+        arguments->print(o, indent + QTINDENT + QTINDENT);
+    }
 }
 
 DbEnum QtSqlFunction::setupDbSource()
@@ -95,7 +99,11 @@ HqlTable* QtSqlFunction::execute()
 
 string QtSqlFunction::toString()
 {
+    TRACE << "Function: " << name;
     string str(name);
-    if (arguments != NULL)
-        str += string("(), arguments: ") + arguments->toString();
+    if (arguments != NULL && arguments->length() > 0)
+        str += string("(") + arguments->toString() + ")";
+    else
+        str += "()";
+    return str;
 }
