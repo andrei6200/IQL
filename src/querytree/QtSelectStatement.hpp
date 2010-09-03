@@ -13,6 +13,7 @@
 #include "QtDataSource.hpp"
 #include "QtNode.hpp"
 #include "QtList.hpp"
+#include "QtWhere.hpp"
 
 #include <vector>
 
@@ -20,7 +21,7 @@ class QtSelectStatement : public QtNode
 {
 public:
     QtSelectStatement();
-    QtSelectStatement(QtList* refs, QtList* sources);
+    QtSelectStatement(QtList* refs, QtList* sources, QtWhere* cond);
     ~QtSelectStatement();
 
     HqlTable* execute();
@@ -43,6 +44,7 @@ public:
 private:
     QtList* what;
     QtList* from;
+    QtWhere *where;
 
     HqlTable *product;
 };

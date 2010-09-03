@@ -16,12 +16,12 @@
 using namespace std;
 
 QtSelectStatement::QtSelectStatement()
-    : product(NULL), what(NULL), from(NULL)
+    : product(NULL), what(NULL), from(NULL), where(NULL)
 {
 }
 
-QtSelectStatement::QtSelectStatement(QtList* refs, QtList* sources)
-    : what(refs), from(sources), product(NULL)
+QtSelectStatement::QtSelectStatement(QtList* refs, QtList* sources, QtWhere *condition)
+    : what(refs), from(sources), product(NULL), where(condition)
 {
 }
 
@@ -62,6 +62,7 @@ HqlTable* QtSelectStatement::getCartesianProduct()
         string q = "SELECT * FROM " + tname;
         product = HqlMain::getInstance().runSqlQuery(q);
         product->setName(tname);
+
         TRACE << "Cartesian product: " << product;
     }
     return product;
@@ -69,10 +70,29 @@ HqlTable* QtSelectStatement::getCartesianProduct()
 
 HqlTable* QtSelectStatement::execute()
 {
+    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
     INFO << "ID: " << getId();
 
     /* First compute the cartesian product between the available tables. */
     getCartesianProduct();
+
+    /* Evaluate the WHERE clause, if it exists. */
+    if (where)
+    {
+        /* The product table is already in main-memory. */
+        HqlTable *tmp = where->execute();
+        /* And filter the cartesian product according to the condition. */
+        string newName = this->id + "filtered";
+        string q = "SELECT prod.* INTO " + newName +
+                " FROM " + product->getName() + " AS prod " +
+                " JOIN " + tmp->getName() + " USING (" + HQL_COL + ")";
+        HqlTable *tmp2 = pg.query(q);
+        pg.addTempTable(newName);
+        tmp2->setName(newName);
+        delete tmp;
+        delete product;
+        product = tmp2;
+    }
 
     /* Pre-processing */
     setupDbSource();
@@ -129,6 +149,11 @@ void QtSelectStatement::print(ostream &o, std::string indent)
     {
         o << indent << QTINDENT << "from: " << endl;
         from->print(o, indent + QTINDENT + QTINDENT);
+    }
+    if (where != NULL)
+    {
+        o << indent << QTINDENT << "where: " << endl;
+        where->print(o, indent + QTINDENT + QTINDENT);
     }
 }
 

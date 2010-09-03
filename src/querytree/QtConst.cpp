@@ -30,7 +30,10 @@ HqlTable* QtConst::execute()
 
     prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
 
-    string q = "SELECT " + toString() + this->id + ", " + HQL_COL + " INTO "
+    string val = toString();
+    if (type != "")
+        val += " AS " + type + this->id;
+    string q = "SELECT " + val + ", " + HQL_COL + " INTO "
             + this->id + " FROM " + prod->getName();
     
     result = pg.query(q);
@@ -43,8 +46,8 @@ HqlTable* QtConst::execute()
 string QtConst::toString()
 {
     string str(value);
-    if (type != "")
-        str += string(" AS ") + type;
+    if (type == "string")
+        str = string("'") + value + "'::text";
     return str;
 }
 

@@ -264,16 +264,15 @@ void HqlTable::print(ostream &out)
 //    TRACE << " * " << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden )";
 //    TRACE;
 
-
-    out << endl << INDENT_PROMPT << " --- Table '" << tableName << "' ---" << endl;
-
     if (dataAlsoInMemory == false)
     {
-        out << INDENT_PROMPT << "Internal error: Table is not in memory. " << endl;
+        out << INDENT_PROMPT << "Internal error: Table " << tableName << "is not in memory. " << endl;
         return;
     }
 
     updateWidths();
+
+    out << endl << INDENT_PROMPT << " --- Table '" << tableName << "' ---" << endl;
 
     if (columns > 0)
     {
@@ -286,10 +285,8 @@ void HqlTable::print(ostream &out)
 #endif
             {
                 l = names[i].size();
-                if ((widths[i]+l) % 2 == 1 ^ (widths[i]-l) % 2 == 1)
-                    out << " ";
                 out << sep << setw((widths[i]+l)/2) << names[i]
-                        << setw((widths[i]-l)/2) << "";
+                        << setw(widths[i] - (widths[i]+l)/2) << "";
                 sep = TABLE_COL_SEPARATOR;
             }
         out << endl;
@@ -462,6 +459,11 @@ void HqlTable::updateWidths()
     for (int col = 0; col < names.size(); col++)
         if (names[col].length() > widths[col])
             widths[col] = names[col].length();
+
+    TRACE << "Table widths:";
+    for (int col = 0; col < names.size(); col++)
+        TRACE << " Column '" << names[col] << "' : " << widths[col];
+    TRACE;
 }
 
 std::ostream& operator << (std::ostream &o, HqlTable *a)

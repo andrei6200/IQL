@@ -24,6 +24,7 @@
 #include "QtTrimOperation.hpp"
 #include "QtSqlFunction.hpp"
 #include "QtRasqlFunction.hpp"
+#include "QtWhere.hpp"
 
 class HqlTable;
 

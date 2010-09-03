@@ -18,13 +18,16 @@ extern char* hqlQueries;
 extern void yyparse();
 extern char *yytext;
 extern int yydebug;
-
+//static char* literalbuf;
+extern void scanner_init();
+extern void scanner_finish();
 
 using namespace std;
 
 string readQuery()
 {
     cout << QUERY_PROMPT;
+    scanner_init();
     yyparse();
     string result;
     if (yytext == NULL || strlen(yytext) == 0)
@@ -39,6 +42,7 @@ string readQuery()
             // a query was successfully parsed
             result = string(hqlQueries);
     }
+    scanner_finish();
     return result;
 }
 

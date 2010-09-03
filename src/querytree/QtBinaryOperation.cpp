@@ -16,16 +16,47 @@ QtBinaryOperation::QtBinaryOperation(QtNode *node1, char* op1, QtNode *node2)
         throw string("Operand of the BinaryOperation must be non-null.");
     if (op == "+")
         opname = "plus";
+    else
     if (op == "-")
         opname = "minus";
+    else
     if (op == "*")
         opname = "times";
+    else
     if (op == "/")
         opname = "divide";
+    else
     if (op == "%")
         opname = "mod";
+    else
     if (op == "^")
         opname = "power";
+    else
+    if (op == "<")
+        opname = "less";
+    else
+    if (op == "<=")
+        opname = "less_or_equal";
+    else
+    if (op == ">")
+        opname = "greater";
+    else
+    if (op == ">=")
+        opname = "greater_or_equal";
+    else
+    if (op == "=")
+        opname = "equal";
+    else
+    if (op == "!=")
+        opname = "not_equal";
+    else
+    if (op == "and" || op == "or" || op == "xor" || op == "not" || op == "like")
+        opname = op;
+    else
+    if (op == "not like")
+        opname = "not_like";
+    else
+        opname = "op";
 }
 
 QtBinaryOperation::~QtBinaryOperation()

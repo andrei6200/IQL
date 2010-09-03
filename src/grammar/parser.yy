@@ -67,6 +67,7 @@ char* hqlQueries;
         char*                           into;
 
         QtSelectStatement               *select;
+        QtWhere                         *mywhere;
         QtList                          *nodelist;
         QtDataSource                    *source;
         
@@ -119,7 +120,7 @@ char* hqlQueries;
 %type <node>	select_limit_value select_offset_value
 
 %type <node>	TableFuncElement
-%type <node>	where_clause
+%type <mywhere>	where_clause
 %type <mynode>  a_expr b_expr c_expr func_expr AexprConst indirection_el
                 columnref in_expr func_table
 %type <mynode>	row type_list
@@ -590,7 +591,7 @@ simple_select:
 // AA: We do not want to support r SQL windows
 //			group_clause having_clause window_clause
                         {
-                            QtSelectStatement *select = new QtSelectStatement($2, $3);
+                            QtSelectStatement *select = new QtSelectStatement($2, $3, $4);
                             $$ = select;
                         }
                         
@@ -606,7 +607,7 @@ simple_select:
                             QtColumn *ref = new QtColumn((char*)"*");
                             QtList *what = new QtList();
                             what->add(ref);
-                            QtSelectStatement *select = new QtSelectStatement(from, what);
+                            QtSelectStatement *select = new QtSelectStatement(from, what, NULL);
                             select->query = cat2($1, $2->toCString());
 
                             $$ = select;
@@ -914,8 +915,8 @@ func_table: func_expr								{ $$ = $1; }
 
 
 where_clause:
-			WHERE a_expr							{ $$ = cat2($1, $2->toCString()); }
-			| /*EMPTY*/								{ $$ = NULL; }
+			WHERE a_expr				{ $$ = new QtWhere($2); }
+			| /*EMPTY*/				{ $$ = NULL; }
 		;
 
 TableFuncElementList:
@@ -1359,17 +1360,17 @@ a_expr:		c_expr
 			| a_expr POWER a_expr
 				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| a_expr LESS a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
                         | a_expr LESSEQUAL a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| a_expr GREATER a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
                         | a_expr GREATEREQUAL a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| a_expr EQUAL a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
                         | a_expr NOTEQUAL a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 
 			| a_expr qual_Op a_expr				%prec Op
 				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
@@ -1379,18 +1380,18 @@ a_expr:		c_expr
 				{ $$ = new QtString(cat2($1->toCString(), $2)); }
 
 			| a_expr AND a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| a_expr OR a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| NOT a_expr
 				{ $$ = new QtString(cat2($1, $2->toCString())); }
 
 			| a_expr LIKE a_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 //			| a_expr LIKE a_expr ESCAPE a_expr
 //				{ $$ = new QtString(cat5($1->toCString(), $2, $3->toCString(), $4, $5->toCString())); }
 			| a_expr NOT LIKE a_expr
-				{ $$ = new QtString(cat4($1->toCString(), $2, $3, $4->toCString())); }
+				{ $$ = new QtBinaryOperation($1, cat2($2, $3), $4); }
 //			| a_expr NOT LIKE a_expr ESCAPE a_expr
 //				{ $$ = new QtString(cat6($1->toCString(), $2, $3, $4->toCString(), $5, $6->toCString())); }
 //			| a_expr ILIKE a_expr
@@ -2947,6 +2948,7 @@ condenseOpLit: PLUS
 
 functionExp: OID LRPAR collectionIterator RRPAR
 	{
+            // TODO: Implement the OID function
             $$ = new QtString($1);
 	}
 	| SHIFT LRPAR generalExp COMMA generalExp RRPAR

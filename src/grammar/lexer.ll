@@ -46,7 +46,7 @@ static bool		saw_non_ascii = false;
  * to empty, addlit to add text.  Note that the buffer is palloc'd and
  * starts life afresh on every parse cycle.
  */
-static char	   *literalbuf;		/* expandable buffer */
+static char             *literalbuf;		/* expandable buffer */
 static int		literallen;		/* actual current length */
 static int		literalalloc;	/* current allocated buffer size */
 
@@ -1007,23 +1007,13 @@ yyerror(const char *message)
  * Called before any actual parsing is done
  */
 void
-scanner_init(const char *str)
+scanner_init()
 {
-	Size	slen = strlen(str);
-
-	/*
-	 * Might be left over after ereport()
-	 */
-	if (YY_CURRENT_BUFFER)
-		yy_delete_buffer(YY_CURRENT_BUFFER);
-
 	/*
 	 * Make a scan buffer with special termination needed by flex.
 	 */
-	scanbuf = (char*) palloc(slen + 2);
-	memcpy(scanbuf, str, slen);
-	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
-	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
+	scanbuf = (char*) palloc(2);
+	scanbuf[0] = scanbuf[1] = YY_END_OF_BUFFER_CHAR;
 
 	/* initialize literal buffer to a reasonable but expansible size */
 	literalalloc = 1024;
@@ -1040,7 +1030,6 @@ scanner_init(const char *str)
 void
 scanner_finish(void)
 {
-	yy_delete_buffer(scanbufhandle);
 	pfree(scanbuf);
 	scanbuf = NULL;
 }
