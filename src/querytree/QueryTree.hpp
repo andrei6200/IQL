@@ -25,6 +25,7 @@
 #include "QtSqlFunction.hpp"
 #include "QtRasqlFunction.hpp"
 #include "QtWhere.hpp"
+#include "QtJoin.hpp"
 
 class HqlTable;
 

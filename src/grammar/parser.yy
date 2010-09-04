@@ -83,7 +83,7 @@ char* hqlQueries;
 
 %type <ival>	opt_asc_desc opt_nulls_order
 
-%type <str>	 attr_name name
+%type <str>	 attr_name 
 %type <str>  relation_name
 
 %type <list>	func_name qual_Op qual_all_Op subquery_Op
@@ -95,8 +95,10 @@ char* hqlQueries;
 %type <list>	stmtblock stmtmulti
 
 %type <list>	sort_clause opt_sort_clause sortby_list
-                name_list  
-                 attrs
+                attrs
+%type <mynode>  name
+%type <nodelist>  name_list
+
 %type <nodelist>  expr_list
 %type <nodelist> target_list from_list from_clause
 //%type <mynode>  
@@ -109,7 +111,8 @@ char* hqlQueries;
 
 %type <boolean>	opt_all
 
-%type <node>	join_outer join_qual
+%type <str>     join_outer
+%type <mynode>	join_qual
 %type <jtype>	join_type
 
 %type <list>	extract_list overlay_list position_list
@@ -129,8 +132,8 @@ char* hqlQueries;
 %type <ival>	sub_type
 %type <alias>	alias_clause
 %type <sortby>	sortby
-%type <source>	table_ref
-%type <source>	joined_table
+%type <mynode>	table_ref
+%type <mynode>	joined_table
 %type <mynode>	relation_expr
 %type <mynode>	target_el
 
@@ -437,7 +440,6 @@ stmt:	SelectStmt
                 {
                     if ($1 != NULL)
                     {
-                        DEBUG << "Parser matched query: " << $1->toString() << endl;
                         $$ = $1;
                         QueryTree::getInstance().load($1);
                         QueryTree::getInstance().execute();
@@ -758,36 +760,36 @@ table_ref:	relation_expr
 				{
                                         $$ = new QtDataSource($1);
 				}
-			| func_table alias_clause
-				{
-                                        $$ = new QtDataSource($1, $2);
-				}
-			| func_table AS LRPAR TableFuncElementList RRPAR
-				{
-                                        $$ = new QtDataSource($1);
-				}
-			| func_table AS ColId LRPAR TableFuncElementList RRPAR
-				{
-                                        $$ = new QtDataSource($1, $2);
-				}
-			| func_table ColId LRPAR TableFuncElementList RRPAR
-				{
-                                        $$ = new QtDataSource($1, $2);
-				}
+// AA: We do not yet support aliases
+//			| func_table alias_clause
+//				{
+//                                        $$ = new QtDataSource($1, $2);
+//				}
+//			| func_table AS LRPAR TableFuncElementList RRPAR
+//				{
+//                                        $$ = new QtDataSource($1);
+//				}
+//			| func_table AS ColId LRPAR TableFuncElementList RRPAR
+//				{
+//                                        $$ = new QtDataSource($1, $3);
+//				}
+//			| func_table ColId LRPAR TableFuncElementList RRPAR
+//				{
+//                                        $$ = new QtDataSource($1, $2);
+//				}
 // AA: We do not allow subqueries in the FROM clause
 /*			| select_with_parens
 			| select_with_parens alias_clause
  */
 			| joined_table
 				{
-                            /* TODO: Create nested structure for joined table */
 					$$ = $1;
 				}
-			| LRPAR joined_table RRPAR alias_clause
-				{
-                            /* TODO: Create nested structure for joined table */
-                                        $$ = $2;
-				}
+// AA: We do not yet support aliases
+//			| LRPAR joined_table RRPAR alias_clause
+//				{
+//                                        $$ = $2;
+//				}
 		;
 
 
@@ -808,7 +810,6 @@ table_ref:	relation_expr
  * in common. We'll collect columns during the later transformations.
  */
 
-/* TODO: Create nested structure for joined table */
 joined_table:
 			LRPAR joined_table RRPAR
 				{
@@ -816,28 +817,26 @@ joined_table:
 				}
 			| table_ref CROSS JOIN table_ref
 				{
-                            /* TODO: Also consider the second table in the join */
-                                        $$ = $1;
+                                        $$ = new QtJoin($1, $4, strdup($2));
 				}
-			| table_ref join_type JOIN table_ref join_qual
-				{
-                            /* TODO: Also consider the second table in the join */
-                                        $$ = $1;
-				}
-			| table_ref JOIN table_ref join_qual
-				{
-                            /* TODO: Also consider the second table in the join */
-                                        $$ = $1;
-				}
+// AA: FIXME: Also consider the join condition !
+//			| table_ref join_type JOIN table_ref join_qual
+//				{
+//                                        // Consider the join condition
+//                                        $$ = new QtJoin($2, $1, $4);
+//				}
+//			| table_ref JOIN table_ref join_qual
+//				{
+//                                        // Consider the join condition
+//                                        $$ = new QtJoin($1, $3);
+//				}
 			| table_ref NATURAL join_type JOIN table_ref
 				{
-                            /* TODO: Also consider the second table in the join */
-                                        $$ = $1;
+                                        $$ = new QtJoin($1, $5, strdup($3), true);
 				}
 			| table_ref NATURAL JOIN table_ref
 				{
-                            /* TODO: Also consider the second table in the join */
-                                        $$ = $1;
+                                        $$ = new QtJoin($1, $4, "", true);
 				}
 		;
 
@@ -860,15 +859,15 @@ alias_clause:
 				}
 		;
 
-join_type:	FULL join_outer							{ $$ = $1; }
-			| LEFT join_outer						{ $$ = $1; }
-			| RIGHT join_outer						{ $$ = $1; }
-			| INNER_P								{ $$ = $1; }
+join_type:	FULL join_outer							{ $$ = cat2($1, $2); }
+                | LEFT join_outer						{ $$ = cat2($1, $2); }
+                | RIGHT join_outer						{ $$ = cat2($1, $2); }
+                | INNER_P							{ $$ = strdup($1); }
 		;
 
 /* OUTER is just noise... */
-join_outer: OUTER_P									{ $$ = NULL; }
-			| /*EMPTY*/								{ $$ = NULL; }
+join_outer: OUTER_P									{ $$ = strdup($1); }
+			| /*EMPTY*/								{ $$ = ""; }
 		;
 
 /* JOIN qualification clauses
@@ -880,8 +879,14 @@ join_outer: OUTER_P									{ $$ = NULL; }
  * We return USING as a List node, while an ON-expr will not be a List.
  */
 
-join_qual:	USING LRPAR name_list RRPAR					{ $$ = cat4($1, $2, $3, $4); }
-			| ON a_expr								{ $$ = cat2($1, $2->toCString()); }
+join_qual:	USING LRPAR name_list RRPAR
+                    {
+                        $$ = $3;
+                    }
+		| ON a_expr
+                    {
+                        $$ = $2;
+                    }
 		;
 
 
@@ -2244,13 +2249,19 @@ qualified_name:
 		;
 
 name_list:	name
-					{ $$ = $1; }
+                    {
+                        $$ = new QtList();
+                        $$->add($1);
+                    }
                 | name_list COMMA name
-					{ $$ = cat3($1, $2, $3); }
+                    {
+                        $$ = $1;
+                        $$->add($3);
+                    }
 		;
 
 
-name:		ColId									{ $$ = $1; };
+name:		ColId									{ $$ = new QtColumn($1); };
 
 attr_name:	ColLabel								{ $$ = $1; };
 
