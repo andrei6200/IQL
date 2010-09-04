@@ -51,7 +51,7 @@ HqlTable* QtTrimOperation::execute()
     vector<vector<string> > rows = tmp->getData();
 
     /* Retrieve the Rasdaman collection name */
-    vector<string> names = tmp->getColumnNames();
+    vector<string> names = tmp->getQualifiedColumnNames();
     if (names.size() < 2)
         throw string("A Trim operation needs non-empty interval limits. ");
     string collName = names[1];

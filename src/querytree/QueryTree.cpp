@@ -108,13 +108,15 @@ void QueryTree::saveRasdamanObjectsToDisk(HqlTable *table)
     /* Post-processing: parse the result table for references to Rasdaman objects,
      * and create the corresponding files on disk */
     RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
-    vector<string> names = table->getColumnNames();
+    vector<string> names = table->getQualifiedColumnNames();
     map<string, string> oid2fname = map<string, string>();
     int fileIndex = 0;
-    for (int col = 0; col < names.size(); col++)
+    for (int col = 0; col < names.size() - 1; col++)
     {
         string::size_type pos = names[col].rfind("_oid");
-        if (pos != string::npos && pos == names[col].size() - 4)  // end with "_oid"
+        string::size_type pos2 = names[col+1].rfind("_filename");
+        if (pos != string::npos && pos == names[col].size() - 4  &&  // end with "_oid"
+            pos2 != string::npos && pos2 == names[col+1].size() - 9) // next col end with "_filename"
         {
             string collName = names[col].substr(0, pos);
             TRACE << "Fetching MDDs from collection: " << collName;

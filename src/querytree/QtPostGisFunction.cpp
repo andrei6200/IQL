@@ -48,10 +48,10 @@ HqlTable* QtPostGisFunction::execute()
     string q = "SELECT * FROM " + childTableName;
     tmp = pg.query(q);
     if (child)
-        arguments = tmp->getColumnNames()[0];
+        arguments = tmp->getQualifiedColumnNames()[0];
     if (children)
     {
-        vector<string> names = tmp->getColumnNames();
+        vector<string> names = tmp->getQualifiedColumnNames();
         // Names[0] is the internal HQL ID column
         arguments = names[1];
         for (int i = 2; i < names.size(); i++)

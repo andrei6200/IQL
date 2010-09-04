@@ -103,7 +103,7 @@ HqlTable* QtRasqlFunction::execute()
             tmp = pg.query(query);
 
             // Retrieve the Rasdaman collection name
-            names = tmp->getColumnNames();
+            names = tmp->getQualifiedColumnNames();
             collName = names[1];
             if (collName.rfind("_oid") == string::npos)
                 throw string("Could not determine Rasdaman collection name.");

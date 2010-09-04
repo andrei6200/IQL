@@ -58,7 +58,7 @@ HqlTable* QtDataSource::execute()
             TRACE << q;
             tmp = HqlMain::getInstance().runSqlQuery(q);
             TRACE << tmp;
-            cols = tmp->getColumnNames();
+            cols = tmp->getQualifiedColumnNames();
 
             TRACE << q;
             q = "SELECT " + cols[0] + " AS " + tableName + "_" + cols[0];
@@ -75,24 +75,12 @@ HqlTable* QtDataSource::execute()
             break;
             
         case RASDAMAN:
-            /* Create a new rasdaman collection */
-//            q = string("SELECT ") + tableName + " INTO " + this->id + " FROM " + tableName;
-//            TRACE << q;
-//            HqlMain::getInstance().getRasqlDataSource().updateQuery(q);
-//            HqlMain::getInstance().getRasqlDataSource().addTempTable(this->id);
-
-            /* And fetch the OIDs */
+            /* Fetch the OIDs */
             table = HqlMain::getInstance().getRasqlDataSource().getCollection(tableName, false, true);
             table->setName(this->id, false);
-//            table->setName(tableName, true);
-//            table->setName(tableName, true);
-//            table->setName(this->id, true);
 
             /* Store the HqlTable in Postgres for subsequent calculations */
             HqlMain::getInstance().getSqlDataSource().insertData(table, this->id);
-
-            /* And remember the alias */
-//            QueryTree::getInstance().addAlias(tableName, this->id);
 
             break;
             
@@ -104,7 +92,6 @@ HqlTable* QtDataSource::execute()
             break;
     }
 
-    
     TRACE << table;
     
     return table;

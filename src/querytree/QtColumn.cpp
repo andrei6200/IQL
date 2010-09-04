@@ -55,7 +55,7 @@ HqlTable* QtColumn::execute()
         else if (column == "*" && table != "")
         {
             // We have the "table.*" syntax. Only select the columns from the referenced table.
-            vector<string> names = prod->getColumnNames();
+            vector<string> names = prod->getQualifiedColumnNames();
             vector<string> cols;
             for (int col = 0 ; col < names.size(); col++)
                 if (names[col].find(table) == 0)
@@ -84,7 +84,7 @@ HqlTable* QtColumn::execute()
             {
                 /* search for the source table */
                 TRACE << "Searching for column: " << this->column;
-                vector<string> names = prod->getColumnNames();
+                vector<string> names = prod->getQualifiedColumnNames();
                 int colCount = 0;
                 string suffix("_filename");
                 for (int i = 0; i < names.size(); i ++)

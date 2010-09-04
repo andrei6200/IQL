@@ -37,17 +37,14 @@ public:
     /* A table can be stored in memory, in Postgres or in Rasdaman. */
     enum storageType {MEMORY, POSTGRES, RASDAMAN};
 
-    /* Default Constructor: an in-memory table. */
-    HqlTable(storageType type = MEMORY);
-
-    /* Constructor with Postgres table name. The data will not be replicated in memory. */
+    /* Constructor with Postgres table name. The data will not be replicated in memory automatically. */
     HqlTable(std::string name);
 
-    /* Import data from Rasdaman to the current table */
-    void importFromRasql(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk = false);
+    /* Constructor from Rasdaman query result*/
+    HqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk = false);
 
     /* Import data from Postgres to the current table. Data will be stored in memory */
-    void importFromSql(pqxx::result sqlResult);
+    HqlTable(pqxx::result sqlResult);
 
     /* Execute a cross Product between this table and another HqlTable. */
     HqlTable* crossProduct(HqlTable *other);
@@ -58,7 +55,10 @@ public:
     /* Destructor */
     virtual ~HqlTable();
 
-    /* Return the column names as vector */
+    /* Return the qualified column names as vector */
+    std::vector<std::string> getQualifiedColumnNames();
+
+    /* Return the raw column names as a vector */
     std::vector<std::string> getColumnNames();
 
     /* Return a certain column as a vector */
@@ -87,7 +87,10 @@ public:
 
 private:
 
-    /* The column names.  */
+    /* The qualified column names (tableName_columnName).  */
+    std::vector<std::string> qnames;
+
+    /* The un-qualified column names (just the column names) */
     std::vector<std::string> names;
 
     /* The column widths */

@@ -110,7 +110,7 @@ bool RasdamanDS::isConnected()
 vector<string> RasdamanDS::getObjectNames()
 {
     string queryStr = "select mddcollname from RAS_MDDCOLLNAMES;";
-    HqlTable *table = new HqlTable();
+    HqlTable *table = NULL;
     connection *sqlconn = NULL;
     work *sqltr = NULL;
 
@@ -122,7 +122,7 @@ vector<string> RasdamanDS::getObjectNames()
         sqlconn = new connection(opts);
         sqltr = new work(*sqlconn, string("Hql-Rasdaman-Conn"));
         result R(sqltr->exec(queryStr));
-        table->importFromSql(R);
+        table = new HqlTable(R);
         TRACE << table << endl;
         sqltr->abort();
         sqlconn->disconnect();
@@ -200,8 +200,7 @@ HqlTable* RasdamanDS::query(string queryString, bool storeOnDisk)
     }
 
     /* Return the data. */
-    HqlTable *table = new HqlTable();
-    table->importFromRasql(&result_set, storeOnDisk);
+    HqlTable *table = new HqlTable(&result_set, storeOnDisk);
 
     /* Close the transaction (after processing of data) */
     commitTa();
@@ -250,9 +249,9 @@ HqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk, bool updateCo
     string query = "SELECT " + name + " FROM " + name;
     HqlTable* out = this->query(query, storeOnDisk);
     if (updateCols)
-        for (int i = 0; i < out->getColumnNames().size(); i++)
-            if (out->names[i] != HQL_COL)
-                out->names[i] = name + "_" + out->names[i];
+        for (int i = 0; i < out->getQualifiedColumnNames().size(); i++)
+            if (out->qnames[i] != HQL_COL)
+                out->qnames[i] = name + "_" + out->qnames[i];
     out->setName(name);
     return out;
 }

@@ -75,7 +75,7 @@ HqlTable* QtRasqlInterval::execute()
                 query = "SELECT * FROM " + tblname + " LIMIT 1";
                 delete tmp;
                 tmp = pg.query(query);
-                colname = tmp->getColumnNames().at(0);
+                colname = tmp->getQualifiedColumnNames().at(0);
                 delete tmp;
                 query = "SELECT " + colname + ", '" + shigh + "', " + HQL_COL +
                         " INTO " + this->id + " FROM " + tblname;
@@ -94,7 +94,7 @@ HqlTable* QtRasqlInterval::execute()
                 query = "SELECT * FROM " + tblname + " LIMIT 1";
                 delete tmp;
                 tmp = pg.query(query);
-                colname = tmp->getColumnNames().at(0);
+                colname = tmp->getQualifiedColumnNames().at(0);
                 delete tmp;
                 query = "SELECT '" + slow + "', " + colname + ", " + HQL_COL +
                         " INTO " + this->id + " FROM " + tblname;
@@ -113,7 +113,7 @@ HqlTable* QtRasqlInterval::execute()
                 query = "SELECT * FROM " + tblname + " LIMIT 1";
                 delete tmp;
                 tmp = pg.query(query);
-                colname = tmp->getColumnNames().at(0);
+                colname = tmp->getQualifiedColumnNames().at(0);
                 delete tmp;
 
                 tmp = chigh->execute();
@@ -121,7 +121,7 @@ HqlTable* QtRasqlInterval::execute()
                 query = "SELECT * FROM " + tblname2 + " LIMIT 1";
                 delete tmp;
                 tmp = pg.query(query);
-                string colname2 = tmp->getColumnNames().at(0);
+                string colname2 = tmp->getQualifiedColumnNames().at(0);
                 delete tmp;
 
                 query = "SELECT " + tblname + "." + colname + ", " +

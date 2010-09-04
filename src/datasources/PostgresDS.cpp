@@ -194,13 +194,10 @@ HqlTable* PostgresDS::query(string queryString)
     connect();
     result R = regularQuery(queryString);
     commitTa();
-    HqlTable *result = new HqlTable();
+    HqlTable *result = new HqlTable(R);
 
     if (R.empty())
         WARN << "No rows in query result. ";
-    /* Only import data in memory if query string does not contain an "INTO" */
-    if (queryString.find("INTO") == string::npos)
-        result->importFromSql(R);
     
     return result;
 }
@@ -236,7 +233,7 @@ result PostgresDS::regularQuery(string queryString)
 vector<string> PostgresDS::getObjectNames()
 {
     string queryStr = "SELECT tablename FROM pg_tables where tablename "
-            "not like 'pg_%' and tablename not like 'sql_%';";
+            "not like 'pg_%' and tablename not like 'sql__%';";
 
     HqlTable *table = this->query(queryStr);
     TRACE << table << endl;
@@ -273,9 +270,9 @@ void PostgresDS::insertData(HqlTable* table, string tableName)
 
     string query = "\nCREATE TABLE " + tableName + " (\n";
     // The first column always exists : it stores the HQL ID.
-    query += "\t" + table->names[0] + " VARCHAR \n";
-    for (int i = 1; i < table->names.size(); i++)
-        query += string(", \n\t") + table->names[i] + " VARCHAR \n";
+    query += "\t" + table->qnames[0] + " VARCHAR \n";
+    for (int i = 1; i < table->qnames.size(); i++)
+        query += string(", \n\t") + table->qnames[i] + " VARCHAR \n";
     query += ")";
 
     connect();

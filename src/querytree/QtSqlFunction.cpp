@@ -72,7 +72,7 @@ HqlTable* QtSqlFunction::execute()
         q = "SELECT * FROM " + argsTableName;
         delete args;
         args = pg.query(q);
-        vector<string> cols = args->getColumnNames();
+        vector<string> cols = args->getQualifiedColumnNames();
         q = "SELECT " + name + "( ";
         // Cols[0] should be the HQL id (HQL_COL), and it should not be a function argument
         for (int i = 0; i < cols.size(); i++)

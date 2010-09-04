@@ -44,7 +44,7 @@ HqlTable* QtWhere::execute()
     query = "SELECT * FROM " + condTableName;
     tmp = pg.query(query);
     
-    colName = tmp->getColumnNames().at(0);
+    colName = tmp->getQualifiedColumnNames().at(0);
     delete tmp;
     TRACE << "Found column name for condition: " << colName;
 

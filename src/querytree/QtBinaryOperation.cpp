@@ -87,8 +87,8 @@ HqlTable* QtBinaryOperation::execute()
     delete tmp2;
     tmp1 = pg.query("SELECT * FROM " + t1);
     tmp2 = pg.query("SELECT * FROM " + t2);
-    string col1 = tmp1->getColumnNames().at(0);
-    string col2 = tmp2->getColumnNames().at(0);
+    string col1 = tmp1->getQualifiedColumnNames().at(0);
+    string col2 = tmp2->getQualifiedColumnNames().at(0);
     delete tmp1;
     delete tmp2;
     string q = "SELECT t1." + col1 + " " + op + " t2." + col2 +
