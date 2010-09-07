@@ -278,7 +278,12 @@ void HqlTable::print(ostream &out)
     out << endl << INDENT_PROMPT << " --- Table '" << tableName << "' ---" << endl;
 
     map<string, bool> colMap;
-    vector<bool> allowPrint(columns, false);    // Allows printing only for columns with different unqualified names
+    vector<bool> allowPrint;     // Allows printing only for columns with different unqualified names
+#ifdef PRINT_HIDDEN_COLUMNS
+    allowPrint = vector<bool>(columns, true);
+#else
+    allowPrint = vector<bool>(columns, false);
+#endif
     if (columns > 0)
     {
         string sep = INDENT_PROMPT;
@@ -287,7 +292,7 @@ void HqlTable::print(ostream &out)
         for (int i = 0; i < columns; i++)
 #ifndef PRINT_HIDDEN_COLUMNS
             if (hidden[i] == false)
-                if (colMap.count(names[i]) == 0)    // Display only one column with a given *unqualified* name.
+            if (colMap.count(names[i]) == 0)    // Display only one column with a given *unqualified* name.
 #endif
             {
                 l = names[i].size();
@@ -304,15 +309,19 @@ void HqlTable::print(ostream &out)
         sprintf(newsep, "%c%s%c", TABLE_HEADER_SEPARATOR, "+", TABLE_HEADER_SEPARATOR);
         for (int i = 0; i < columns; i++)
 #ifndef PRINT_HIDDEN_COLUMNS
-            if (hidden[i] == false)
-                if (allowPrint[i])
+            if (allowPrint[i])
 #endif
+            
             {
                 out << sep << setw(widths[i]) << setfill(TABLE_HEADER_SEPARATOR) << "";
                 sep = newsep;
             }
         out << setfill(' ');
     }
+
+    TRACE << "Allowance for column printing: ";
+    for (int i = 0; i < columns; i ++)
+        TRACE << " * " << names[i] << " -> " << (allowPrint[i] ? "true" : "false");
 
     if (rows > 0)
     {
@@ -328,8 +337,7 @@ void HqlTable::print(ostream &out)
             colMap.clear();
             for (int i = 0; i < row.size(); i++)
 #ifndef PRINT_HIDDEN_COLUMNS
-                if (hidden[i] == false)
-                    if (allowPrint[i])
+                if (allowPrint[i])
 #endif
                 {
                     l = row[i].size();

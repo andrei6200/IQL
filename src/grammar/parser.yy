@@ -3,8 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 
+
 #include <list>
 #include <string>
+#include <vector>
 
 #include "str.h"
 #include "HqlMain.hpp"
@@ -70,6 +72,8 @@ char* hqlQueries;
         QtWhere                         *mywhere;
         QtList                          *nodelist;
         QtDataSource                    *source;
+        std::vector<std::string *>      *vector1;
+        std::string                     *string;
         
         QtNode                          *mynode;        // dummy placeholder
 }
@@ -96,8 +100,8 @@ char* hqlQueries;
 
 %type <list>	sort_clause opt_sort_clause sortby_list
                 attrs
-%type <mynode>  name
-%type <nodelist>  name_list
+%type <string>  name
+%type <vector1>  name_list
 
 %type <nodelist>  expr_list
 %type <nodelist> target_list from_list from_clause
@@ -112,7 +116,7 @@ char* hqlQueries;
 %type <boolean>	opt_all
 
 %type <str>     join_outer
-%type <mynode>	join_qual
+//%type <mynode>	join_qual
 %type <jtype>	join_type
 
 %type <list>	extract_list overlay_list position_list
@@ -819,17 +823,22 @@ joined_table:
 				{
                                         $$ = new QtJoin($1, $4, strdup($2));
 				}
-// AA: FIXME: Also consider the join condition !
-//			| table_ref join_type JOIN table_ref join_qual
-//				{
-//                                        // Consider the join condition
-//                                        $$ = new QtJoin($2, $1, $4);
-//				}
-//			| table_ref JOIN table_ref join_qual
-//				{
-//                                        // Consider the join condition
-//                                        $$ = new QtJoin($1, $3);
-//				}
+			| table_ref join_type JOIN table_ref USING LRPAR name_list RRPAR 
+				{
+                                        $$ = new QtJoin($1, $4, strdup($2), $7);
+				}
+                        | table_ref join_type JOIN table_ref ON a_expr
+                                {
+                                        $$ = new QtJoin($1, $4, strdup($2), $6);
+				}
+			| table_ref JOIN table_ref USING LRPAR name_list RRPAR
+				{
+                                        $$ = new QtJoin($1, $3, "", $6);
+				}
+                        | table_ref JOIN table_ref ON a_expr
+				{
+                                        $$ = new QtJoin($1, $3, "", $5);
+				}
 			| table_ref NATURAL join_type JOIN table_ref
 				{
                                         $$ = new QtJoin($1, $5, strdup($3), true);
@@ -879,16 +888,15 @@ join_outer: OUTER_P									{ $$ = strdup($1); }
  * We return USING as a List node, while an ON-expr will not be a List.
  */
 
-join_qual:	USING LRPAR name_list RRPAR
-                    {
-                        $$ = $3;
-                    }
-		| ON a_expr
-                    {
-                        $$ = $2;
-                    }
-		;
-
+//join_qual:	USING LRPAR name_list RRPAR
+//                    {
+//                        $$ = $3;
+//                    }
+//		| ON a_expr
+//                    {
+//                        $$ = $2;
+//                    }
+//		;
 
 relation_expr:
 			qualified_name
@@ -1378,7 +1386,7 @@ a_expr:		c_expr
 				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 
 			| a_expr qual_Op a_expr				%prec Op
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| qual_Op a_expr					%prec Op
 				{ $$ = new QtString(cat2($1, $2->toCString())); }
 			| a_expr qual_Op					%prec POSTFIXOP
@@ -1522,8 +1530,8 @@ a_expr:		c_expr
  * cause trouble in the places where b_expr is used.  For simplicity, we
  * just eliminate all the boolean-keyword-operator productions from b_expr.
  */
-b_expr:		c_expr
-				{ $$ = new QtString($1->toString()); }
+b_expr:                 c_expr
+                                { $$ = $1; }
 			| b_expr TYPECAST Typename
 				{ $$ = new QtString(cat3($1->toCString(), $2, $3)); }
 			| PLUS b_expr					%prec UMINUS
@@ -1531,31 +1539,31 @@ b_expr:		c_expr
 			| MINUS b_expr					%prec UMINUS
 				{ $$ = new QtString(cat2($1, $2->toCString())); }
 			| b_expr PLUS b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| b_expr MINUS b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| b_expr MULT b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| b_expr DIV b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| b_expr MOD b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| b_expr POWER b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| b_expr LESS b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
                         | b_expr LESSEQUAL b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| b_expr GREATER b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
                         | b_expr GREATEREQUAL b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| b_expr EQUAL b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
                         | b_expr NOTEQUAL b_expr
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| b_expr qual_Op b_expr				%prec Op
-				{ $$ = new QtString(cat3($1->toCString(), $2, $3->toCString())); }
+				{ $$ = new QtBinaryOperation($1, strdup($2), $3); }
 			| qual_Op b_expr					%prec Op
 				{ $$ = new QtString(cat2($1, $2->toCString())); }
 			| b_expr qual_Op					%prec POSTFIXOP
@@ -1590,16 +1598,16 @@ b_expr:		c_expr
  * inside parentheses, such as function arguments; that cannot introduce
  * ambiguity to the b_expr syntax.
  */
-c_expr:		columnref								{ $$ = $1; }
+c_expr:                 columnref							{ $$ = $1; }
 			| AexprConst							{ $$ = $1; }
-			| PARAM opt_indirection
-				{
-                            $$ = new QtString(cat2($1, $2));
-				}
-			| LRPAR a_expr RRPAR opt_indirection
-				{
-                            $$ = new QtString(cat4($1, $2->toCString(), $3, $4));
-				}
+//			| PARAM opt_indirection
+//				{
+//                            $$ = new QtString(cat2($1, $2));
+//				}
+//			| LRPAR a_expr RRPAR opt_indirection
+//				{
+//                            $$ = new QtString(cat4($1, $2->toCString(), $3, $4));
+//				}
 			| case_expr
 				{ $$ = new QtString($1); }
 			| func_expr
@@ -1612,10 +1620,11 @@ c_expr:		columnref								{ $$ = $1; }
 // AA: Disallow SQL array constructs. They conflict with RaSQL arrays.
 			| ARRAY array_expr
 */
-			| row
-				{
-                                        $$ = new QtString($1->toString());
-				}
+// AA: Disallow the ROW construct
+//			| row
+//				{
+//                                        $$ = new QtString($1->toString());
+//				}
 		;
 
 postgis_func_name:
@@ -1776,15 +1785,15 @@ func_expr:
 				}
 			| COALESCE LRPAR expr_list RRPAR
 				{
-                                        $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+                                        $$ = new QtSqlFunction(strdup($1), $3);
 				}
 			| GREATEST LRPAR expr_list RRPAR
 				{
-                                        $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+                                        $$ = new QtSqlFunction(strdup($1), $3);
 				}
 			| LEAST LRPAR expr_list RRPAR
 				{
-                                        $$ = new QtString(cat4($1, $2, $3->toCString(), $4));
+                                        $$ = new QtSqlFunction(strdup($1), $3);
 				}
 //			| XMLCONCAT LRPAR expr_list RRPAR
 //				{
@@ -2250,18 +2259,18 @@ qualified_name:
 
 name_list:	name
                     {
-                        $$ = new QtList();
-                        $$->add($1);
+                        $$ = new std::vector<std::string *>();
+                        $$->push_back($1);
                     }
                 | name_list COMMA name
                     {
                         $$ = $1;
-                        $$->add($3);
+                        $$->push_back($3);
                     }
 		;
 
 
-name:		ColId									{ $$ = new QtColumn($1); };
+name:		ColId									{ $$ = new std::string($1); };
 
 attr_name:	ColLabel								{ $$ = $1; };
 
@@ -2640,6 +2649,7 @@ unreserved_keyword:
 			| YEAR_P
 			| YES_P
 			| ZONE
+                        | OID
 		;
 
 /* Column identifier --- keywords that can be column, table, etc names.

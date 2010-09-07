@@ -21,7 +21,7 @@
 
 
 // Internal HQL id
-#define HQL_COL "internal_id_hql"
+#define HQL_COL "iqlinternalid"
 
 
 class HqlTable
@@ -112,18 +112,6 @@ private:
     /* Storage information */
     storageType storage;
     string tableName;
-
-
-//    /*** Functions for tuple-id generation ***/
-//
-//    /* Reset the ID counter. */
-//    void resetId();
-//
-//    /* Generates a new ID, unique for this table. */
-//    string generateId();
-//
-//    /* Last used id */
-//    long lastId;
 };
 
 

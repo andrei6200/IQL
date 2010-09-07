@@ -17,16 +17,20 @@
 class QtJoin : public QtNode
 {
 public:
-    QtJoin(QtNode* table1, QtNode* table2);
+    /* Join two tables with the given join type */
     QtJoin(QtNode* table1, QtNode* table2, char* jointype);
+    /* Join two tables with the given join type, optionally using a natural join*/
     QtJoin(QtNode* table1, QtNode* table2, char* jointype, bool naturaljoin);
+    /* Join two tables with the given join type, using the specified columns */
+    QtJoin(QtNode* table1, QtNode* table2, char* jointype, std::vector<std::string *> *columns);
+    /* Join two tables with the given join type, using a user-specified theta-condition. */
+    QtJoin(QtNode* table1, QtNode* table2, char* jointype, QtNode *condition);
+    /* Destructor*/
     virtual ~QtJoin();
 
     HqlTable* execute();
     std::string toString();
     void print(ostream &o, std::string indent);
-
-    void setJoinColumns(std::vector<std::string> cols);
 
     DbEnum setupDbSource();
 private:
@@ -36,6 +40,8 @@ private:
     std::string type;
     QtNode *child1, *child2;
     bool natural;
+    std::vector < std::string * > * columns;
+    QtNode *cond;
 };
 
 #endif	/* QTJOIN_HPP */

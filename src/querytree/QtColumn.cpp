@@ -98,7 +98,7 @@ HqlTable* QtColumn::execute()
                         table = names[i].substr(0, names[i].size() - suffix.size());
                     }
                     // Format for Postgres columns : table_column
-                    if (names[i].rfind(this->column) == names[i].size() - this->column.size())
+                    if (names[i].rfind("_" + this->column) == names[i].size() - this->column.size() - 1)
                     {
                         TRACE << "Found Postgres column '" << this->column << "' under the name: " << names[i];
                         colCount ++;

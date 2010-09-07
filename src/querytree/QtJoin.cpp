@@ -12,18 +12,23 @@
 #include "datasources/PostgresDS.hpp"
 #include "HqlMain.hpp"
 
-QtJoin::QtJoin(QtNode* table1, QtNode* table2)
-    : child1(table1), child2(table2), type(""), natural(false)
-{
-}
-
 QtJoin::QtJoin(QtNode* table1, QtNode* table2, char *jointype)
-    : child1(table1), child2(table2), type(jointype), natural(false)
+    : child1(table1), child2(table2), type(jointype), natural(false), cond(NULL), columns(NULL)
 {
 }
 
 QtJoin::QtJoin(QtNode* table1, QtNode* table2, char* jointype, bool naturaljoin)
-    : child1(table1), child2(table2), type(jointype), natural(naturaljoin)
+    : child1(table1), child2(table2), type(jointype), natural(naturaljoin), cond(NULL), columns(NULL)
+{
+}
+
+QtJoin::QtJoin(QtNode* table1, QtNode* table2, char* jointype, std::vector<std::string *> *columns)
+    : child1(table1), child2(table2), type(jointype), natural(false), cond(NULL), columns(columns)
+{
+}
+
+QtJoin::QtJoin(QtNode* table1, QtNode* table2, char* jointype, QtNode *condition)
+    : child1(table1), child2(table2), type(jointype), natural(false), cond(condition), columns(NULL)
 {
 }
 
@@ -39,6 +44,22 @@ QtJoin::~QtJoin()
         delete child2;
         child2 = NULL;
     }
+    if (cond)
+    {
+        delete cond;
+        cond = NULL;
+    }
+    if (columns)
+    {
+        for (int i = 0; i < columns->size(); i++)
+            if (columns->at(i) != NULL)
+            {
+                delete columns->at(i);
+                columns->at(i) = NULL;
+            }
+        delete columns;
+        columns = NULL;
+    }
 }
 
 HqlTable* QtJoin::execute()
@@ -52,20 +73,21 @@ HqlTable* QtJoin::execute()
     string query = "SELECT * INTO " + this->id + " FROM " +
             tmp1->getName() + " AS t1 ";
     query += type + " JOIN " + tmp2->getName() + " AS t2 ";
+
+    // Perform column matching and use the respective columns
+    map<string, string> cols1, cols2;   // map from unqualified column name to qualified col name
+    cols1 = getColumns(tmp1->getName());
+    cols2 = getColumns(tmp2->getName());
+    map<string, string>::iterator it1;
+    TRACE << "Columns of table '" << tmp1->getName() << "': ";
+    for (it1 = cols1.begin(); it1 != cols1.end(); it1++)
+        TRACE << " * " << it1->second << " ( " << it1->first << " )";
+    TRACE << "Columns of table '" << tmp2->getName() << "': ";
+    for (it1 = cols2.begin(); it1 != cols2.end(); it1++)
+        TRACE << " * " << it1->second << " ( " << it1->first << " )";
+
     if (natural)
     {
-        // Perform column matching and use the respective columns
-        map<string, string> cols1, cols2;   // map from column name to table name
-        cols1 = getColumns(tmp1->getName());
-        cols2 = getColumns(tmp2->getName());
-        map<string, string>::iterator it1;
-        TRACE << "Columns of table '" << tmp1->getName() << "': ";
-        for (it1 = cols1.begin(); it1 != cols1.end(); it1++)
-            TRACE << " * " << it1->first << " ( " << it1->second << " )";
-        TRACE << "Columns of table '" << tmp2->getName() << "': ";
-        for (it1 = cols2.begin(); it1 != cols2.end(); it1++)
-            TRACE << " * " << it1->first << " ( " << it1->second << " )";
-
         // Add the common columns to the query string
         query += " ON ";
         map<string, string>::iterator i;
@@ -76,14 +98,31 @@ HqlTable* QtJoin::execute()
             col = (*i).first;
             if (cols2.count(col) > 0)
             {
-                query +=  "t1." + cols1[col] + "_" + col + " = " +
-                        "t2." + cols2[col] + "_" + col + sep;
-                sep = ", ";
+                query +=  sep + "t1." + cols1[col] + " = t2." + cols2[col];
+                sep = " and ";
                 found = true;
             }
         }
         if (!found)
             throw string("Natural join requested, but no common columns could be found !");
+    }
+    else
+    if (columns != NULL)
+    {
+        query += " ON ";
+        string sep = "", colName = "";
+        for (int i = 0; i < columns->size(); i++)
+        {
+            colName = *(columns->at(i));
+            if (cols1.count(colName) != 1)
+                throw string("Could not find exactly one match for column '" + colName
+                        + "' in left table while performing JOIN.");
+            if (cols2.count(colName) != 1)
+                throw string("Could not find exactly one match for column '" + colName
+                        + "' in right table while performing JOIN.");
+            query += sep + "t1." + cols1[colName] + " = t2." + cols2[colName];
+            sep = " and ";
+        }
     }
 
     delete tmp1;
@@ -148,7 +187,7 @@ map<string, string> QtJoin::getColumns(std::string tableName)
             int pos = qualifiedNames[i].find("_");
             table = qualifiedNames[i].substr(0, pos);
             column = qualifiedNames[i].substr(pos+1);
-            result[column] = table;
+            result[column] = qualifiedNames[i];
         }
 
     return result;
