@@ -167,3 +167,8 @@ QtList* QtSelectStatement::getSourceTables()
 {
     return from;
 }
+
+void QtSelectStatement::switchContextForJoin(HqlTable* newContext)
+{
+    product = newContext;
+}

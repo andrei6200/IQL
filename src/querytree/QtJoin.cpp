@@ -11,6 +11,8 @@
 #include "QtJoin.hpp"
 #include "datasources/PostgresDS.hpp"
 #include "HqlMain.hpp"
+#include "QueryTree.hpp"
+#include "QtInducedOperation.hpp"
 
 QtJoin::QtJoin(QtNode* table1, QtNode* table2, char *jointype)
     : child1(table1), child2(table2), type(jointype), natural(false), cond(NULL), columns(NULL)
@@ -124,6 +126,35 @@ HqlTable* QtJoin::execute()
             sep = " and ";
         }
     }
+    else
+    if (cond != NULL)
+    {
+        /* First create the cartesian join between the two tables, and set it as the
+         context for the execution of the JOIN. */
+        string q = "DROP TABLE IF EXISTS tmp; ";
+        q += "SELECT * INTO tmp FROM " + tmp1->getName() + " CROSS JOIN " + tmp2->getName();
+        HqlTable *tmp3 = pg.query(q);
+        delete tmp3;
+        /* Insert the HQL internal ID, needed for the execution of the condition */
+        pg.insertHqlIdToTable("tmp");
+        q = "SELECT * FROM tmp";
+        tmp3 = pg.query(q);
+        tmp3->setName("tmp");
+        QueryTree::getInstance().getRoot()->switchContextForJoin(tmp3);
+        TRACE << tmp3;
+        /* Now we can execute the theta condition independently. The columns from the
+         condition will refer to the columns of the cartesian product, stored as the execution context. */
+        tmp3 = cond->execute();
+        string condTable = tmp3->getName();
+        delete tmp3;
+        tmp3 = pg.query("TABLE " + condTable + " LIMIT 1");
+        string colCond = tmp3->getColumnNames().at(0);
+        delete tmp3;
+        query = "SELECT * INTO " + this->id + " FROM tmp JOIN " + condTable +
+                " USING (" + HQL_COL + ") WHERE " + colCond;
+        query += "; ALTER TABLE " + this->id + " DROP COLUMN " + HQL_COL;
+        query += "; DROP TABLE tmp";
+    }
 
     delete tmp1;
     delete tmp2;
@@ -170,6 +201,17 @@ void QtJoin::print(ostream& o, std::string indent)
     child1->print(o, indent + QTINDENT + QTINDENT);
     o << indent << QTINDENT << "table 2: " << endl;
     child2->print(o, indent + QTINDENT + QTINDENT);
+    if (columns)
+    {
+        o << indent << QTINDENT << "Join Columns:" << endl;
+        for (int i = 0; i < columns->size(); i++)
+            o << indent << QTINDENT << QTINDENT << " - " << columns->at(i) << endl;
+    }
+    if (cond)
+    {
+        o << indent << QTINDENT << "Join Condition:" << endl;
+        cond->print(o, indent + QTINDENT + QTINDENT);
+    }
 }
 
 map<string, string> QtJoin::getColumns(std::string tableName)

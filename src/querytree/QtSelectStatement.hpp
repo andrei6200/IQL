@@ -14,6 +14,7 @@
 #include "QtNode.hpp"
 #include "QtList.hpp"
 #include "QtWhere.hpp"
+#include "QtJoin.hpp"
 
 #include <vector>
 
@@ -34,19 +35,26 @@ public:
 
     /* Return a QtList (containing all the QtDataSource objects) */
     QtList* getSourceTables();
+    
     /* Return a table that holds the cartesian product, if it has been evaluated. */
     HqlTable* getCartesianProduct();
 
-    /* Returns true if this structure can be evaluated with exactly two queries,
-     one RaSQL and one SQL query. */
-//    bool mixedQueryIsSimple();
-    
 private:
     QtList* what;
     QtList* from;
     QtWhere *where;
 
     HqlTable *product;
+
+    /* In order to evaluate joins with theta-conditions (JOIN .. ON condition),
+     * we need to provide the available tables to the QtJoin node. We do this
+     * by using a mechanism which we call context switching. When needed, we modify
+     * the "cartesian product" of the entire query to contain the source table for
+     * a JOIN. 
+     */
+    void switchContextForJoin(HqlTable* newContext);
+    /* Allow class QtJoin to access the private methods. */
+    friend class QtJoin;
 };
 
 #endif	/* QTSELECT_HPP */

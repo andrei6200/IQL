@@ -36,25 +36,25 @@ QtBinaryOperation::QtBinaryOperation(QtNode *node1, char* op1, QtNode *node2)
         opname = "less";
     else
     if (op == "<=")
-        opname = "less_or_equal";
+        opname = "lessorequal";
     else
     if (op == ">")
         opname = "greater";
     else
     if (op == ">=")
-        opname = "greater_or_equal";
+        opname = "greaterorequal";
     else
     if (op == "=")
         opname = "equal";
     else
     if (op == "!=")
-        opname = "not_equal";
+        opname = "notequal";
     else
     if (op == "and" || op == "or" || op == "xor" || op == "not" || op == "like")
         opname = op;
     else
     if (op == "not like")
-        opname = "not_like";
+        opname = "notlike";
     else
         opname = "op";
 }
