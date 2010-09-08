@@ -9,7 +9,7 @@
 
 #include "QtWhere.hpp"
 #include "datasources/PostgresDS.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 
 QtWhere::QtWhere(QtNode *cond) : condition(cond)
 {
@@ -24,10 +24,10 @@ QtWhere::~QtWhere()
     }
 }
 
-HqlTable* QtWhere::execute()
+IqlTable* QtWhere::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    HqlTable* result = NULL, *tmp = NULL;
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    IqlTable* result = NULL, *tmp = NULL;
     string query, colName, condTableName;
 
     /* The execution of the condition takes into account the raw cartesian

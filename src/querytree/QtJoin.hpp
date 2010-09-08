@@ -26,7 +26,7 @@ public:
     /* Destructor*/
     virtual ~QtJoin();
 
-    HqlTable* execute();
+    IqlTable* execute();
     std::string toString();
     void print(ostream &o, std::string indent);
 

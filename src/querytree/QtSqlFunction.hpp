@@ -18,7 +18,7 @@ public:
     QtSqlFunction(char* fname, QtList *args);
     ~QtSqlFunction();
 
-    HqlTable* execute();
+    IqlTable* execute();
     std::string toString();
     void print(ostream &o, std::string indent);
 

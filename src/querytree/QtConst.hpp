@@ -18,7 +18,7 @@ public:
     QtConst(char* str);
     virtual ~QtConst();
 
-    HqlTable* execute();
+    IqlTable* execute();
     std::string toString();
     void print(ostream &o, std::string indent);
 

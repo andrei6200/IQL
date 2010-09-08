@@ -6,7 +6,7 @@
  */
 
 #include "QtColumn.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "QueryTree.hpp"
 
 QtColumn::QtColumn(char *col)
@@ -28,11 +28,11 @@ QtColumn::~QtColumn()
 {
 }
 
-HqlTable* QtColumn::execute()
+IqlTable* QtColumn::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
-    HqlTable *result = NULL, *tmp = NULL;
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    RasdamanDS &rman = IqlApp::getInstance().getRasqlDataSource();
+    IqlTable *result = NULL, *tmp = NULL;
 
     if (child != NULL)
     {
@@ -43,7 +43,7 @@ HqlTable* QtColumn::execute()
     }
     else
     {
-        HqlTable *prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
+        IqlTable *prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
         /* If we select all columns, then just copy the output of the "FROM" clause */
         if (column == "*" && table == "")
         {
@@ -229,7 +229,7 @@ DbEnum QtColumn::setupDbSource()
 //    }
 
     /* Else try to use the global data source dictionary. */
-    map<string, DbEnum> tables = HqlMain::getInstance().tableMap;
+    map<string, DbEnum> tables = IqlApp::getInstance().tableMap;
     switch (tables.count(search))
     {
     case 0:

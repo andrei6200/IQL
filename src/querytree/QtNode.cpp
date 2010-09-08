@@ -7,7 +7,7 @@
 
 #include <string>
 #include "QtNode.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 
 using namespace std;
 
@@ -28,7 +28,7 @@ DbEnum QtNode::getDbSource()
     return db_source;
 }
 
-HqlTable* QtNode::execute()
+IqlTable* QtNode::execute()
 {
     return NULL;
 }
@@ -46,7 +46,7 @@ string QtNode::getId()
 string QtNode::generateId()
 {
     stringstream s;
-//    s << "id_" << HqlMain::getInstance().getId() << "_" << ++ QtNode::idCounter;
+//    s << "id_" << IqlApp::getInstance().getId() << "_" << ++ QtNode::idCounter;
     s << "id" << ++ QtNode::idCounter;
 //    s << ++ QtNode::idCounter;
     return s.str();

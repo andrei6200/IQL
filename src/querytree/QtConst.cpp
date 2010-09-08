@@ -6,7 +6,7 @@
  */
 
 #include "QtConst.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "QueryTree.hpp"
 
 QtConst::QtConst(char* str, char* type)
@@ -23,10 +23,10 @@ QtConst::~QtConst()
 {
 }
 
-HqlTable* QtConst::execute()
+IqlTable* QtConst::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    HqlTable *result = NULL, *prod = NULL;
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    IqlTable *result = NULL, *prod = NULL;
 
     prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
 

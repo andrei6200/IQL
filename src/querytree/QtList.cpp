@@ -10,20 +10,20 @@
 
 #include "QtList.hpp"
 #include "QueryTree.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 
 using namespace std;
 
 QtList::QtList() : QtNode()
 {
     data = vector<QtNode*>();
-    results = vector<HqlTable*>();
+    results = vector<IqlTable*>();
 }
 
 QtList::QtList(vector<QtNode*> newdata)
 {
     data = newdata;
-    results = vector<HqlTable*>();
+    results = vector<IqlTable*>();
 }
 
 void QtList::add(QtNode *elem)
@@ -74,7 +74,7 @@ string QtList::toString()
 void QtList::executeChildren()
 {
     results.clear();
-    HqlTable *table = NULL;
+    IqlTable *table = NULL;
     for (int i = 0; i < data.size(); i++)
     {
         table = data[i]->execute();
@@ -87,7 +87,7 @@ void QtList::executeChildren()
             delete table;
             string q = "SELECT * FROM " + name;
             TRACE << q;
-            table = HqlMain::getInstance().getSqlDataSource().query(q);
+            table = IqlApp::getInstance().getSqlDataSource().query(q);
             table->setName(name);
         }
         /* Store the table for later processing */
@@ -96,21 +96,21 @@ void QtList::executeChildren()
     }
 }
 
-HqlTable* QtList::execute()
+IqlTable* QtList::execute()
 {
     executeChildren();
 
     /* Default action: add columns of the results. One can also use the multiplyResults()
      * function for different processing.
      */
-    HqlTable *result = addResults();
+    IqlTable *result = addResults();
     return result;
 }
 
-HqlTable* QtList::multiplyResults()
+IqlTable* QtList::multiplyResults()
 {
-    TRACE << "Computing the cross product between " << data.size() << " HqlTables...";
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+    TRACE << "Computing the cross product between " << data.size() << " IqlTables...";
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
 
     if (results.size() == 0)
     {
@@ -137,20 +137,20 @@ HqlTable* QtList::multiplyResults()
         }
 
     string q = "SELECT * INTO " + this->id + " FROM " + tableList;
-    HqlTable *result = pg.query(q);
+    IqlTable *result = pg.query(q);
     pg.addTempTable(this->id);
     pg.insertHqlIdToTable(this->id);
     result->setName(this->id, false);
 
-    TRACE << "The cross product between " << data.size() << " HqlTables is " << result;
+    TRACE << "The cross product between " << data.size() << " IqlTables is " << result;
 
     return result;
 }
 
-HqlTable* QtList::addResults()
+IqlTable* QtList::addResults()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    TRACE << "Computing the column-addition between " << data.size() << " HqlTables...";
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    TRACE << "Computing the column-addition between " << data.size() << " IqlTables...";
 
     if (results.size() == 0)
     {
@@ -165,7 +165,7 @@ HqlTable* QtList::addResults()
         throw string("Intermediate result was NULL. ");
     }
     string tableList = results[0]->getName();
-//    HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(results[0]->getName());
+//    IqlApp::getInstance().getSqlDataSource().insertHqlIdToTable(results[0]->getName());
     for (int i = 1; i < results.size(); i++)
         if (results[i] == NULL)
         {
@@ -175,11 +175,11 @@ HqlTable* QtList::addResults()
         else
         {
             tableList += " JOIN " + results[i]->getName() + " USING (" + HQL_COL + ")";
-//            HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(results[i]->getName());
+//            IqlApp::getInstance().getSqlDataSource().insertHqlIdToTable(results[i]->getName());
         }
 
     string q;
-    HqlTable *result = NULL;
+    IqlTable *result = NULL;
     if (results.size() == 1)
     {
         // Only one table, query does not have join.
@@ -193,7 +193,7 @@ HqlTable* QtList::addResults()
     }
     result->setName(this->id);
     pg.addTempTable(this->id);
-    TRACE << "The column addition between " << data.size() << " HqlTables is " << result;
+    TRACE << "The column addition between " << data.size() << " IqlTables is " << result;
 
     return result;
 }

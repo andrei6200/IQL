@@ -18,7 +18,7 @@ public:
     QtBinaryOperation(QtNode *node1, char* op, QtNode *node2);
     virtual ~QtBinaryOperation();
 
-    HqlTable* execute();
+    IqlTable* execute();
     std::string toString();
     void print(ostream &o, std::string indent);
 

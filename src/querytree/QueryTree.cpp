@@ -1,5 +1,5 @@
 #include "QueryTree.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 
 using namespace std;
 
@@ -41,19 +41,19 @@ void QueryTree::execute()
         /* Analyze data sources */
         root->setupDbSource();
         /* Execute the hybrid query, based on information about data sources. */
-        HqlTable* table = root->execute();
+        IqlTable* table = root->execute();
         /* Read the result table from postgres. */
         string name = table->getName();
         string queryString = "SELECT * FROM " + name;
         delete table;
-        table = HqlMain::getInstance().getSqlDataSource().query(queryString);
+        table = IqlApp::getInstance().getSqlDataSource().query(queryString);
         table->setName(name);
         /* Save required files to disk. */
         saveRasdamanObjectsToDisk(table);
         /* Remove traces of execution */
-//        HqlMain::getInstance().getSqlDataSource().removeTempTables();
-        HqlMain::getInstance().getSqlDataSource().commit();
-        HqlMain::getInstance().getRasqlDataSource().removeTempTables();
+//        IqlApp::getInstance().getSqlDataSource().removeTempTables();
+        IqlApp::getInstance().getSqlDataSource().commit();
+        IqlApp::getInstance().getRasqlDataSource().removeTempTables();
         /* Print output */
         status = "ok";
         if (table)
@@ -84,8 +84,8 @@ void QueryTree::execute()
     }
 
 //    /* In the end, remove temporary tables. */
-//    HqlMain::getInstance().getSqlDataSource().removeTempTables();
-//    HqlMain::getInstance().getRasqlDataSource().removeTempTables();
+//    IqlApp::getInstance().getSqlDataSource().removeTempTables();
+//    IqlApp::getInstance().getRasqlDataSource().removeTempTables();
 
     /* And display the query execution status*/
     cout << RESPONSE_PROMPT << status << endl;
@@ -97,11 +97,11 @@ QtSelectStatement* QueryTree::getRoot()
     return root;
 }
 
-void QueryTree::saveRasdamanObjectsToDisk(HqlTable *table)
+void QueryTree::saveRasdamanObjectsToDisk(IqlTable *table)
 {
     /* Post-processing: parse the result table for references to Rasdaman objects,
      * and create the corresponding files on disk */
-    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
+    RasdamanDS &rman = IqlApp::getInstance().getRasqlDataSource();
     vector<string> names = table->getQualifiedColumnNames();
     map<string, string> oid2fname = map<string, string>();
     int fileIndex = 0;

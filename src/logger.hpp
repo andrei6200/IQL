@@ -13,7 +13,7 @@
 #include <iomanip>
 #include <cstring>
 
-class HqlTable;
+class IqlTable;
 
 #undef DEBUG
 #undef TRACE
@@ -50,7 +50,7 @@ public:
     typedef ostream_type & (*manip_type)(ostream_type&);
 
     friend LOGGER<char, char_traits < char > >& operator <<
-        (LOGGER<char, char_traits < char > > &o, HqlTable *a);
+        (LOGGER<char, char_traits < char > > &o, IqlTable *a);
 
     /** Constructor with external outputstream. */
     LOGGER(ostream_type & os) :
@@ -144,9 +144,9 @@ extern std::ofstream _outputFile;
 extern LOGGER <char, char_traits < char > > LOG;
 extern string formatClassName(string prettyFunction);
 
-/** Custom printing of HqlTable objects in log. */
+/** Custom printing of IqlTable objects in log. */
 LOGGER<char, char_traits < char > >& operator <<
-    (LOGGER<char, char_traits < char > > &o, HqlTable *a);
+    (LOGGER<char, char_traits < char > > &o, IqlTable *a);
 
 // Always display log information about the calling function, by processing the __PRETTY_FUNCTION__ macro
 #define TRACE   LOG.trace() << "[" << formatClassName(__PRETTY_FUNCTION__) << " - " << __LINE__ << "] "

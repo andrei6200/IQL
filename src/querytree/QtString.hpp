@@ -21,7 +21,7 @@ public:
     QtString(std::string s);
     QtString(char* s);
     virtual ~QtString();
-    HqlTable* execute();
+    IqlTable* execute();
     std::string toString();
     char* toCString();
     void print(ostream &o, std::string indent);

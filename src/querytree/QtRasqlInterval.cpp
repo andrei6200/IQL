@@ -6,7 +6,7 @@
  */
 
 #include "querytree/QtRasqlInterval.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "QueryTree.hpp"
 
 #include <map>
@@ -49,10 +49,10 @@ QtRasqlInterval::~QtRasqlInterval()
     }
 }
 
-HqlTable* QtRasqlInterval::execute()
+IqlTable* QtRasqlInterval::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    HqlTable *tmp = NULL, *result = NULL, *prod = NULL;
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    IqlTable *tmp = NULL, *result = NULL, *prod = NULL;
     prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
     string query, colname, tblname;
 

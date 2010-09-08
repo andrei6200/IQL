@@ -6,7 +6,7 @@
  */
 
 #include "QtBinaryOperation.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "QueryTree.hpp"
 
 QtBinaryOperation::QtBinaryOperation(QtNode *node1, char* op1, QtNode *node2)
@@ -73,11 +73,11 @@ QtBinaryOperation::~QtBinaryOperation()
     }
 }
 
-HqlTable* QtBinaryOperation::execute()
+IqlTable* QtBinaryOperation::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
-    HqlTable *result = NULL, *tmp1 = NULL, *tmp2 = NULL;
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    RasdamanDS &rman = IqlApp::getInstance().getRasqlDataSource();
+    IqlTable *result = NULL, *tmp1 = NULL, *tmp2 = NULL;
 
     tmp1 = child1->execute();
     tmp2 = child2->execute();

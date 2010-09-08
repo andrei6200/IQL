@@ -5,7 +5,7 @@
  * Created on June 14, 2010, 1:28 PM
  */
 
-#include "datasources/HqlTable.hpp"
+#include "datasources/IqlTable.hpp"
 
 
 #include <iomanip>
@@ -54,7 +54,7 @@ string formatClassName(string prettyFunction)
 }
 
 LOGGER<char, char_traits < char > >& operator <<
-    (LOGGER<char, char_traits < char > > &o, HqlTable *a)
+    (LOGGER<char, char_traits < char > > &o, IqlTable *a)
 {
     a->print(o.os);
     return o;

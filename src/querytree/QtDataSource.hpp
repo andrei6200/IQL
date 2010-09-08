@@ -25,7 +25,7 @@ public:
 
     ~QtDataSource();
 
-    virtual HqlTable* execute();
+    virtual IqlTable* execute();
     virtual std::string toString();
     virtual DbEnum setupDbSource();
 

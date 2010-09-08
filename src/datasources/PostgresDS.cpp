@@ -7,7 +7,7 @@
 
 #include "PostgresDS.hpp"
 #include <pqxx/pqxx>
-#include "HqlTable.hpp"
+#include "IqlTable.hpp"
 
 using namespace std;
 using namespace pqxx;
@@ -189,12 +189,12 @@ void PostgresDS::connect()
     }
 }
 
-HqlTable* PostgresDS::query(string queryString)
+IqlTable* PostgresDS::query(string queryString)
 {
     connect();
     result R = regularQuery(queryString);
     commitTa();
-    HqlTable *result = new HqlTable(R);
+    IqlTable *result = new IqlTable(R);
 
     if (R.empty())
         WARN << "No rows in query result. ";
@@ -235,7 +235,7 @@ vector<string> PostgresDS::getObjectNames()
     string queryStr = "SELECT tablename FROM pg_tables where tablename "
             "not like 'pg_%' and tablename not like 'sql__%';";
 
-    HqlTable *table = this->query(queryStr);
+    IqlTable *table = this->query(queryStr);
     TRACE << table << endl;
     
     return table->getColumn("tablename");
@@ -247,7 +247,7 @@ void PostgresDS::disconnect()
     closeConn();
 }
 
-void PostgresDS::insertData(HqlTable* table, string tableName)
+void PostgresDS::insertData(IqlTable* table, string tableName)
 {
     TRACE << "Insert into SQL table '" << tableName << "': ";
     TRACE << table << endl;
@@ -333,6 +333,6 @@ void PostgresDS::insertHqlIdToTable(string table)
     q += "ALTER TABLE " + table + " ADD COLUMN " + HQL_COL + " integer; \n";
     q += "UPDATE " + table + " SET " + HQL_COL + " = nextval('hqlid'); \n";
     q += "DROP SEQUENCE hqlid; ";
-    HqlTable *result = this->query(q);
+    IqlTable *result = this->query(q);
     delete result;
 }

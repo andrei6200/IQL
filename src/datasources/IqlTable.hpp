@@ -1,12 +1,12 @@
 /* 
- * File:   HqlTable.hpp
+ * File:   IqlTable.hpp
  * Author: andrei
  *
  * Created on June 18, 2010, 4:02 PM
  */
 
-#ifndef HQLTABLE_HPP
-#define	HQLTABLE_HPP
+#ifndef IqlTable_HPP
+#define	IqlTable_HPP
 
 #include <pqxx/pqxx>
 #ifdef EARLY_TEMPLATE
@@ -34,13 +34,13 @@
  * made when importing data from a RaSQL result, when the result type is scalar.
  * Then we use the float datatype. \todo implement
  */
-class HqlTable
+class IqlTable
 {
 public:
     /** If false, the only useful information may be the table name. */
     bool dataAlsoInMemory;
 
-    /** Allow full access to the private members of the HqlTable, for efficiency.*/
+    /** Allow full access to the private members of the IqlTable, for efficiency.*/
     friend class PostgresDS;
     friend class RasdamanDS;
 
@@ -48,22 +48,22 @@ public:
     enum storageType {MEMORY, POSTGRES, RASDAMAN};
 
     /** Constructor with Postgres table name. The data will not be replicated in memory automatically. */
-    HqlTable(std::string name);
+    IqlTable(std::string name);
 
     /** Constructor from Rasdaman query result*/
-    HqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk = false);
+    IqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk = false);
 
     /** Import data from Postgres to the current table. Data will be stored in memory */
-    HqlTable(pqxx::result sqlResult);
+    IqlTable(pqxx::result sqlResult);
 
-    /** Execute a cross Product between this table and another HqlTable. */
-    HqlTable* crossProduct(HqlTable *other);
+    /** Execute a cross Product between this table and another IqlTable. */
+    IqlTable* crossProduct(IqlTable *other);
 
     /** Add the columns of another table. The number of tuples must be the same. */
-    HqlTable* addColumns(HqlTable *other);
+    IqlTable* addColumns(IqlTable *other);
 
     /** Destructor */
-    virtual ~HqlTable();
+    virtual ~IqlTable();
 
     /** Return the qualified column names as vector */
     std::vector<std::string> getQualifiedColumnNames();
@@ -125,6 +125,6 @@ private:
 };
 
 
-std::ostream& operator << (std::ostream &o, HqlTable *a);
+std::ostream& operator << (std::ostream &o, IqlTable *a);
 
-#endif	/* HQLTABLE_HPP */
+#endif	/* IqlTable_HPP */

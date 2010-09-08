@@ -7,7 +7,7 @@
 
 #include "QtSqlFunction.hpp"
 #include "datasources/PostgresDS.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "QueryTree.hpp"
 
 QtSqlFunction::QtSqlFunction(char *fname, QtList *args)
@@ -57,10 +57,10 @@ DbEnum QtSqlFunction::setupDbSource()
     return db_source;
 }
 
-HqlTable* QtSqlFunction::execute()
+IqlTable* QtSqlFunction::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    HqlTable *result = NULL, *args = NULL;
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    IqlTable *result = NULL, *args = NULL;
     string q, sep = "";
 
     if (arguments != NULL)

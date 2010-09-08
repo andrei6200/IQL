@@ -27,7 +27,7 @@
 #include "QtWhere.hpp"
 #include "QtJoin.hpp"
 
-class HqlTable;
+class IqlTable;
 
 /** Singleton class for accessing the entire query tree that is executed. */
 class QueryTree
@@ -45,8 +45,8 @@ public:
     /** Execute the query and return the result. */
     void execute();
 
-    /** Save the Rasdaman objects referenced in a HqlTable to files on disk. */
-    void saveRasdamanObjectsToDisk(HqlTable *table);
+    /** Save the Rasdaman objects referenced in a IqlTable to files on disk. */
+    void saveRasdamanObjectsToDisk(IqlTable *table);
 
     /** Destructor */
     ~QueryTree();

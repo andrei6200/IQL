@@ -27,7 +27,7 @@ public:
 
     DbEnum getDbSource();
 
-    HqlTable* execute();
+    IqlTable* execute();
 
     virtual void print(ostream &o, std::string indent);
 

@@ -23,7 +23,7 @@ public:
     QtRasqlInterval(char *low, QtNode *high);
     QtRasqlInterval(QtNode *low, QtNode *high);
     virtual ~QtRasqlInterval();
-    HqlTable* execute();
+    IqlTable* execute();
     std::string toString();
     void print(ostream &o, std::string indent);
 

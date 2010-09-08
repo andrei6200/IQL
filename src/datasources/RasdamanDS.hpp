@@ -48,8 +48,8 @@ public:
     void openTa();
 
     
-    HqlTable* query(std::string query);
-    HqlTable* query(std::string query, bool storeOnDisk);
+    IqlTable* query(std::string query);
+    IqlTable* query(std::string query, bool storeOnDisk);
     r_Ref<r_GMarray> queryByOid(std::string);
 
     /** Execute an update/insert query on the current datasource */
@@ -59,9 +59,9 @@ public:
     std::string saveRasdamanMddToFile(r_Ref<r_GMarray> mdd, bool storeOnDisk, int index);
 
     /** Retrieve a collection by its name */
-    HqlTable* getCollection(std::string name, bool storeOnDisk = false, bool updateCols = false);
+    IqlTable* getCollection(std::string name, bool storeOnDisk = false, bool updateCols = false);
 
-    void insertData(HqlTable* table, std::string tableName);
+    void insertData(IqlTable* table, std::string tableName);
 
     void addTempTable(std::string name);
 

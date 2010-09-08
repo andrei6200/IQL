@@ -19,7 +19,7 @@ public:
     QtPostGisFunction(char *fname, QtList *node);
     virtual ~QtPostGisFunction();
 
-    HqlTable* execute();
+    IqlTable* execute();
     std::string toString();
     void print(ostream &o, std::string indent);
 

@@ -44,7 +44,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_iql_OBJECTS = driver.$(OBJEXT) HqlMain.$(OBJEXT) logger.$(OBJEXT)
+am_iql_OBJECTS = driver.$(OBJEXT) IqlApp.$(OBJEXT) logger.$(OBJEXT)
 iql_OBJECTS = $(am_iql_OBJECTS)
 iql_DEPENDENCIES = grammar/parser.o grammar/lexer.o postgres/libpg.a \
 	rasdaman/librman.a querytree/libquerytree.a \
@@ -198,7 +198,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = datasources grammar querytree postgres rasdaman
-iql_SOURCES = driver.cpp HqlMain.cpp logger.cpp
+iql_SOURCES = driver.cpp IqlApp.cpp logger.cpp
 iql_LDFLAGS = -L$(RASDAMAN)/lib
 iql_LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork	\
 	-lcrypto -lpqxx grammar/parser.o grammar/lexer.o postgres/libpg.a	\
@@ -287,7 +287,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HqlMain.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IqlApp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/driver.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logger.Po@am__quote@
 

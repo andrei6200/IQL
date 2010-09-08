@@ -17,7 +17,7 @@ public:
     QtTrimOperation(QtNode *baseExpr, QtNode* limits);
     virtual ~QtTrimOperation();
 
-    HqlTable* execute();
+    IqlTable* execute();
     std::string toString();
     void print(std::ostream &o, std::string indent);
 

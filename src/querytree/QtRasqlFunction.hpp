@@ -40,8 +40,8 @@ public:
     /** Get the source system that can handle this node. */
     DbEnum getDbSource();
 
-    /** Execute the operation of this node and return a HqlTable result. */
-    HqlTable* execute();
+    /** Execute the operation of this node and return a IqlTable result. */
+    IqlTable* execute();
 
     virtual void print(ostream &o, std::string indent = "");
 

@@ -19,7 +19,7 @@ public:
     QtColumn(QtNode* node, char* col);
     virtual ~QtColumn();
 
-    HqlTable* execute();
+    IqlTable* execute();
     std::string toString();
     void print(ostream &o, std::string indent);
 

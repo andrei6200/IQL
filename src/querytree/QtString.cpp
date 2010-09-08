@@ -7,7 +7,7 @@
 
 #include "QueryTree.hpp"
 #include "querytree/QtString.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 
 #include <map>
 #include <string>
@@ -29,10 +29,10 @@ QtString::~QtString()
 {
 }
 
-HqlTable* QtString::execute()
+IqlTable* QtString::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    HqlTable *result = NULL, *prod = NULL;
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    IqlTable *result = NULL, *prod = NULL;
 
     prod = QueryTree::getInstance().getRoot()->getCartesianProduct();
 
@@ -64,7 +64,7 @@ DbEnum QtString::setupDbSource()
     if (str == string("*"))
         return POSTGRES;
     /* Else try to use the global data source dictionary. */
-    map<string, DbEnum> tables = HqlMain::getInstance().tableMap;
+    map<string, DbEnum> tables = IqlApp::getInstance().tableMap;
     switch (tables.count(str))
     {
     case 0:

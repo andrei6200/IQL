@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT(hql, 0.1, a.aiordachioaie@jacobs-university.de)
+AC_INIT(iql, 0.1, a.aiordachioaie@jacobs-university.de)
 
 AM_INIT_AUTOMAKE([foreign])
 

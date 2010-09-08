@@ -49,13 +49,13 @@ ARFLAGS = cru
 libdatasources_a_AR = $(AR) $(ARFLAGS)
 libdatasources_a_LIBADD =
 am_libdatasources_a_OBJECTS = DataSourceInterface.$(OBJEXT) \
-	PostgresDS.$(OBJEXT) RasdamanDS.$(OBJEXT) HqlTable.$(OBJEXT)
+	PostgresDS.$(OBJEXT) RasdamanDS.$(OBJEXT) IqlTable.$(OBJEXT)
 libdatasources_a_OBJECTS = $(am_libdatasources_a_OBJECTS)
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_test_OBJECTS = test.$(OBJEXT) logger.$(OBJEXT) RasdamanDS.$(OBJEXT) \
-	DataSourceInterface.$(OBJEXT) HqlTable.$(OBJEXT) \
-	PostgresDS.$(OBJEXT) HqlMain.$(OBJEXT)
+	DataSourceInterface.$(OBJEXT) IqlTable.$(OBJEXT) \
+	PostgresDS.$(OBJEXT) IqlApp.$(OBJEXT)
 test_OBJECTS = $(am_test_OBJECTS)
 test_LDADD = $(LDADD)
 test_DEPENDENCIES =
@@ -168,9 +168,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libdatasources.a
-libdatasources_a_SOURCES = DataSourceInterface.cpp  PostgresDS.cpp  RasdamanDS.cpp HqlTable.cpp
+libdatasources_a_SOURCES = DataSourceInterface.cpp  PostgresDS.cpp  RasdamanDS.cpp IqlTable.cpp
 test_SOURCES = test.cpp ../logger.cpp RasdamanDS.cpp DataSourceInterface.cpp \
-		HqlTable.cpp PostgresDS.cpp ../HqlMain.cpp
+		IqlTable.cpp PostgresDS.cpp ../IqlApp.cpp
 
 AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include -DLINUX -DEARLY_TEMPLATE -DONCRPC -DDEBUG
 LDADD = -lrasodmg -lclientcomm -lrasodmg -lraslib -lcompression -lnetwork -lcrypto -lpqxx
@@ -264,8 +264,8 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DataSourceInterface.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HqlMain.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HqlTable.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IqlApp.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IqlTable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PostgresDS.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RasdamanDS.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logger.Po@am__quote@
@@ -299,19 +299,19 @@ logger.obj: ../logger.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o logger.obj `if test -f '../logger.cpp'; then $(CYGPATH_W) '../logger.cpp'; else $(CYGPATH_W) '$(srcdir)/../logger.cpp'; fi`
 
-HqlMain.o: ../HqlMain.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT HqlMain.o -MD -MP -MF $(DEPDIR)/HqlMain.Tpo -c -o HqlMain.o `test -f '../HqlMain.cpp' || echo '$(srcdir)/'`../HqlMain.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/HqlMain.Tpo $(DEPDIR)/HqlMain.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../HqlMain.cpp' object='HqlMain.o' libtool=no @AMDEPBACKSLASH@
+IqlApp.o: ../IqlApp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT IqlApp.o -MD -MP -MF $(DEPDIR)/IqlApp.Tpo -c -o IqlApp.o `test -f '../IqlApp.cpp' || echo '$(srcdir)/'`../IqlApp.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/IqlApp.Tpo $(DEPDIR)/IqlApp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../IqlApp.cpp' object='IqlApp.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o HqlMain.o `test -f '../HqlMain.cpp' || echo '$(srcdir)/'`../HqlMain.cpp
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o IqlApp.o `test -f '../IqlApp.cpp' || echo '$(srcdir)/'`../IqlApp.cpp
 
-HqlMain.obj: ../HqlMain.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT HqlMain.obj -MD -MP -MF $(DEPDIR)/HqlMain.Tpo -c -o HqlMain.obj `if test -f '../HqlMain.cpp'; then $(CYGPATH_W) '../HqlMain.cpp'; else $(CYGPATH_W) '$(srcdir)/../HqlMain.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/HqlMain.Tpo $(DEPDIR)/HqlMain.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../HqlMain.cpp' object='HqlMain.obj' libtool=no @AMDEPBACKSLASH@
+IqlApp.obj: ../IqlApp.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT IqlApp.obj -MD -MP -MF $(DEPDIR)/IqlApp.Tpo -c -o IqlApp.obj `if test -f '../IqlApp.cpp'; then $(CYGPATH_W) '../IqlApp.cpp'; else $(CYGPATH_W) '$(srcdir)/../IqlApp.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/IqlApp.Tpo $(DEPDIR)/IqlApp.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='../IqlApp.cpp' object='IqlApp.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o HqlMain.obj `if test -f '../HqlMain.cpp'; then $(CYGPATH_W) '../HqlMain.cpp'; else $(CYGPATH_W) '$(srcdir)/../HqlMain.cpp'; fi`
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o IqlApp.obj `if test -f '../IqlApp.cpp'; then $(CYGPATH_W) '../IqlApp.cpp'; else $(CYGPATH_W) '$(srcdir)/../IqlApp.cpp'; fi`
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \

@@ -5,7 +5,7 @@
 #include <cstring>
 #include <signal.h>
 
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "logger.hpp"
 #include "config.hpp"
 
@@ -49,8 +49,8 @@ string readQuery()
 void exitProgram(int code, string queries)
 {
     TRACE << "Removing temporary tables ...";
-    HqlMain::getInstance().getSqlDataSource().removeTempTables();
-    HqlMain::getInstance().getRasqlDataSource().removeTempTables();
+    IqlApp::getInstance().getSqlDataSource().removeTempTables();
+    IqlApp::getInstance().getRasqlDataSource().removeTempTables();
     TRACE << "Removed temporary tables.";
 
     DEBUG << endl;
@@ -102,11 +102,11 @@ int main(int argc, char** argv)
         DEBUG << "Accepting as many queries as possible.";
 
 
-    /* First create an instance of the HqlMain class.
+    /* First create an instance of the IqlApp class.
      * Initialization is performed here.*/
     try
     {
-        HqlMain::getInstance();
+        IqlApp::getInstance();
     }
     catch (...)
     {

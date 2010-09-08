@@ -26,7 +26,7 @@ public:
     QtSelectStatement(QtList* refs, QtList* sources, QtWhere* cond);
     ~QtSelectStatement();
 
-    HqlTable* execute();
+    IqlTable* execute();
 
     DbEnum setupDbSource();
 
@@ -38,7 +38,7 @@ public:
     QtList* getSourceTables();
     
     /** Return a table that holds the cartesian product, if it has been evaluated. */
-    HqlTable* getCartesianProduct();
+    IqlTable* getCartesianProduct();
 
 private:
     /** WHAT clause */
@@ -48,7 +48,7 @@ private:
     /** WHERE Clause */
     QtWhere *where;
 
-    HqlTable *product;
+    IqlTable *product;
 
     /* In order to evaluate joins with theta-conditions (JOIN .. ON condition),
      * we need to provide the available tables to the QtJoin node. We do this
@@ -56,7 +56,7 @@ private:
      * the "cartesian product" of the entire query to contain the source table for
      * a JOIN. 
      */
-    void switchContextForJoin(HqlTable* newContext);
+    void switchContextForJoin(IqlTable* newContext);
     /* Allow class QtJoin to access the private methods. */
     friend class QtJoin;
 };

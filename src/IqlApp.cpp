@@ -1,5 +1,5 @@
 /* 
- * File:   HqlMain.cpp
+ * File:   IqlApp.cpp
  * Author: andrei
  * 
  * Created on June 12, 2010, 5:51 PM
@@ -14,7 +14,7 @@
 #include <cctype>
 
 /* Header file of this class */
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "logger.hpp"
 #include "querytree/QueryTree.hpp"
 #include "config.hpp"
@@ -25,25 +25,25 @@ using namespace std;
 
 
 
-HqlMain* HqlMain::instance = NULL;
+IqlApp* IqlApp::instance = NULL;
 
 extern void exitProgram(int code, string queries);
 
-/* Return (and initialize if needed) the singleton instance of HqlMain. */
-HqlMain& HqlMain::getInstance()
+/* Return (and initialize if needed) the singleton instance of IqlApp. */
+IqlApp& IqlApp::getInstance()
 {
     if (!instance)
-        instance = new HqlMain();
+        instance = new IqlApp();
     return *instance;
 }
 
 /* Private constructor.
  * Queries the postgres and rasdaman databases for available tables.
  */
-HqlMain::HqlMain()
+IqlApp::IqlApp()
 {
     /* Initialization */
-    INFO << "Initialization of HqlMain ... ";
+    INFO << "Initialization of IqlApp ... ";
     pg = new PostgresDS();
     rman = new RasdamanDS();
     pg->connect();
@@ -88,9 +88,9 @@ HqlMain::HqlMain()
 }
 
 /* Public destructor */
-HqlMain::~HqlMain()
+IqlApp::~IqlApp()
 {
-    TRACE << "Destroying Singleton instance of HqlMain.";
+    TRACE << "Destroying Singleton instance of IqlApp.";
 
     if (pg) {
         pg->disconnect();
@@ -109,20 +109,20 @@ HqlMain::~HqlMain()
         instance = NULL;
     }
 
-    TRACE << "HqlMain fields have been destroyed.";
+    TRACE << "IqlApp fields have been destroyed.";
 }
 
-PostgresDS& HqlMain::getSqlDataSource()
+PostgresDS& IqlApp::getSqlDataSource()
 {
     return *pg;
 }
 
-RasdamanDS& HqlMain::getRasqlDataSource()
+RasdamanDS& IqlApp::getRasqlDataSource()
 {
     return *rman;
 }
 
-void HqlMain::initPostgisFunctionList()
+void IqlApp::initPostgisFunctionList()
 {
     TRACE << "Initializing PostGIS function list ...";
     /* This function will be called in the constructor, after we will have a
@@ -153,7 +153,7 @@ void HqlMain::initPostgisFunctionList()
     TRACE << "Finished initialization of PostGIS function list. " << endl << kwList.str() << endl;
 }
 
-bool HqlMain::isPostGisFunction(char* str)
+bool IqlApp::isPostGisFunction(char* str)
 {
     TRACE << "Keyword query : " << str;
     char buf[50];

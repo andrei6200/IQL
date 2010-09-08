@@ -6,7 +6,7 @@
  */
 
 #include "QtEncodeArray.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "QueryTree.hpp"
 
 using namespace std;
@@ -51,15 +51,15 @@ DbEnum QtEncodeArray::setupDbSource()
     return db_source;
 }
 
-HqlTable* QtEncodeArray::execute()
+IqlTable* QtEncodeArray::execute()
 {
     /* Delegate the format encoding to the Query Tree post-processing.
      We have to do this because of a bug in rasdaman, which crashes the server
      when more than one encoded mdd is inserted into a collection, using a SELECT INTO
      query. */
-//    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
-//    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    HqlTable *tmp = child->execute();
+//    RasdamanDS &rman = IqlApp::getInstance().getRasqlDataSource();
+//    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    IqlTable *tmp = child->execute();
     QueryTree::getInstance().setEncodingFormat(format);
 //    string query = "SELECT " + format + "( " + tmp->getName() + " ) INTO " + this->id +
 //            " FROM " + tmp->getName();

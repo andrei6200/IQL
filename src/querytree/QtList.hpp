@@ -23,17 +23,17 @@ public:
     void add(QtNode *elem);
     ~QtList();
     /** Executes the child nodes and adds the results column-wise. */
-    HqlTable* execute();
+    IqlTable* execute();
     std::string toString();
     void print(ostream &o, std::string indent);
 
     DbEnum setupDbSource();
 
-    /** Return the cartesian product of the HqlTables of its children. No restrictions. */
-    HqlTable* multiplyResults();
-    /** Return a table with all the columns of the HqlTables of its children. All tables
+    /** Return the cartesian product of the IqlTables of its children. No restrictions. */
+    IqlTable* multiplyResults();
+    /** Return a table with all the columns of the IqlTables of its children. All tables
      must have the same number of elements, otherwise an exception is thrown. */
-    HqlTable* addResults();
+    IqlTable* addResults();
 
     /** Get the number of nodes of the list. */
     int length();
@@ -45,7 +45,7 @@ private:
     void executeChildren();
 
     std::vector<QtNode*> data;
-    std::vector<HqlTable*> results;
+    std::vector<IqlTable*> results;
 };
 
 #endif	/* QTLIST_HPP */

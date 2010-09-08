@@ -12,7 +12,7 @@
 
 #include <string>
 #include <ostream>
-#include "datasources/HqlTable.hpp"
+#include "datasources/IqlTable.hpp"
 
 /** Enumeration of available DBMS systems */
 enum DbEnum
@@ -49,8 +49,8 @@ public:
     /** Get the source system that can handle this node. */
     DbEnum getDbSource();
 
-    /** Execute the operation of this node and return a HqlTable result. */
-    virtual HqlTable* execute() = 0;
+    /** Execute the operation of this node and return a IqlTable result. */
+    virtual IqlTable* execute() = 0;
 
     /** Returns the unique ID of this node. */
     std::string getId();

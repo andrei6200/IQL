@@ -110,7 +110,7 @@ bool RasdamanDS::isConnected()
 vector<string> RasdamanDS::getObjectNames()
 {
     string queryStr = "select mddcollname from RAS_MDDCOLLNAMES;";
-    HqlTable *table = NULL;
+    IqlTable *table = NULL;
     connection *sqlconn = NULL;
     work *sqltr = NULL;
 
@@ -122,7 +122,7 @@ vector<string> RasdamanDS::getObjectNames()
         sqlconn = new connection(opts);
         sqltr = new work(*sqlconn, string("Hql-Rasdaman-Conn"));
         result R(sqltr->exec(queryStr));
-        table = new HqlTable(R);
+        table = new IqlTable(R);
         TRACE << table << endl;
         sqltr->abort();
         sqlconn->disconnect();
@@ -166,14 +166,14 @@ void RasdamanDS::commitTa()
     }
 }
 
-HqlTable* RasdamanDS::query(string queryString)
+IqlTable* RasdamanDS::query(string queryString)
 {
     // By default, do not write files to disk
-    HqlTable* result = this->query(queryString, false);
+    IqlTable* result = this->query(queryString, false);
     return result;
 }
 
-HqlTable* RasdamanDS::query(string queryString, bool storeOnDisk)
+IqlTable* RasdamanDS::query(string queryString, bool storeOnDisk)
 {
     connect();
 
@@ -200,7 +200,7 @@ HqlTable* RasdamanDS::query(string queryString, bool storeOnDisk)
     }
 
     /* Return the data. */
-    HqlTable *table = new HqlTable(&result_set, storeOnDisk);
+    IqlTable *table = new IqlTable(&result_set, storeOnDisk);
 
     /* Close the transaction (after processing of data) */
     commitTa();
@@ -244,10 +244,10 @@ r_Ref<r_GMarray> RasdamanDS::queryByOid(std::string queryString)
     return image;
 }
 
-HqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk, bool updateCols)
+IqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk, bool updateCols)
 {
     string query = "SELECT " + name + " FROM " + name;
-    HqlTable* out = this->query(query, storeOnDisk);
+    IqlTable* out = this->query(query, storeOnDisk);
     if (updateCols)
         for (int i = 0; i < out->getQualifiedColumnNames().size(); i++)
             if (out->qnames[i] != HQL_COL)
@@ -256,7 +256,7 @@ HqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk, bool updateCo
     return out;
 }
 
-void RasdamanDS::insertData(HqlTable* table, string tableName)
+void RasdamanDS::insertData(IqlTable* table, string tableName)
 {
     ERROR << "Inserting temporary tables into Rasdaman is not supported !";
     throw string("Inserting temporary tables into Rasdaman is not supported !");

@@ -1,5 +1,5 @@
 /*
- * File:   HqlTable.cpp
+ * File:   IqlTable.cpp
  * Author: andrei
  *
  * Created on June 18, 2010, 4:02 PM
@@ -23,23 +23,23 @@
 
 
 
-#include "HqlTable.hpp"
+#include "IqlTable.hpp"
 #include "config.hpp"
 #include "logger.hpp"
 #include "RasdamanDS.hpp"
 #include "PostgresDS.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 
 
 using namespace std;
 using namespace pqxx;
 
 
-HqlTable::HqlTable(string name)
+IqlTable::IqlTable(string name)
     : rows(0), columns(0), hiddenCount(0), storage(POSTGRES),
         tableName(name), dataAlsoInMemory(false)
 {
-    TRACE << "Created HqlTable '" << tableName << "' with " << rows << " rows and "
+    TRACE << "Created IqlTable '" << tableName << "' with " << rows << " rows and "
             << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden)";
     qnames = vector<string>();
     widths = vector<int>();
@@ -48,7 +48,7 @@ HqlTable::HqlTable(string name)
 }
 
 /* Import data from the result of a RaSQL query. */
-HqlTable::HqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
+IqlTable::IqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
     :rows(0), columns(0), hiddenCount(0), storage(POSTGRES),
         tableName(""), dataAlsoInMemory(true)
 {
@@ -84,7 +84,7 @@ HqlTable::HqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
             case r_Type::MARRAYTYPE:
             {
                 cell <<
-                        HqlMain::getInstance().getRasqlDataSource().
+                        IqlApp::getInstance().getRasqlDataSource().
                         saveRasdamanMddToFile(r_Ref<r_GMarray> (*iter), storeOnDisk, i);
                 break;
             }
@@ -139,13 +139,13 @@ HqlTable::HqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
     dataAlsoInMemory = true;
 
     INFO << "Import successful from Rasdaman result.";
-    TRACE << "Updated HqlTable '" << tableName << "' with " << rows << " rows and "
+    TRACE << "Updated IqlTable '" << tableName << "' with " << rows << " rows and "
             << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden)";
 }
 
 
 /* Import data from the result of an SQL query. */
-HqlTable::HqlTable(pqxx::result sqlResult)
+IqlTable::IqlTable(pqxx::result sqlResult)
     :rows(0), columns(0), hiddenCount(0), storage(POSTGRES),
         tableName(""), dataAlsoInMemory(true)
 {
@@ -203,11 +203,11 @@ HqlTable::HqlTable(pqxx::result sqlResult)
     dataAlsoInMemory = true;
 
     TRACE << "Import from Postgres successful. ";
-    TRACE << "Updated HqlTable '" << tableName << "' with " << rows << " rows and "
+    TRACE << "Updated IqlTable '" << tableName << "' with " << rows << " rows and "
             << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden)";
 }
 
-vector<string> HqlTable::getColumn(int index)
+vector<string> IqlTable::getColumn(int index)
 {
     vector<string> vec;
     for (int i = 0; i < rows; i++)
@@ -215,7 +215,7 @@ vector<string> HqlTable::getColumn(int index)
     return vec;
 }
 
-vector<string> HqlTable::getColumn(string name)
+vector<string> IqlTable::getColumn(string name)
 {
     int index = -1, count = 0;
     /* Search the qualified column names, by default. */
@@ -251,15 +251,15 @@ vector<string> HqlTable::getColumn(string name)
 }
 
 
-HqlTable::~HqlTable()
+IqlTable::~IqlTable()
 {
 	TRACE << "Destroyed table. ";
 }
 
 /* Print the table contents to a specified stream. */
-void HqlTable::print(ostream &out)
+void IqlTable::print(ostream &out)
 {
-    TRACE << "HqlTable instance '" << tableName << "':";
+    TRACE << "IqlTable instance '" << tableName << "':";
     TRACE << " * " << rows << " rows";
     TRACE << " * " << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden )";
     TRACE << "Qualified Column names (raw column names):";
@@ -359,7 +359,7 @@ void HqlTable::print(ostream &out)
 }
 
 
-void HqlTable::updateWidths()
+void IqlTable::updateWidths()
 {
     if (columns == 0)
         return;
@@ -385,13 +385,13 @@ void HqlTable::updateWidths()
     TRACE;
 }
 
-std::ostream& operator << (std::ostream &o, HqlTable *a)
+std::ostream& operator << (std::ostream &o, IqlTable *a)
 {
     a->print(o);
     return o;
 }
 
-void HqlTable::setName(string name, bool updateColumnNames)
+void IqlTable::setName(string name, bool updateColumnNames)
 {
     tableName = name;
     // Prefix the field names with the table name, if possible
@@ -403,17 +403,17 @@ void HqlTable::setName(string name, bool updateColumnNames)
     }
 }
 
-string HqlTable::getName()
+string IqlTable::getName()
 {
     return tableName;
 }
 
-vector<string> HqlTable::getQualifiedColumnNames()
+vector<string> IqlTable::getQualifiedColumnNames()
 {
     return qnames;
 }
 
-void HqlTable::setFilenames(vector<string> values, int colIndex)
+void IqlTable::setFilenames(vector<string> values, int colIndex)
 {
     if (colIndex < 0 || colIndex >= columns)
         throw string("Table column index out of range. ");
@@ -421,27 +421,27 @@ void HqlTable::setFilenames(vector<string> values, int colIndex)
     string s("_filename");
     if (qnames.at(colIndex).rfind(s) != qnames.at(colIndex).size() - s.size())
         throw string("Internal Error: Setting non-filename columns is not "
-                "allowed for HqlTable. ");
+                "allowed for IqlTable. ");
     for (int row = 0; row < rows; row++)
         data[row][colIndex] = values[row];
 }
 
-vector<vector<string> > HqlTable::getData()
+vector<vector<string> > IqlTable::getData()
 {
     if (dataAlsoInMemory == false)
-        WARN << "Trying to retrieve data for HqlTable, but table was not retrieved in memory.";
+        WARN << "Trying to retrieve data for IqlTable, but table was not retrieved in memory.";
 
     return data;
 }
 
-int HqlTable::rowCount()
+int IqlTable::rowCount()
 {
     if (dataAlsoInMemory)
         return rows;
     return -1;
 }
 
-vector<string> HqlTable::getColumnNames()
+vector<string> IqlTable::getColumnNames()
 {
     return names;
 }

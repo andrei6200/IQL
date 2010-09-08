@@ -8,7 +8,7 @@
 #include "datasources/PostgresDS.hpp"
 #include "QtRasqlFunction.hpp"
 #include "datasources/RasdamanDS.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 
 using namespace std;
 
@@ -62,12 +62,12 @@ DbEnum QtRasqlFunction::setupDbSource()
     return db_source;
 }
 
-HqlTable* QtRasqlFunction::execute()
+IqlTable* QtRasqlFunction::execute()
 {
-    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+    RasdamanDS &rman = IqlApp::getInstance().getRasqlDataSource();
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
     
-    HqlTable* result = NULL, *tmp = NULL;
+    IqlTable* result = NULL, *tmp = NULL;
     string query, mddName;
     vector<string> names;
     string collName;

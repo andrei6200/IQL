@@ -10,7 +10,7 @@
 #include <vector>
 #include <map>
 #include <typeinfo>
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "logger.hpp"
 
 using namespace std;
@@ -50,9 +50,9 @@ DbEnum QtSelectStatement::setupDbSource()
     return db_source;
 }
 
-HqlTable* QtSelectStatement::getCartesianProduct()
+IqlTable* QtSelectStatement::getCartesianProduct()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
     if (product == NULL)
     {
         /* Evaluate the cartesian product. */
@@ -69,10 +69,10 @@ HqlTable* QtSelectStatement::getCartesianProduct()
     return product;
 }
 
-HqlTable* QtSelectStatement::execute()
+IqlTable* QtSelectStatement::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    HqlTable* result = NULL;
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    IqlTable* result = NULL;
     INFO << "ID: " << getId();
 
     /* First compute the cartesian product between the available tables. */
@@ -82,13 +82,13 @@ HqlTable* QtSelectStatement::execute()
     if (where)
     {
         /* The product table is already in main-memory. */
-        HqlTable *tmp = where->execute();
+        IqlTable *tmp = where->execute();
         /* And filter the cartesian product according to the condition. */
         string newName = this->id + "filtered";
         string q = "SELECT prod.* INTO " + newName +
                 " FROM " + product->getName() + " AS prod " +
                 " JOIN " + tmp->getName() + " USING (" + HQL_COL + ")";
-        HqlTable *tmp2 = pg.query(q);
+        IqlTable *tmp2 = pg.query(q);
         pg.addTempTable(newName);
         delete tmp;
         delete tmp2;
@@ -169,7 +169,7 @@ QtList* QtSelectStatement::getSourceTables()
     return from;
 }
 
-void QtSelectStatement::switchContextForJoin(HqlTable* newContext)
+void QtSelectStatement::switchContextForJoin(IqlTable* newContext)
 {
     product = newContext;
 }

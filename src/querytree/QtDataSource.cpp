@@ -7,7 +7,7 @@
 
 #include <map>
 #include "QtDataSource.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "QueryTree.hpp"
 
 using namespace std;
@@ -43,11 +43,11 @@ QtDataSource::~QtDataSource()
 	TRACE << "Destructor ... ";
 }
 
-HqlTable* QtDataSource::execute()
+IqlTable* QtDataSource::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
-    HqlTable* table = NULL, *tmp = NULL;
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    RasdamanDS &rman = IqlApp::getInstance().getRasqlDataSource();
+    IqlTable* table = NULL, *tmp = NULL;
     vector<string> cols;
     string q;
     
@@ -81,7 +81,7 @@ HqlTable* QtDataSource::execute()
             table = rman.getCollection(tableName, false, true);
             table->setName(this->id, false);
 
-            /* Store the HqlTable in Postgres for subsequent calculations */
+            /* Store the IqlTable in Postgres for subsequent calculations */
             pg.insertData(table, this->id);
 
             break;
@@ -110,7 +110,7 @@ string QtDataSource::toString()
 DbEnum QtDataSource::setupDbSource()
 {
     TRACE << tableName << " ...";
-    map<string,DbEnum> tableMap = HqlMain::getInstance().tableMap;
+    map<string,DbEnum> tableMap = IqlApp::getInstance().tableMap;
     if (tableMap.count(string(tableName)) == 0)
     {
         ERROR << "Table '" << tableName << "' does not exist in Postgres nor in Rasdaman !";

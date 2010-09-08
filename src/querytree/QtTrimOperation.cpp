@@ -8,7 +8,7 @@
 #include "QtTrimOperation.hpp"
 #include "datasources/PostgresDS.hpp"
 #include "datasources/RasdamanDS.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 
 QtTrimOperation::QtTrimOperation(QtNode *baseExpr, QtNode *limits)
     : mdd(baseExpr), intervals(limits)
@@ -29,12 +29,12 @@ QtTrimOperation::~QtTrimOperation()
     }
 }
 
-HqlTable* QtTrimOperation::execute()
+IqlTable* QtTrimOperation::execute()
 {
-    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+    RasdamanDS &rman = IqlApp::getInstance().getRasqlDataSource();
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
 
-    HqlTable* result = NULL, *tmp = NULL;
+    IqlTable* result = NULL, *tmp = NULL;
     string query, mddTable, intervalTable;
     
     tmp = mdd->execute();

@@ -11,7 +11,7 @@
 #define	DATASOURCEINTERFACE_HPP
 
 #include <string>
-#include "HqlTable.hpp"
+#include "IqlTable.hpp"
 
 /** Interface for the Datasources. */
 class DataSourceInterface
@@ -36,10 +36,10 @@ public:
     virtual void disconnect() = 0;
 
     /** Execute a query on the current data source */
-    virtual HqlTable* query(std::string) = 0;
+    virtual IqlTable* query(std::string) = 0;
 
     /** Insert some data in a new table*/
-    virtual void insertData(HqlTable* table, std::string tableName) = 0;
+    virtual void insertData(IqlTable* table, std::string tableName) = 0;
 
     /** Mark a table as temporary - to delete after query execution */
     void addTempTable(std::string name);

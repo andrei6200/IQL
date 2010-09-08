@@ -10,7 +10,7 @@
 
 #include "QtJoin.hpp"
 #include "datasources/PostgresDS.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "QueryTree.hpp"
 
 QtJoin::QtJoin(QtNode* table1, QtNode* table2, char *jointype)
@@ -63,11 +63,11 @@ QtJoin::~QtJoin()
     }
 }
 
-HqlTable* QtJoin::execute()
+IqlTable* QtJoin::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
     
-    HqlTable *result = NULL, *tmp1 = NULL, *tmp2 = NULL;
+    IqlTable *result = NULL, *tmp1 = NULL, *tmp2 = NULL;
     tmp1 = child1->execute();
     tmp2 = child2->execute();
 
@@ -132,7 +132,7 @@ HqlTable* QtJoin::execute()
          context for the execution of the JOIN. */
         string q = "DROP TABLE IF EXISTS tmp; ";
         q += "SELECT * INTO tmp FROM " + tmp1->getName() + " CROSS JOIN " + tmp2->getName();
-        HqlTable *tmp3 = pg.query(q);
+        IqlTable *tmp3 = pg.query(q);
         delete tmp3;
         /* Insert the HQL internal ID, needed for the execution of the condition */
         pg.insertHqlIdToTable("tmp");
@@ -215,8 +215,8 @@ void QtJoin::print(ostream& o, std::string indent)
 
 map<string, string> QtJoin::getColumns(std::string tableName)
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    HqlTable *tbl = pg.query("TABLE " + tableName);
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    IqlTable *tbl = pg.query("TABLE " + tableName);
     vector<string> qualifiedNames = tbl->getQualifiedColumnNames();
 
     map<string, string> result;

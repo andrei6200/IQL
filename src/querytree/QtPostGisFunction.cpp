@@ -6,7 +6,7 @@
  */
 
 #include "QtPostGisFunction.hpp"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "QueryTree.hpp"
 
 QtPostGisFunction::QtPostGisFunction(char *fname, QtNode *node)
@@ -33,10 +33,10 @@ QtPostGisFunction::~QtPostGisFunction()
     }
 }
 
-HqlTable* QtPostGisFunction::execute()
+IqlTable* QtPostGisFunction::execute()
 {
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
-    HqlTable *result = NULL, *tmp = NULL;
+    PostgresDS &pg = IqlApp::getInstance().getSqlDataSource();
+    IqlTable *result = NULL, *tmp = NULL;
     string childTableName, arguments;
 
     if (child)

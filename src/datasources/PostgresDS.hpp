@@ -32,11 +32,11 @@ public:
 
     void disconnect();
 
-    HqlTable* query(std::string q);
+    IqlTable* query(std::string q);
 
     pqxx::result regularQuery(std::string queryString);
 
-    void insertData(HqlTable* table, std::string tableName);
+    void insertData(IqlTable* table, std::string tableName);
 
     void addTempTable(std::string name);
 

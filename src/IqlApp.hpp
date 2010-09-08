@@ -7,8 +7,8 @@
  * Implements the singleton design pattern.
  */
 
-#ifndef HQLMAIN_HH
-#define	HQLMAIN_HH
+#ifndef IQLAPP_HH
+#define	IQLAPP_HH
 
 
 /* PostgreSQL includes and defines */
@@ -31,21 +31,21 @@
 #include <string>
 
 #include "querytree/QtNode.hpp"
-#include "datasources/HqlTable.hpp"
+#include "datasources/IqlTable.hpp"
 #include "datasources/PostgresDS.hpp"
 #include "datasources/RasdamanDS.hpp"
 
 
 
 /** Singleton application class. */
-class HqlMain
+class IqlApp
 {
 public:
     /** Return (and initialize if needed) the singleton instance of HqlMain. */
-    static HqlMain& getInstance();
+    static IqlApp& getInstance();
 
     /** Public destructor. */
-    ~HqlMain();
+    ~IqlApp();
 
     /** Name Dictionary for available tables */
     std::map<std::string, DbEnum> tableMap;
@@ -61,7 +61,7 @@ private:
      * Private constructor.
      * Queries the postgres and rasdaman databases for available tables.
      */
-    HqlMain();
+    IqlApp();
 
     /*
      * Read the functions available for use with PostGIS, and make them available
@@ -70,7 +70,7 @@ private:
     void initPostgisFunctionList();
 
     /* The singleton instance. */
-    static HqlMain *instance;
+    static IqlApp *instance;
 
     /* Data Sources */
     PostgresDS *pg;
@@ -80,4 +80,4 @@ private:
 };
 
 
-#endif	/* HQLMAIN_HH */
+#endif	/* IQLAPP_HH */

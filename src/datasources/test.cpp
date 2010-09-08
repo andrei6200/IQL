@@ -3,8 +3,8 @@
 #include "config.hpp"
 #include "RasdamanDS.hpp"
 #include "PostgresDS.hpp"
-#include "HqlTable.hpp"
-#include "HqlMain.hpp"
+#include "IqlTable.hpp"
+#include "IqlApp.hpp"
 #include "logger.hpp"
 
 #include <pqxx/pqxx>
@@ -15,7 +15,7 @@ using namespace pqxx;
 
 RasdamanDS *rman = NULL;
 PostgresDS *pg = NULL;
-HqlTable *mr = NULL, *mr2 = NULL, *rgb = NULL;
+IqlTable *mr = NULL, *mr2 = NULL, *rgb = NULL;
 
 
 /* Add the columns of two tables. */
@@ -35,7 +35,7 @@ void testCartesianProd()
     if (mr == NULL || rgb == NULL)
         throw string("Error, test input is NULL.");
 
-//    HqlTable* prod = mr->crossProduct(rgb);
+//    IqlTable* prod = mr->crossProduct(rgb);
 //    if (prod)
 //    {
 //        cout << prod << endl;
@@ -50,7 +50,7 @@ void testInsertIntoPostgres()
 {
     pg->insertData(mr, "testMr");
 
-    HqlTable *pgtbl = pg->query("TABLE testMr");
+    IqlTable *pgtbl = pg->query("TABLE testMr");
     if (pgtbl)
     {
         cout << "Table testMr, fetched from Postgres: " << endl;
