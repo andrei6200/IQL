@@ -1,4 +1,4 @@
-/* 
+/** 
  * File:   QueryTree.hpp
  * Author: andrei
  *
@@ -7,6 +7,8 @@
 
 #ifndef QUERYTREE_HPP
 #define	QUERYTREE_HPP
+
+#include <string>
 
 #include "QtNode.hpp"
 
@@ -51,19 +53,21 @@ public:
     /* Destructor */
     ~QueryTree();
 
+    /** Set the encoding format for Rasdaman objects that will be saved to disk. */
+    void setEncodingFormat(std::string format);
+
 private:
     /* Private constructor */
     QueryTree();
-
-    /* Parses the query tree and attaches a reference to the QtSource nodes
-     whenever it is needed. */
-    void attachDataSourceNodes();
 
     /* The query tree root node*/
     QtSelectStatement *root;
 
     /* Singleton instance. */
     static QueryTree instance;
+
+    /** (Optional) Rasdaman encoding format, to apply to array objects before saving them to disk. */
+    std::string encode;
 };
 
 

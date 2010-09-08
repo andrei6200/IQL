@@ -4,7 +4,7 @@
 using namespace std;
 
 
-QueryTree::QueryTree(): root(NULL)
+QueryTree::QueryTree(): root(NULL), encode("")
 {
     
 }
@@ -16,17 +16,11 @@ QueryTree::~QueryTree()
     root = NULL;
 }
 
-void QueryTree::attachDataSourceNodes()
-{
-    /* TODO */
-}
-
 void QueryTree::load(QtSelectStatement* newroot)
 {
     if (root)
         delete root;
     root = newroot;
-    attachDataSourceNodes();
 }
 
 QueryTree QueryTree::instance;
@@ -130,7 +124,12 @@ void QueryTree::saveRasdamanObjectsToDisk(HqlTable *table)
                 string filename = "";
                 if (oid2fname.count(oid) == 0)
                 {
-                    string q = "SELECT var FROM " + collName + " AS var " +
+                    /* Perform optional format encoding. */
+                    string expr = "var";
+                    if (encode != "")
+                        expr = encode + "(var)";
+                    /* Build the RaSQL query. */
+                    string q = "SELECT " + expr + " FROM " + collName + " AS var " +
                             "WHERE oid(var) = <\"" + oid + "\">";
                     r_Ref<r_GMarray> mdd = rman.queryByOid(q);
                     filename = rman.saveRasdamanMddToFile(mdd, true, ++fileIndex);
@@ -154,4 +153,11 @@ void QueryTree::saveRasdamanObjectsToDisk(HqlTable *table)
             col++;
         }
     }
+}
+
+void QueryTree::setEncodingFormat(string format)
+{
+    if (encode != "")
+        throw string("Queries with multiple format encoders are not supported at the moment.");
+    encode = format;
 }

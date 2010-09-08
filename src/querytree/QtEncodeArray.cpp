@@ -8,6 +8,7 @@
 #include "QtEncodeArray.hpp"
 #include "QtInducedOperation.hpp"
 #include "HqlMain.hpp"
+#include "QueryTree.hpp"
 
 using namespace std;
 
@@ -53,20 +54,25 @@ DbEnum QtEncodeArray::setupDbSource()
 
 HqlTable* QtEncodeArray::execute()
 {
-    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
-    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+    /* Delegate the format encoding to the Query Tree post-processing.
+     We have to do this because of a bug in rasdaman, which crashes the server
+     when more than one encoded mdd is inserted into a collection, using a SELECT INTO
+     query. */
+//    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
+//    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
     HqlTable *tmp = child->execute();
-    string query = "SELECT " + format + "( " + tmp->getName() + " ) INTO " + this->id +
-            " FROM " + tmp->getName();
-    delete tmp;
-    rman.updateQuery(query);
-    tmp = rman.getCollection(this->id, false);
-    tmp->setName(this->id, true);
-    rman.addTempTable(this->id);
-
-    // Store the OID table in Postgres as well
-    pg.insertData(tmp, this->id);
-    pg.addTempTable(this->id);
+    QueryTree::getInstance().setEncodingFormat(format);
+//    string query = "SELECT " + format + "( " + tmp->getName() + " ) INTO " + this->id +
+//            " FROM " + tmp->getName();
+//    delete tmp;
+//    rman.updateQuery(query);
+//    tmp = rman.getCollection(this->id, false);
+//    tmp->setName(this->id, true);
+//    rman.addTempTable(this->id);
+//
+//    // Store the OID table in Postgres as well
+//    pg.insertData(tmp, this->id);
+//    pg.addTempTable(this->id);
 
     return tmp;
 }
