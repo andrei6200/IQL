@@ -30,7 +30,8 @@ HqlMain* HqlMain::instance = NULL;
 extern void exitProgram(int code, string queries);
 
 /* Return (and initialize if needed) the singleton instance of HqlMain. */
-HqlMain& HqlMain::getInstance() {
+HqlMain& HqlMain::getInstance()
+{
     if (!instance)
         instance = new HqlMain();
     return *instance;
@@ -39,11 +40,10 @@ HqlMain& HqlMain::getInstance() {
 /* Private constructor.
  * Queries the postgres and rasdaman databases for available tables.
  */
-HqlMain::HqlMain() {
-    id = random() % 10000;
-
+HqlMain::HqlMain()
+{
     /* Initialization */
-    INFO << "Initialization of HqlMain (ID " << id << ")... ";
+    INFO << "Initialization of HqlMain ... ";
     pg = new PostgresDS();
     rman = new RasdamanDS();
     pg->connect();
@@ -88,7 +88,8 @@ HqlMain::HqlMain() {
 }
 
 /* Public destructor */
-HqlMain::~HqlMain() {
+HqlMain::~HqlMain()
+{
     TRACE << "Destroying Singleton instance of HqlMain.";
 
     if (pg) {
@@ -111,27 +112,18 @@ HqlMain::~HqlMain() {
     TRACE << "HqlMain fields have been destroyed.";
 }
 
-HqlTable* HqlMain::runSqlQuery(string query) {
-    return pg->query(query);
-}
-
-HqlTable* HqlMain::runRasqlQuery(string query) {
-    return rman->query(query);
-}
-
-long HqlMain::getId() {
-    return id;
-}
-
-PostgresDS& HqlMain::getSqlDataSource() {
+PostgresDS& HqlMain::getSqlDataSource()
+{
     return *pg;
 }
 
-RasdamanDS& HqlMain::getRasqlDataSource() {
+RasdamanDS& HqlMain::getRasqlDataSource()
+{
     return *rman;
 }
 
-void HqlMain::initPostgisFunctionList() {
+void HqlMain::initPostgisFunctionList()
+{
     TRACE << "Initializing PostGIS function list ...";
     /* This function will be called in the constructor, after we will have a
      Postgres connection available */

@@ -10,7 +10,7 @@
 
 #include "QtNode.hpp"
 
-
+/** Represents a constant value, either in SQL or in RaSQl. */
 class QtConst : public QtNode
 {
 public:

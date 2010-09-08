@@ -45,6 +45,8 @@ QtDataSource::~QtDataSource()
 
 HqlTable* QtDataSource::execute()
 {
+    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
+    RasdamanDS &rman = HqlMain::getInstance().getRasqlDataSource();
     HqlTable* table = NULL, *tmp = NULL;
     vector<string> cols;
     string q;
@@ -56,7 +58,7 @@ HqlTable* QtDataSource::execute()
         case POSTGRES:
             q = "SELECT * FROM " + tableName;
             TRACE << q;
-            tmp = HqlMain::getInstance().runSqlQuery(q);
+            tmp = pg.query(q);
             TRACE << tmp;
             cols = tmp->getQualifiedColumnNames();
 
@@ -66,8 +68,8 @@ HqlTable* QtDataSource::execute()
                 q += ", " + cols[i] + " AS " + tableName + "_" + cols[i];
             q += " INTO " + this->id + " FROM " + tableName;
 
-            table = HqlMain::getInstance().runSqlQuery(q);
-            HqlMain::getInstance().getSqlDataSource().addTempTable(this->id);
+            table = pg.query(q);
+            pg.addTempTable(this->id);
             delete table;
             table = tmp;
             table->setName(tableName, true);
@@ -76,11 +78,11 @@ HqlTable* QtDataSource::execute()
             
         case RASDAMAN:
             /* Fetch the OIDs */
-            table = HqlMain::getInstance().getRasqlDataSource().getCollection(tableName, false, true);
+            table = rman.getCollection(tableName, false, true);
             table->setName(this->id, false);
 
             /* Store the HqlTable in Postgres for subsequent calculations */
-            HqlMain::getInstance().getSqlDataSource().insertData(table, this->id);
+            pg.insertData(table, this->id);
 
             break;
             

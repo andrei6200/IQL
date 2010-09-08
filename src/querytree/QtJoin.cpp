@@ -12,7 +12,6 @@
 #include "datasources/PostgresDS.hpp"
 #include "HqlMain.hpp"
 #include "QueryTree.hpp"
-#include "QtInducedOperation.hpp"
 
 QtJoin::QtJoin(QtNode* table1, QtNode* table2, char *jointype)
     : child1(table1), child2(table2), type(jointype), natural(false), cond(NULL), columns(NULL)

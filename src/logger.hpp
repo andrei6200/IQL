@@ -40,6 +40,7 @@ enum verbosityLevelsEnum
 static time_t rawtime;
 static char timestr[STRLENGTH];
 
+/** Extensible Template Logging class */
 template<typename Char, typename Traits = char_traits<Char> >
         class LOGGER
 {
@@ -51,11 +52,13 @@ public:
     friend LOGGER<char, char_traits < char > >& operator <<
         (LOGGER<char, char_traits < char > > &o, HqlTable *a);
 
+    /** Constructor with external outputstream. */
     LOGGER(ostream_type & os) :
         os(os), level(GLOBAL_LOGGING_LEVEL)
     {
     }
 
+    /** Print operator for IOS manipulators. */
     LOGGER & operator<<(manip_type pfn)
     {
         /* Take verbosity level into account */
@@ -66,6 +69,7 @@ public:
         return *this;
     }
 
+    /** Print operator for regular datatypes. */
     template<typename T >
             LOGGER & operator<<(T const& t)
     {
@@ -77,6 +81,7 @@ public:
         return *this;
     }
 
+    /** Set the verbosity level of the current Logger. */
     inline LOGGER& setLevel(verbosityLevelsEnum newlevel, const char* strLevel)
     {
         level = newlevel;
@@ -91,31 +96,37 @@ public:
         return *this;
     }
 
+    /** Convenience method for setting a TRACE logger. */
     inline LOGGER& trace()
     {
         return setLevel(TRACE_LVL, "TRACE");
     }
 
+    /** Convenience method for setting a DEBUG logger. */
     inline LOGGER& debug()
     {
         return setLevel(DEBUG_LVL, "DEBUG");
     }
-    
+
+    /** Convenience method for setting a INFO logger. */
     inline LOGGER& info()
     {
         return setLevel(INFO_LVL, "INFO");
     }
 
+    /** Convenience method for setting a WARN logger. */
     inline LOGGER& warn()
     {
         return setLevel(WARN_LVL, "WARN");
     }
 
+    /** Convenience method for setting a ERROR logger. */
     inline LOGGER& error()
     {
         return setLevel(ERROR_LVL, "ERROR");
     }
 
+    /** Convenience method for setting a FATAL error logger. */
     inline LOGGER& fatal()
     {
         return setLevel(FATAL_LVL, "FATAL");
@@ -133,10 +144,11 @@ extern std::ofstream _outputFile;
 extern LOGGER <char, char_traits < char > > LOG;
 extern string formatClassName(string prettyFunction);
 
-
+/** Custom printing of HqlTable objects in log. */
 LOGGER<char, char_traits < char > >& operator <<
     (LOGGER<char, char_traits < char > > &o, HqlTable *a);
 
+// Always display log information about the calling function, by processing the __PRETTY_FUNCTION__ macro
 #define TRACE   LOG.trace() << "[" << formatClassName(__PRETTY_FUNCTION__) << " - " << __LINE__ << "] "
 #define DEBUG   LOG.debug() << "[" << formatClassName(__PRETTY_FUNCTION__) << " - " << __LINE__ << "] "
 #define INFO    LOG.info() << "[" << formatClassName(__PRETTY_FUNCTION__) << "] "

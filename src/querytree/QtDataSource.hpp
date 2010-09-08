@@ -14,7 +14,7 @@
 #include <ostream>
 #include "QtNode.hpp"
 
-
+/** Represents a source table in PostgreSQL or an array collection in Rasdaman.*/
 class QtDataSource: public QtNode
 {
 public:

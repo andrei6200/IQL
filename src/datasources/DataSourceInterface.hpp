@@ -13,34 +13,38 @@
 #include <string>
 #include "HqlTable.hpp"
 
+/** Interface for the Datasources. */
 class DataSourceInterface
 {
 public:
-    // Public constructor
+    /** Public constructor */
     DataSourceInterface();
 
-    // Public destructor
+    /** Public destructor */
     virtual ~DataSourceInterface();
 
-    // Connects to the data source
+    /** Connects to the data source */
     virtual void connect() = 0;
 
-    // Returns the connection status
+    /** Returns the connection status */
     virtual bool isConnected() = 0;
 
-    // Returns the list of available object names (tables/collections)
+    /** Returns the list of available object names (tables/collections) */
     virtual vector<string> getObjectNames() = 0;
 
-    // Breaks the connection
+    /** Breaks the connection */
     virtual void disconnect() = 0;
 
-    // Execute a query on the current data source
+    /** Execute a query on the current data source */
     virtual HqlTable* query(std::string) = 0;
 
-    // FIXME: Insert some data in a temporary table
+    /** Insert some data in a new table*/
     virtual void insertData(HqlTable* table, std::string tableName) = 0;
 
-    // Drop tables that have been created during a query execution
+    /** Mark a table as temporary - to delete after query execution */
+    void addTempTable(std::string name);
+
+    /** Drop tables that have been created during a query execution */
     virtual void removeTempTables() = 0;
 };
 

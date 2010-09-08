@@ -23,93 +23,103 @@
 // Internal HQL id
 #define HQL_COL "iqlinternalid"
 
-
+/** Represents a table in main memory.
+ * 
+ * This class can be initialized with the results of an SQL-query, with the
+ * results of a RaSQL-query, or simply with a name. In the latter case, this
+ * class only stores the name of the table, while in the rest of the cases we
+ * also store the result data and auxiliary information (columns, widths etc).
+ *
+ * The datatype is assumed to be *almost* always string. The only exception is
+ * made when importing data from a RaSQL result, when the result type is scalar.
+ * Then we use the float datatype. \todo implement
+ */
 class HqlTable
 {
 public:
-    /* If false, the only useful information may be the table name. */
+    /** If false, the only useful information may be the table name. */
     bool dataAlsoInMemory;
 
-    /* Allow full access to the private members of the HqlTable, for efficiency.*/
+    /** Allow full access to the private members of the HqlTable, for efficiency.*/
     friend class PostgresDS;
     friend class RasdamanDS;
 
-    /* A table can be stored in memory, in Postgres or in Rasdaman. */
+    /** A table can be stored in memory, in Postgres or in Rasdaman. */
     enum storageType {MEMORY, POSTGRES, RASDAMAN};
 
-    /* Constructor with Postgres table name. The data will not be replicated in memory automatically. */
+    /** Constructor with Postgres table name. The data will not be replicated in memory automatically. */
     HqlTable(std::string name);
 
-    /* Constructor from Rasdaman query result*/
+    /** Constructor from Rasdaman query result*/
     HqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk = false);
 
-    /* Import data from Postgres to the current table. Data will be stored in memory */
+    /** Import data from Postgres to the current table. Data will be stored in memory */
     HqlTable(pqxx::result sqlResult);
 
-    /* Execute a cross Product between this table and another HqlTable. */
+    /** Execute a cross Product between this table and another HqlTable. */
     HqlTable* crossProduct(HqlTable *other);
 
-    /* Add the columns of another table. The number of tuples must be the same. */
+    /** Add the columns of another table. The number of tuples must be the same. */
     HqlTable* addColumns(HqlTable *other);
 
-    /* Destructor */
+    /** Destructor */
     virtual ~HqlTable();
 
-    /* Return the qualified column names as vector */
+    /** Return the qualified column names as vector */
     std::vector<std::string> getQualifiedColumnNames();
 
-    /* Return the raw column names as a vector */
+    /** Return the raw column names as a vector */
     std::vector<std::string> getColumnNames();
 
-    /* Return a certain column as a vector */
+    /** Return a certain column as a vector */
     std::vector<std::string> getColumn(int index);
 
-    /* Return a certain column as a vector */
+    /** Return a certain column as a vector */
     std::vector<std::string> getColumn(std::string name);
 
-    /* Modify the filenames of Rasdaman objects. */
+    /** Modify the filenames of Rasdaman objects. */
     void setFilenames(std::vector<std::string> values, int colIndex);
 
-    /* Display this table to stdout */
+    /** Display this table to stdout */
     void print(std::ostream& out);
 
-    /* Set the name of this table. */
+    /** Set the name of this table. */
     void setName(std::string name, bool updateColumnNames = false);
 
-    /* Get the name of this table, as it is stored in the DataSources. */
+    /** Get the name of this table, as it is stored in the DataSources. */
     std::string getName();
 
-    /* Return the data stored inside this table*/
+    /** Return the data stored inside this table*/
     std::vector<std::vector<std::string > > getData();
 
-    /* Returns the number of rows of the current table. */
+    /** Returns the number of rows of the current table. */
     int rowCount();
 
 private:
 
-    /* The qualified column names (tableName_columnName).  */
+    /** The qualified column names (tableName_columnName).  */
     std::vector<std::string> qnames;
 
-    /* The un-qualified column names (just the column names) */
+    /** The un-qualified column names (just the column names) */
     std::vector<std::string> names;
 
-    /* The column widths */
+    /** The column widths */
     std::vector<int> widths;
 
-    /* Hidden column info */
+    /** Hidden column info */
     std::vector<bool> hidden;
     int hiddenCount;
 
-    /* The actual data, as strings */
+    /** The actual data, as strings */
     std::vector<std::vector<std::string> > data;
 
-    /* Update the width information for printing. */
+    /** Update the width information for printing. */
     void updateWidths();
 
-    /* Counters */
+    /** Counters */
     long columns, rows;
 
-    /* Storage information */
+    /** Storage information */
     storageType storage;
     string tableName;
 };

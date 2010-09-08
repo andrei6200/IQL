@@ -25,55 +25,46 @@
 
 #include <map>
 
+/** Rasdaman datasource adapter. */
 class RasdamanDS : public DataSourceInterface
 {
 public:
-    // constructor
     RasdamanDS();
 
-    // destructor
     ~RasdamanDS();
 
-    // Returns the data source ID
     std::string getId();
 
-    // Connects to the data source
     void connect();
 
-    // Returns the connection status
     virtual bool isConnected();
 
-    // Returns the list of available object names (tables/collections)
     std::vector<std::string> getObjectNames();
 
-    // Breaks the connection, aborting the active transaction.
     void disconnect();
 
     void commitTa();
     void abortTa();
     void openTa();
 
-    // Execute a SELECT query on the current data source
+    
     HqlTable* query(std::string query);
     HqlTable* query(std::string query, bool storeOnDisk);
     r_Ref<r_GMarray> queryByOid(std::string);
 
-    // Execute an update/insert query on the current datasource
+    /** Execute an update/insert query on the current datasource */
     void updateQuery(std::string query);
 
-    // Save an array to disk
+    /** Save an array to disk */
     std::string saveRasdamanMddToFile(r_Ref<r_GMarray> mdd, bool storeOnDisk, int index);
 
-    // Retrieve a collection by its name
+    /** Retrieve a collection by its name */
     HqlTable* getCollection(std::string name, bool storeOnDisk = false, bool updateCols = false);
 
-    // Insert some data in a temporary table
     void insertData(HqlTable* table, std::string tableName);
 
-    // Mark a table for deletion on program exit
     void addTempTable(std::string name);
 
-    // Drop tables that have been created during a query execution
     void removeTempTables();
     
 private:

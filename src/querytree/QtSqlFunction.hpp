@@ -11,6 +11,7 @@
 #include "QtNode.hpp"
 #include "QtList.hpp"
 
+/** Represents a SQL function. */
 class QtSqlFunction : public QtNode
 {
 public:

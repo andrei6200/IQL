@@ -14,6 +14,7 @@
 #include <ostream>
 #include "QtNode.hpp"
 
+/** Represents a constant string. */
 class QtString: public QtNode
 {
 public:

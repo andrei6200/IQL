@@ -3,9 +3,6 @@
  * Author: andrei
  *
  * Created on August 4, 2010, 1:34 PM
- *
- * Represents a JOIN operation between two object collections,
- * possibly from different data sources.
  */
 
 #ifndef QTJOIN_HPP
@@ -14,6 +11,7 @@
 #include <map>
 #include "QtNode.hpp"
 
+/** Represents a JOIN operation between two object collections */
 class QtJoin : public QtNode
 {
 public:
@@ -35,6 +33,11 @@ public:
     DbEnum setupDbSource();
 private:
 
+    /** Given an SQL table name, read its datatype and return a map,
+     * using as keys the unqualified column names, and as values the
+     * qualified column names. For example, a column "id" from the table "sql"
+     * would be represented by map["id"] = "sql_id"
+     */
     std::map < std::string, std::string > getColumns(std::string tableName);
 
     std::string type;

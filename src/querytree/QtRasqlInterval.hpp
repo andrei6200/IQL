@@ -14,6 +14,7 @@
 #include <ostream>
 #include "QtNode.hpp"
 
+/** Represents a Rasdaman interval.*/
 class QtRasqlInterval: public QtNode
 {
 public:

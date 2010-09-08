@@ -8,11 +8,10 @@
  */
 
 #include "QtWhere.hpp"
-#include "QtInducedOperation.hpp"
 #include "datasources/PostgresDS.hpp"
 #include "HqlMain.hpp"
 
-QtWhere::QtWhere(QtNode *cond) : condition(cond), srcTable(NULL)
+QtWhere::QtWhere(QtNode *cond) : condition(cond)
 {
 }
 
@@ -23,11 +22,6 @@ QtWhere::~QtWhere()
         delete condition;
         condition = NULL;
     }
-    if (srcTable)
-    {
-        delete srcTable;
-        srcTable = NULL;
-    }
 }
 
 HqlTable* QtWhere::execute()
@@ -37,7 +31,7 @@ HqlTable* QtWhere::execute()
     string query, colName, condTableName;
 
     /* The execution of the condition takes into account the raw cartesian
-     * product of the tables in the FROM clause. */
+     * product of the tables in the FROM clause, which is computed on-the-fly. */
     tmp = condition->execute();
     condTableName = tmp->getName();
     delete tmp;
@@ -73,8 +67,3 @@ void QtWhere::print(ostream &o, std::string indent)
     o << indent << "QtWhere (" << id << "): '" << endl;
     condition->print(o, indent + QTINDENT);
 }
-
-//void QtWhere::setSourceTable(HqlTable* src)
-//{
-//    srcTable = src;
-//}

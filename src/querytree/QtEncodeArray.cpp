@@ -6,7 +6,6 @@
  */
 
 #include "QtEncodeArray.hpp"
-#include "QtInducedOperation.hpp"
 #include "HqlMain.hpp"
 #include "QueryTree.hpp"
 

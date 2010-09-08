@@ -10,7 +10,8 @@
 
 #include "QtNode.hpp"
 
-
+/** Represents a binary operation between two source objects.
+ Either object may be a relational table or an array collection. */
 class QtBinaryOperation : public QtNode
 {
 public:

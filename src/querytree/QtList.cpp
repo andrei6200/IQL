@@ -110,6 +110,7 @@ HqlTable* QtList::execute()
 HqlTable* QtList::multiplyResults()
 {
     TRACE << "Computing the cross product between " << data.size() << " HqlTables...";
+    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
 
     if (results.size() == 0)
     {
@@ -136,9 +137,9 @@ HqlTable* QtList::multiplyResults()
         }
 
     string q = "SELECT * INTO " + this->id + " FROM " + tableList;
-    HqlTable *result = HqlMain::getInstance().runSqlQuery(q);
-    HqlMain::getInstance().getSqlDataSource().addTempTable(this->id);
-    HqlMain::getInstance().getSqlDataSource().insertHqlIdToTable(this->id);
+    HqlTable *result = pg.query(q);
+    pg.addTempTable(this->id);
+    pg.insertHqlIdToTable(this->id);
     result->setName(this->id, false);
 
     TRACE << "The cross product between " << data.size() << " HqlTables is " << result;
@@ -148,6 +149,7 @@ HqlTable* QtList::multiplyResults()
 
 HqlTable* QtList::addResults()
 {
+    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
     TRACE << "Computing the column-addition between " << data.size() << " HqlTables...";
 
     if (results.size() == 0)
@@ -182,15 +184,15 @@ HqlTable* QtList::addResults()
     {
         // Only one table, query does not have join.
         q = "SELECT * INTO " + this->id + " FROM " + results[0]->getName();
-        result = HqlMain::getInstance().runSqlQuery(q);
+        result = pg.query(q);
     }
     else
     {
         q = "SELECT * INTO " + this->id + " FROM " + tableList;
-        result = HqlMain::getInstance().runSqlQuery(q);
+        result = pg.query(q);
     }
     result->setName(this->id);
-    HqlMain::getInstance().getSqlDataSource().addTempTable(this->id);
+    pg.addTempTable(this->id);
     TRACE << "The column addition between " << data.size() << " HqlTables is " << result;
 
     return result;

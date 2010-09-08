@@ -10,11 +10,13 @@
 
 #include "QtNode.hpp"
 
-
+/** Represents the WHERE clause of an IQL query. */
 class QtWhere  : public QtNode
 {
 public:
+    /** Public constructor */
     QtWhere(QtNode* cond);
+    /** Destructor */
     virtual ~QtWhere();
 
     HqlTable* execute();
@@ -22,11 +24,9 @@ public:
     void print(ostream &o, std::string indent);
 
     DbEnum setupDbSource();
-
-//    void setSourceTable(HqlTable* src);
 private:
+    /** Condition that is to be evaluated. */
     QtNode *condition;
-    HqlTable *srcTable;
 };
 
 #endif	/* QTWHERE_HPP */

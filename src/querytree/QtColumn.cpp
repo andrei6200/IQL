@@ -48,7 +48,7 @@ HqlTable* QtColumn::execute()
         if (column == "*" && table == "")
         {
             string q = "SELECT * INTO " + this->id + " FROM " + prod->getName();
-            result = HqlMain::getInstance().runSqlQuery(q);
+            result = pg.query(q);
             result->setName(this->id);
             pg.addTempTable(this->id);
         }

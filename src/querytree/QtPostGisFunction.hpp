@@ -11,6 +11,7 @@
 #include "QtNode.hpp"
 #include "QtList.hpp"
 
+/** Represents PostGIS functions with a variable number of arguments. */
 class QtPostGisFunction : public QtNode
 {
 public:

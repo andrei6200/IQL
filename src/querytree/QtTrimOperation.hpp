@@ -10,6 +10,7 @@
 
 #include "QtNode.hpp"
 
+/** Represents a Rasdaman Trim operation. */
 class QtTrimOperation : public QtNode
 {
 public:
@@ -26,4 +27,3 @@ private:
 };
 
 #endif	/* QTTRIMOPERATION_HPP */
-

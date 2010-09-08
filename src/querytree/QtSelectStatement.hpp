@@ -18,6 +18,7 @@
 
 #include <vector>
 
+/** Represents a complete SELECT query. */
 class QtSelectStatement : public QtNode
 {
 public:
@@ -33,15 +34,18 @@ public:
 
     void print(ostream &o, std::string indent = "");
 
-    /* Return a QtList (containing all the QtDataSource objects) */
+    /** Return a QtList (containing all the QtDataSource objects) */
     QtList* getSourceTables();
     
-    /* Return a table that holds the cartesian product, if it has been evaluated. */
+    /** Return a table that holds the cartesian product, if it has been evaluated. */
     HqlTable* getCartesianProduct();
 
 private:
+    /** WHAT clause */
     QtList* what;
+    /** FROM Clause */
     QtList* from;
+    /** WHERE Clause */
     QtWhere *where;
 
     HqlTable *product;

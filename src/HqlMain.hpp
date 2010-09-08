@@ -37,28 +37,22 @@
 
 
 
-/* Singleton class responsible for DB access. */
+/** Singleton application class. */
 class HqlMain
 {
 public:
-    /* Return (and initialize if needed) the singleton instance of HqlMain. */
+    /** Return (and initialize if needed) the singleton instance of HqlMain. */
     static HqlMain& getInstance();
 
-    /* Public destructor. */
+    /** Public destructor. */
     ~HqlMain();
 
-    /* Name Dictionary for available tables */
+    /** Name Dictionary for available tables */
     std::map<std::string, DbEnum> tableMap;
-
-    HqlTable* runSqlQuery(std::string query);
-
-    HqlTable* runRasqlQuery(std::string query);
 
     PostgresDS& getSqlDataSource();
 
     RasdamanDS& getRasqlDataSource();
-
-    long getId();
 
     bool isPostGisFunction(char *);
     
@@ -83,9 +77,6 @@ private:
     RasdamanDS *rman;
 
     std::vector<std::string> postgisKw;
-
-    /* Integer ID */
-    long id;
 };
 
 

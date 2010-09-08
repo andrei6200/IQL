@@ -1,9 +1,9 @@
 noinst_LIBRARIES = libquerytree.a
 libquerytree_a_SOURCES = \
-		QtCartesianProduct.cpp  QtEncodeArray.cpp       QtRasqlFunction.cpp    QtSqlFunction.cpp	\
-		QtPostGisFunction.cpp	QtInducedOperation.cpp  QtString.cpp		QtRasqlInterval.cpp	\
-		QtCreateArray.cpp       QtJoin.cpp              QtSelectStatement.cpp	QtTrimOperation.cpp	\
-		QtDataSource.cpp        QtList.cpp              QueryTree.cpp		QtConst.cpp		\
-		QtNode.cpp              QtColumn.cpp 		QtBinaryOperation.cpp	QtWhere.cpp		\
-		QtDot.cpp               QtPaginate.cpp          QtSort.cpp            
+	QtBinaryOperation.cpp  QtJoin.cpp             QtRasqlInterval.cpp    QtWhere.cpp	\
+	QtColumn.cpp           QtList.cpp             QtSelectStatement.cpp  QueryTree.cpp	\
+	QtConst.cpp            QtNode.cpp             QtSqlFunction.cpp		\
+	QtDataSource.cpp       QtPostGisFunction.cpp  QtString.cpp		\
+	QtEncodeArray.cpp      QtRasqlFunction.cpp    QtTrimOperation.cpp
+
 AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include

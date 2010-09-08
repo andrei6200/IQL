@@ -52,6 +52,7 @@ DbEnum QtSelectStatement::setupDbSource()
 
 HqlTable* QtSelectStatement::getCartesianProduct()
 {
+    PostgresDS &pg = HqlMain::getInstance().getSqlDataSource();
     if (product == NULL)
     {
         /* Evaluate the cartesian product. */
@@ -60,7 +61,7 @@ HqlTable* QtSelectStatement::getCartesianProduct()
         string tname = product->getName();
         delete product;
         string q = "SELECT * FROM " + tname;
-        product = HqlMain::getInstance().runSqlQuery(q);
+        product = pg.query(q);
         product->setName(tname);
 
         TRACE << "Cartesian product: " << product;

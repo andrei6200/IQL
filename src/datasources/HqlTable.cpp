@@ -145,7 +145,7 @@ HqlTable::HqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
 
 
 /* Import data from the result of an SQL query. */
-HqlTable::HqlTable(result sqlResult)
+HqlTable::HqlTable(pqxx::result sqlResult)
     :rows(0), columns(0), hiddenCount(0), storage(POSTGRES),
         tableName(""), dataAlsoInMemory(true)
 {

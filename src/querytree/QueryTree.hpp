@@ -12,10 +12,8 @@
 
 #include "QtNode.hpp"
 
-#include "QtCartesianProduct.hpp"
 #include "QtString.hpp"
 #include "QtDataSource.hpp"
-#include "QtDot.hpp"
 #include "QtSelectStatement.hpp"
 #include "QtColumn.hpp"
 #include "QtEncodeArray.hpp"
@@ -31,39 +29,39 @@
 
 class HqlTable;
 
-/* Singleton class for accessing the entire query tree. */
+/** Singleton class for accessing the entire query tree that is executed. */
 class QueryTree
 {
 public:
-    /* Return (and initialize if needed) the singleton instance of HqlMain. */
+    /** Return (and initialize if needed) the singleton instance of HqlMain. */
     static QueryTree& getInstance();
 
-    /* Load the whole query tree and prepare for execution. */
+    /** Load the whole query tree and prepare for execution. */
     void load(QtSelectStatement *newroot);
 
-    /* Return the query tree root. */
+    /** Return the query tree root. */
     QtSelectStatement* getRoot();
 
-    /* Execute the query and return the result. */
+    /** Execute the query and return the result. */
     void execute();
 
-    /* Save the Rasdaman objects referenced in a HqlTable to files on disk. */
+    /** Save the Rasdaman objects referenced in a HqlTable to files on disk. */
     void saveRasdamanObjectsToDisk(HqlTable *table);
 
-    /* Destructor */
+    /** Destructor */
     ~QueryTree();
 
     /** Set the encoding format for Rasdaman objects that will be saved to disk. */
     void setEncodingFormat(std::string format);
 
 private:
-    /* Private constructor */
+    /** Private constructor */
     QueryTree();
 
-    /* The query tree root node*/
+    /** The query tree root node*/
     QtSelectStatement *root;
 
-    /* Singleton instance. */
+    /** Singleton instance. */
     static QueryTree instance;
 
     /** (Optional) Rasdaman encoding format, to apply to array objects before saving them to disk. */

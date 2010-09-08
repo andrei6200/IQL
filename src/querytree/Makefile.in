@@ -46,17 +46,14 @@ AR = ar
 ARFLAGS = cru
 libquerytree_a_AR = $(AR) $(ARFLAGS)
 libquerytree_a_LIBADD =
-am_libquerytree_a_OBJECTS = QtCartesianProduct.$(OBJEXT) \
-	QtEncodeArray.$(OBJEXT) QtRasqlFunction.$(OBJEXT) \
-	QtSqlFunction.$(OBJEXT) QtPostGisFunction.$(OBJEXT) \
-	QtInducedOperation.$(OBJEXT) QtString.$(OBJEXT) \
-	QtRasqlInterval.$(OBJEXT) QtCreateArray.$(OBJEXT) \
-	QtJoin.$(OBJEXT) QtSelectStatement.$(OBJEXT) \
-	QtTrimOperation.$(OBJEXT) QtDataSource.$(OBJEXT) \
-	QtList.$(OBJEXT) QueryTree.$(OBJEXT) QtConst.$(OBJEXT) \
-	QtNode.$(OBJEXT) QtColumn.$(OBJEXT) \
-	QtBinaryOperation.$(OBJEXT) QtWhere.$(OBJEXT) QtDot.$(OBJEXT) \
-	QtPaginate.$(OBJEXT) QtSort.$(OBJEXT)
+am_libquerytree_a_OBJECTS = QtBinaryOperation.$(OBJEXT) \
+	QtJoin.$(OBJEXT) QtRasqlInterval.$(OBJEXT) QtWhere.$(OBJEXT) \
+	QtColumn.$(OBJEXT) QtList.$(OBJEXT) \
+	QtSelectStatement.$(OBJEXT) QueryTree.$(OBJEXT) \
+	QtConst.$(OBJEXT) QtNode.$(OBJEXT) QtSqlFunction.$(OBJEXT) \
+	QtDataSource.$(OBJEXT) QtPostGisFunction.$(OBJEXT) \
+	QtString.$(OBJEXT) QtEncodeArray.$(OBJEXT) \
+	QtRasqlFunction.$(OBJEXT) QtTrimOperation.$(OBJEXT)
 libquerytree_a_OBJECTS = $(am_libquerytree_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -168,12 +165,11 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libquerytree.a
 libquerytree_a_SOURCES = \
-		QtCartesianProduct.cpp  QtEncodeArray.cpp       QtRasqlFunction.cpp    QtSqlFunction.cpp	\
-		QtPostGisFunction.cpp	QtInducedOperation.cpp  QtString.cpp		QtRasqlInterval.cpp	\
-		QtCreateArray.cpp       QtJoin.cpp              QtSelectStatement.cpp	QtTrimOperation.cpp	\
-		QtDataSource.cpp        QtList.cpp              QueryTree.cpp		QtConst.cpp		\
-		QtNode.cpp              QtColumn.cpp 		QtBinaryOperation.cpp	QtWhere.cpp		\
-		QtDot.cpp               QtPaginate.cpp          QtSort.cpp            
+	QtBinaryOperation.cpp  QtJoin.cpp             QtRasqlInterval.cpp    QtWhere.cpp	\
+	QtColumn.cpp           QtList.cpp             QtSelectStatement.cpp  QueryTree.cpp	\
+	QtConst.cpp            QtNode.cpp             QtSqlFunction.cpp		\
+	QtDataSource.cpp       QtPostGisFunction.cpp  QtString.cpp		\
+	QtEncodeArray.cpp      QtRasqlFunction.cpp    QtTrimOperation.cpp
 
 AM_CXXFLAGS = -w -I.. -I@RASDAMAN@/include
 all: all-am
@@ -225,23 +221,17 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtBinaryOperation.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtCartesianProduct.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtColumn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtConst.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtCreateArray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtDataSource.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtDot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtEncodeArray.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtInducedOperation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtJoin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtList.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtNode.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtPaginate.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtPostGisFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtRasqlFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtRasqlInterval.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtSelectStatement.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtSort.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtSqlFunction.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtString.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QtTrimOperation.Po@am__quote@

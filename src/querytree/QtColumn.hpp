@@ -10,7 +10,7 @@
 
 #include "QtNode.hpp"
 
-
+/** Represents a reference to a relational table column or to a Rasdaman collection.*/
 class QtColumn : public QtNode
 {
 public:

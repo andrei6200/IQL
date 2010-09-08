@@ -12,80 +12,67 @@
 #include <pqxx/pqxx>
 #include <map>
 
-
+/** Datasource adapter for PostgreSQL. */
 class PostgresDS : public DataSourceInterface
 {
 public:
-    // default constructor
     PostgresDS();
 
-    // constructor with connection options
     PostgresDS(std::string opts);
 
-    // destructor
     ~PostgresDS();
 
-    // Connects to the data source
     void connect();
 
-    // Returns the connection status
     bool isConnected();
 
-    // Public interface for commit current transaction
     void commit();
 
-    // Returns the list of available object names (tables/collections)
     std::vector<std::string> getObjectNames();
 
-    // Breaks the connection
     void disconnect();
 
-    // Execute a query on the current data source
     HqlTable* query(std::string q);
 
-    // Execute a query and return a pqxx result object
     pqxx::result regularQuery(std::string queryString);
 
-    // Insert some data in a temporary table
     void insertData(HqlTable* table, std::string tableName);
 
-    // Remember the name of a temporary table
     void addTempTable(std::string name);
 
-    // Drop tables that have been created during a query execution
     void removeTempTables();
 
-    // Insert an HQL id column to the named table
+    /** Insert an HQL id column to the named table */
     void insertHqlIdToTable(std::string table);
 
 private:
 
-    // Open transaction
+    /** Open transaction */
     void openTa();
 
-    // Abort transaction
+    /** Abort transaction */
     void abortTa();
 
-    // Commit transaction
+    /** Commit transaction */
     void commitTa();
 
-    // Open connection to base DB
+    /** Open connection to base DB */
     void openConn();
 
-    // Close connection to base DB
+    /** Close connection to base DB */
     void closeConn();
 
     
-    // Connection options
+    /** Connection options */
     std::string options;
 
-    // Connection
+    /** Connection */
     pqxx::connection_base *conn;
 
-    // Transaction
+    /** Transaction */
     pqxx::work *tr;
 
-    // List of temporary table names
+    /** List of temporary table names */
     std::map<std::string, bool> tempTables;
 };
 
