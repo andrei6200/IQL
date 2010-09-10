@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "str.h"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 #include "logger.hpp"
 #include "querytree/QueryTree.hpp"
 

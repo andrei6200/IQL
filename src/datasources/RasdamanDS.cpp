@@ -14,7 +14,7 @@
 
 
 // Filename pattern, for Rasdaman coverages stored on disk
-#define DEFAULT_OUTFILE_MASK "hql_%d"
+#define DEFAULT_OUTFILE_MASK "iql_%d"
 
 
 using namespace std;
