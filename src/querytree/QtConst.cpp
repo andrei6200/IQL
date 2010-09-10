@@ -53,7 +53,8 @@ string QtConst::toString()
 
 DbEnum QtConst::setupDbSource()
 {
-    return POSTGRES;
+    db_source = POSTGRES;
+    return db_source;
 }
 
 void QtConst::print(ostream &o, std::string indent)

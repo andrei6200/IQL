@@ -3234,78 +3234,63 @@ inductionExp: SQRT LRPAR generalExp RRPAR
 	}
 	| generalExp OVERLAY generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp IS generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp AND generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp OR generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp XOR generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp PLUS generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp MINUS generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp MULT generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp DIV generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp EQUAL generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp LESS generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp GREATER generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
  	}
 	| generalExp LESSEQUAL generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp GREATEREQUAL generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
 	}
 	| generalExp NOTEQUAL generalExp
 	{
-//            $$ = cat3($1->toCString(), $2, $3->toCString());
-            $$ = $3;
+            $$ = new QtBinaryOperation($1, strdup($2), $3);
  	}
 	| PLUS  generalExp %prec UNARYOP
 	{
