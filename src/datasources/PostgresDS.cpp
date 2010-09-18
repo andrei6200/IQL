@@ -267,25 +267,7 @@ void PostgresDS::insertData(IqlTable* table, string tableName)
     }
 
     /* (2) Create the table, with an appropriate structure. */
-
-    string query = "\nCREATE TABLE " + tableName + " (\n";
-    // The first column always exists : it stores the HQL ID.
-    query += "\t" + table->qnames[0] + " VARCHAR \n";
-    for (int i = 1; i < table->qnames.size(); i++)
-        query += string(", \n\t") + table->qnames[i] + " VARCHAR \n";
-    query += ")";
-
-    connect();
-    try
-    {
-        tr->exec(query);
-        TRACE << "Created table " << tableName;
-    }
-    catch (pqxx_exception &e)
-    {
-        ERROR << e.base().what();
-        abortTa();
-    }
+    createTable(table, tableName);
     
     /* (3) Insert the data into the table. */
     connect();
@@ -335,4 +317,27 @@ void PostgresDS::insertHqlIdToTable(string table)
     q += "DROP SEQUENCE hqlid; ";
     IqlTable *result = this->query(q);
     delete result;
+}
+
+void PostgresDS::createTable(IqlTable *table, std::string tableName)
+{
+    string query = "\nCREATE TABLE " + tableName + " (\n";
+    string datatype = table->getDataType();
+    // The first column always exists : it stores the HQL ID.
+    query += "\t" + table->qnames[0] + " " + datatype + "\n";
+    for (int i = 1; i < table->qnames.size(); i++)
+        query += string(", \n\t") + table->qnames[i] + " " + datatype + " \n";
+    query += ")";
+
+    connect();
+    try
+    {
+        tr->exec(query);
+        TRACE << "Created table " << tableName << " with type: " << datatype;
+    }
+    catch (pqxx_exception &e)
+    {
+        ERROR << e.base().what();
+        abortTa();
+    }
 }

@@ -37,7 +37,7 @@ using namespace pqxx;
 
 IqlTable::IqlTable(string name)
     : rows(0), columns(0), hiddenCount(0), storage(POSTGRES),
-        tableName(name), dataAlsoInMemory(false)
+        tableName(name), dataAlsoInMemory(false), dataType("VARCHAR")
 {
     TRACE << "Created IqlTable '" << tableName << "' with " << rows << " rows and "
             << columns - hiddenCount << " columns ( +" << hiddenCount << " hidden)";
@@ -50,7 +50,7 @@ IqlTable::IqlTable(string name)
 /* Import data from the result of a RaSQL query. */
 IqlTable::IqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
     :rows(0), columns(0), hiddenCount(0), storage(POSTGRES),
-        tableName(""), dataAlsoInMemory(true)
+        tableName(""), dataAlsoInMemory(true), dataType("VARCHAR")
 {
     INFO << "Import from Rasdaman result ...";
 
@@ -147,7 +147,7 @@ IqlTable::IqlTable(r_Set<r_Ref_Any> *resultSet, bool storeOnDisk)
 /* Import data from the result of an SQL query. */
 IqlTable::IqlTable(pqxx::result sqlResult)
     :rows(0), columns(0), hiddenCount(0), storage(POSTGRES),
-        tableName(""), dataAlsoInMemory(true)
+        tableName(""), dataAlsoInMemory(true), dataType("VARCHAR")
 {
     TRACE << "Importing from Postgres result with " << sqlResult.size() 
             << " rows and " << sqlResult.columns() << " columns ... ";
@@ -165,15 +165,16 @@ IqlTable::IqlTable(pqxx::result sqlResult)
     for (int i = 0; i < newcols; i++)
     {
         newqnames[i] = newnames[i] = sqlResult.column_name(i);
+        string suffix = IQL_TBL_COL_SEP + "oid";
         // Hide OIDs and the internal ID column
-        if (newqnames[i].rfind("_oid") == newqnames[i].length() - 4 || newqnames[i] == HQL_COL)
+        if (newqnames[i].rfind(suffix) == newqnames[i].length() - suffix.size() || newqnames[i] == HQL_COL)
         {
             newhidden[i] = true;
             hiddenCount ++;
         }
-        int pos = newqnames[i].find("_");
+        int pos = newqnames[i].find(IQL_TBL_COL_SEP);
         if (pos != string::npos)
-            newnames[i] = newqnames[i].substr(pos+1);
+            newnames[i] = newqnames[i].substr(pos + IQL_TBL_COL_SEP_SIZE);
     }
 
     // Append the new data
@@ -399,7 +400,7 @@ void IqlTable::setName(string name, bool updateColumnNames)
     {
         for (int i = 0; i < qnames.size(); i ++)
             if (qnames[i].find(name) != 0)
-                qnames[i] = tableName + "_" + qnames[i];
+                qnames[i] = tableName + IQL_TBL_COL_SEP + qnames[i];
     }
 }
 
@@ -418,7 +419,7 @@ void IqlTable::setFilenames(vector<string> values, int colIndex)
     if (colIndex < 0 || colIndex >= columns)
         throw string("Table column index out of range. ");
     
-    string s("_filename");
+    string s(IQL_TBL_COL_SEP + "filename");
     if (qnames.at(colIndex).rfind(s) != qnames.at(colIndex).size() - s.size())
         throw string("Internal Error: Setting non-filename columns is not "
                 "allowed for IqlTable. ");
@@ -444,4 +445,54 @@ int IqlTable::rowCount()
 vector<string> IqlTable::getColumnNames()
 {
     return names;
+}
+
+void IqlTable::setDataType(std::string newtype)
+{
+    dataType = newtype;
+}
+
+string IqlTable::getDataType()
+{
+    return dataType;
+}
+
+void IqlTable::deleteColumn(int index)
+{
+    if (index >= 0 && index < columns)
+    {
+        this->columns--;
+        if (this->hidden[index] == true)
+            this->hiddenCount --;
+        this->hidden.erase(hidden.begin() + index);
+        this->names.erase(names.begin() + index);
+        this->qnames.erase(qnames.begin() + index);
+        if (widths.size() > 0)
+            this->widths.erase(widths.begin() + index);
+        for (int i = 0 ; i < rows; i ++)
+        {
+            vector<string> &row = data.at(i);
+            row.erase(row.begin() + index);
+        }
+    }
+    else
+        throw std::out_of_range("Cannot delete column.");
+}
+
+void IqlTable::setColumnName(int index, string name)
+{
+    if (index >= 0 && index < columns)
+    {
+        names[index] = name;
+        int pos = qnames[index].rfind(IQL_TBL_COL_SEP);
+        if (pos != string::npos)
+        {
+            string prefix = qnames[index].substr(0, pos);
+            qnames[index] = prefix + name;
+        }
+        else
+            qnames[index] = name;
+    }
+    else
+        throw std::out_of_range("Cannot set column name.");
 }

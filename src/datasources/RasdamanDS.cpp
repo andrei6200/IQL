@@ -251,7 +251,7 @@ IqlTable* RasdamanDS::getCollection(string name, bool storeOnDisk, bool updateCo
     if (updateCols)
         for (int i = 0; i < out->getQualifiedColumnNames().size(); i++)
             if (out->qnames[i] != HQL_COL)
-                out->qnames[i] = name + "_" + out->qnames[i];
+                out->qnames[i] = name + IQL_TBL_COL_SEP + out->qnames[i];
     out->setName(name);
     return out;
 }

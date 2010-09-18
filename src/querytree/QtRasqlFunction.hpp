@@ -19,8 +19,10 @@
 class QtRasqlFunction : public QtNode
 {
 public:
-    /** Constructors for one parameter functions */
-    QtRasqlFunction(std::string name, QtNode* node);
+    /** Constructors for one parameter functions. Reduce operations should change
+     * the boolean parameter, to let the system know that the output will be of
+     * scalar type.  */
+    QtRasqlFunction(std::string name, QtNode* node, bool reduceOperation = false);
 
     /** Constructors for two parameter functions */
     QtRasqlFunction(std::string name, QtNode* node1, QtNode* node2);
@@ -37,21 +39,24 @@ public:
      */
     DbEnum setupDbSource();
 
-    /** Get the source system that can handle this node. */
-    DbEnum getDbSource();
-
     /** Execute the operation of this node and return a IqlTable result. */
     IqlTable* execute();
 
     virtual void print(ostream &o, std::string indent = "");
 
 private:
+
+    /** Compute the output datatype of the current operation. */
+    std::string computeDatatype();
+
     /** function name */
     std::string fname;
     /** children nodes */
     QtNode *child1, *child2;
     /** children count */
     int nodeCount;
+    /** Is the output of this operation of scalar type ? */
+    bool scalarOutput;
 };
 
 #endif	/* QTRASQLFUNCTION_HPP */

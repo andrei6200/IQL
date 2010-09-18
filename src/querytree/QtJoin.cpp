@@ -225,9 +225,9 @@ map<string, string> QtJoin::getColumns(std::string tableName)
         if (qualifiedNames[i] != HQL_COL)
         {
             // format: tableName_columnName
-            int pos = qualifiedNames[i].find("_");
+            int pos = qualifiedNames[i].find(IQL_TBL_COL_SEP);
             table = qualifiedNames[i].substr(0, pos);
-            column = qualifiedNames[i].substr(pos+1);
+            column = qualifiedNames[i].substr(pos + IQL_TBL_COL_SEP_SIZE);
             result[column] = qualifiedNames[i];
         }
 

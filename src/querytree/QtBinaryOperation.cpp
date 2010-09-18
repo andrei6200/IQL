@@ -85,6 +85,7 @@ IqlTable* QtBinaryOperation::execute()
     vector<string> names;
     vector<vector<string> > rows;
     vector<vector<string> >::iterator it;
+    string oidsuffix = IQL_TBL_COL_SEP + "oid";
 
     setupDbSource();
 
@@ -131,7 +132,7 @@ IqlTable* QtBinaryOperation::execute()
                 // Retrieve the Rasdaman collection name
                 names = tmp->getQualifiedColumnNames();
                 for (int i = 0; i < names.size(); i ++)
-                    if (names[i] != HQL_COL && names[i].rfind("_oid") != string::npos)
+                    if (names[i] != HQL_COL && names[i].rfind(oidsuffix) != string::npos)
                     {
                         count ++;
                         col1 = names[i];
@@ -139,7 +140,7 @@ IqlTable* QtBinaryOperation::execute()
                     }
                 if (count != 1)
                     throw string("Could not determine Rasdaman collection name.");
-                mddName = col1.substr(0, col1.rfind("_oid"));
+                mddName = col1.substr(0, col1.rfind(oidsuffix));
                 TRACE << "Found Rasdaman collection name for first operand: " << mddName;
             }
             else
@@ -156,9 +157,10 @@ IqlTable* QtBinaryOperation::execute()
             if (child2->getDbSource() == RASDAMAN)
             {
                 // Retrieve the Rasdaman collection name
+                
                 names = tmp->getQualifiedColumnNames();
                 for (int i = 0; i < names.size(); i ++)
-                    if (names[i] != HQL_COL && names[i].rfind("_oid") != string::npos)
+                    if (names[i] != HQL_COL && names[i].rfind(oidsuffix) != string::npos)
                     {
                         count ++;
                         col2 = names[i];
@@ -166,7 +168,7 @@ IqlTable* QtBinaryOperation::execute()
                     }
                 if (count != 1)
                     throw string("Could not determine Rasdaman collection name.");
-                mddName = col2.substr(0, col2.rfind("_oid"));
+                mddName = col2.substr(0, col2.rfind(oidsuffix));
                 TRACE << "Found Rasdaman collection name for second operand: " << mddName;
             }
             else
@@ -227,7 +229,7 @@ IqlTable* QtBinaryOperation::execute()
             // Retrieve the Rasdaman collection names for the operands
             names = tmp->getQualifiedColumnNames();
             for (int i = 0; i < names.size(); i ++)
-                if (names[i] != HQL_COL && names[i].rfind("_oid") != string::npos)
+                if (names[i] != HQL_COL && names[i].rfind(oidsuffix) != string::npos)
                 {
                     if (count < 2)
                         col [ count ] = names[i];
@@ -235,8 +237,8 @@ IqlTable* QtBinaryOperation::execute()
                 }
             if (count != 2)
                 throw string("Could not determine Rasdaman collection names for all operands.");
-            col1 = col[0].substr(0, col[0].rfind("_oid"));
-            col2 = col[1].substr(0, col[1].rfind("_oid"));
+            col1 = col[0].substr(0, col[0].rfind(oidsuffix));
+            col2 = col[1].substr(0, col[1].rfind(oidsuffix));
             TRACE << "Found Rasdaman collection name for first operand: " << col1;
             TRACE << "Found Rasdaman collection name for second operand: " << col2;
 

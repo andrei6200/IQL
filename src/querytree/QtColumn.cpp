@@ -79,14 +79,14 @@ IqlTable* QtColumn::execute()
             // The column names are prefixed with the table name
             string col = table;
             if (table != "")
-                col += "_" + this->column;
+                col += IQL_TBL_COL_SEP + this->column;
             else
             {
                 /* search for the source table */
                 TRACE << "Searching for column: " << this->column;
                 vector<string> names = prod->getQualifiedColumnNames();
                 int colCount = 0;
-                string suffix("_filename");
+                string suffix(IQL_TBL_COL_SEP + "filename");
                 for (int i = 0; i < names.size(); i ++)
                 {
                     // Format for Rasdaman columns: table_oid | table_filename
@@ -97,13 +97,13 @@ IqlTable* QtColumn::execute()
                         col = names[i];
                         table = names[i].substr(0, names[i].size() - suffix.size());
                     }
-                    // Format for Postgres columns : table_column
-                    if (names[i].rfind("_" + this->column) == names[i].size() - this->column.size() - 1)
+                    // Format for Postgres columns : table + IQL_TBL_COL_SEP + column
+                    if (names[i].rfind(IQL_TBL_COL_SEP + this->column) == names[i].size() - this->column.size() - IQL_TBL_COL_SEP.size())
                     {
                         TRACE << "Found Postgres column '" << this->column << "' under the name: " << names[i];
                         colCount ++;
                         col = names[i];
-                        table = names[i].substr(0, names[i].size() - this->column.size() - 1);
+                        table = names[i].substr(0, names[i].size() - this->column.size() - IQL_TBL_COL_SEP.size());
                     }
                 }
 //                if (colCount == 0)
@@ -151,21 +151,12 @@ IqlTable* QtColumn::execute()
                     break;
 
                 case RASDAMAN:
-//                    /* Setup the SQL table */
-//                    string col1 = table + "_oid", alias1 = " AS " + this->id + "_oid";
-//                    string col2 = table + "_filename", alias2 = " AS " + this->id + "_filename";
-//                    q = "SELECT " + col1 + alias1 + " , " + col2 + alias2 + ", " + HQL_COL + " INTO "
-//                            + this->id +  " FROM " + prod->getName();
-//                    result = pg.query(q);
-//                    pg.addTempTable(this->id);
-//                    /* Fetch a copy in memory */
-//                    delete result;
-                    q = "SELECT " + table + "_oid FROM " + prod->getName();
+                    q = "SELECT " + table + IQL_TBL_COL_SEP + "oid FROM " + prod->getName();
                     result = pg.query(q);
                     result->setName(this->id);
 
                     /* Create the RaSQL collection with the right number of rows */
-                    vector<string> oids = result->getColumn(table + "_oid");
+                    vector<string> oids = result->getColumn(table + IQL_TBL_COL_SEP + "oid");
                     for (int row = 0 ; row < oids.size(); row ++)
                     {
                         string oid = oids[row];

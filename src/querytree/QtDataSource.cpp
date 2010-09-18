@@ -63,9 +63,9 @@ IqlTable* QtDataSource::execute()
             cols = tmp->getQualifiedColumnNames();
 
             TRACE << q;
-            q = "SELECT " + cols[0] + " AS " + tableName + "_" + cols[0];
+            q = "SELECT " + cols[0] + " AS " + tableName + IQL_TBL_COL_SEP + cols[0];
             for (int i = 1; i < cols.size(); i++)
-                q += ", " + cols[i] + " AS " + tableName + "_" + cols[i];
+                q += ", " + cols[i] + " AS " + tableName + IQL_TBL_COL_SEP + cols[i];
             q += " INTO " + this->id + " FROM " + tableName;
 
             table = pg.query(q);

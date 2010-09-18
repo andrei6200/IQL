@@ -3365,7 +3365,7 @@ condenseVariable: Identifier;
 
 reduceExp: reduceIdent LRPAR generalExp RRPAR
 	{
-            $$ = new QtString(cat4($1->toCString(), $2, $3->toCString(), $4));
+            $$ = new QtRasqlFunction($1->toCString(), $3, true);
 	};
 
 reduceIdent: ALL

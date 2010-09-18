@@ -105,12 +105,14 @@ void QueryTree::saveRasdamanObjectsToDisk(IqlTable *table)
     vector<string> names = table->getQualifiedColumnNames();
     map<string, string> oid2fname = map<string, string>();
     int fileIndex = 0;
+    string suffix_oid = IQL_TBL_COL_SEP + "oid";
+    string suffix_filename = IQL_TBL_COL_SEP + "filename";
     for (int col = 0; col < names.size() - 1; col++)
     {
-        string::size_type pos = names[col].rfind("_oid");
-        string::size_type pos2 = names[col+1].rfind("_filename");
-        if (pos != string::npos && pos == names[col].size() - 4  &&  // end with "_oid"
-            pos2 != string::npos && pos2 == names[col+1].size() - 9) // next col end with "_filename"
+        string::size_type pos = names[col].rfind(suffix_oid);
+        string::size_type pos2 = names[col+1].rfind(suffix_filename);
+        if (pos != string::npos && pos == names[col].size() - suffix_oid.size()  &&  // end with "_oid"
+            pos2 != string::npos && pos2 == names[col+1].size() - suffix_filename.size()) // next col end with "_filename"
         {
             string collName = names[col].substr(0, pos);
             TRACE << "Fetching MDDs from collection: " << collName;

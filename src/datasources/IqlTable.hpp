@@ -22,6 +22,9 @@
 
 // Internal HQL id
 #define HQL_COL "iqlinternalid"
+// Separator between Iql Table name and Column name, in qualified names
+#define IQL_TBL_COL_SEP         string("__")
+#define IQL_TBL_COL_SEP_SIZE    2
 
 /** Represents a table in main memory.
  * 
@@ -43,6 +46,7 @@ public:
     /** Allow full access to the private members of the IqlTable, for efficiency.*/
     friend class PostgresDS;
     friend class RasdamanDS;
+    friend class QtRasqlFunction;
 
     /** A table can be stored in memory, in Postgres or in Rasdaman. */
     enum storageType {MEMORY, POSTGRES, RASDAMAN};
@@ -95,7 +99,21 @@ public:
     /** Returns the number of rows of the current table. */
     int rowCount();
 
+    /** Set a new PostgreSQL datatype for this table.
+     NOTE: The datatype applies for all columns !
+     */
+    void setDataType(std::string newtype);
+
+    /** Returns the PostgreSQL datatype of all the columns. */
+    std::string getDataType();
+
 private:
+
+    /** Delete a column. */
+    void deleteColumn(int index);
+
+    /** Set a column name */
+    void setColumnName(int index, std::string name);
 
     /** The qualified column names (tableName_columnName).  */
     std::vector<std::string> qnames;
@@ -122,6 +140,7 @@ private:
     /** Storage information */
     storageType storage;
     string tableName;
+    string dataType;
 };
 
 

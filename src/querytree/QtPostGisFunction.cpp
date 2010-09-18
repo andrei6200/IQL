@@ -59,7 +59,7 @@ IqlTable* QtPostGisFunction::execute()
     }
     delete tmp;
     
-    q = "SELECT " + function + " ( " + arguments + " ) AS " + this->id + "_" + function
+    q = "SELECT " + function + " ( " + arguments + " ) AS " + this->id + IQL_TBL_COL_SEP + function
             + ", " + HQL_COL + " INTO " + this->id + " FROM " + childTableName;
     result = pg.query(q);
     pg.addTempTable(this->id);

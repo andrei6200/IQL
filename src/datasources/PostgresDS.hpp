@@ -62,6 +62,8 @@ private:
     /** Close connection to base DB */
     void closeConn();
 
+    /** Create a table in the Postgresql database with the datatype of the given table. */
+    void createTable(IqlTable *table, std::string tableName);
     
     /** Connection options */
     std::string options;

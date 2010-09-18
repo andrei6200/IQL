@@ -5,6 +5,7 @@
  * Created on August 4, 2010, 1:47 PM
  */
 
+#include <algorithm>
 #include "datasources/PostgresDS.hpp"
 #include "QtRasqlFunction.hpp"
 #include "datasources/RasdamanDS.hpp"
@@ -13,14 +14,16 @@
 using namespace std;
 
 
-QtRasqlFunction::QtRasqlFunction(string name, QtNode *node)
-    : fname(name), nodeCount(1), child1(node), child2(NULL)
+QtRasqlFunction::QtRasqlFunction(string name, QtNode *node, bool reduceOperation)
+    : fname(name), nodeCount(1), child1(node), child2(NULL), scalarOutput(reduceOperation)
 {
+    transform(fname.begin(), fname.end(), fname.begin(), ::tolower);
 }
 
 QtRasqlFunction::QtRasqlFunction(string name, QtNode* node1, QtNode* node2)
-    : fname(name), nodeCount(2), child1(node1), child2(node2)
+    : fname(name), nodeCount(2), child1(node1), child2(node2), scalarOutput(false)
 {
+    transform(fname.begin(), fname.end(), fname.begin(), ::tolower);
 }
 
 QtRasqlFunction::~QtRasqlFunction()
@@ -51,14 +54,11 @@ string QtRasqlFunction::toString()
     return out;
 }
 
-DbEnum QtRasqlFunction::getDbSource()
-{
-    return RASDAMAN;
-}
-
 DbEnum QtRasqlFunction::setupDbSource()
 {
     db_source = RASDAMAN;
+    if (scalarOutput)
+        db_source = POSTGRES;
     return db_source;
 }
 
@@ -73,6 +73,7 @@ IqlTable* QtRasqlFunction::execute()
     string collName;
     vector<vector<string> > rows;
     vector<vector<string> >::iterator it;
+    string suffix = IQL_TBL_COL_SEP + "oid";
 
     tmp = child1->execute();
     mddName = tmp->getName();
@@ -83,15 +84,39 @@ IqlTable* QtRasqlFunction::execute()
         case 1:
             // The function call looks like this: Function(mdd)
             // We issue a single Rasql query
-            query = "SELECT " + fname + " ( mdd ) INTO " + this->id +
+            
+            if (scalarOutput)   
+            {
+                // output is scalar, do not store it in Rasdaman
+                query = "SELECT " + fname + " ( mdd ) FROM " + mddName +
+                        " AS mdd";
+                result = rman.query(query);
+                result->setName(this->id);
+                string datatype = this->computeDatatype();
+                result->setDataType(datatype);
+
+                /* Delete the first column("oid") and name the second one ("filename") properly. */
+                result->setColumnName(1, fname);
+                result->deleteColumn(0);
+
+                pg.insertData(result, this->id);
+                pg.insertHqlIdToTable(this->id);
+            }
+            else    
+            {
+                // output is an MDD expression, and can be stored in Rasdaman
+                query = "SELECT " + fname + " ( mdd ) INTO " + this->id +
                     " FROM " + mddName + " AS mdd";
-            rman.updateQuery(query);
+                rman.updateQuery(query);
 
-            // Store the new OIDs into Postgresql
-            result = rman.getCollection(this->id, false, false);
-            result->setName(this->id);
+                // Store the new OIDs into Postgresql
+                result = rman.getCollection(this->id, false, false);
+                result->setName(this->id);
 
-            pg.insertData(result, this->id);
+                pg.insertData(result, this->id);
+                pg.insertHqlIdToTable(this->id);
+            }
+            
             break;
         case 2:
             // The function call looks like this: Function(mdd, options)
@@ -105,9 +130,10 @@ IqlTable* QtRasqlFunction::execute()
             // Retrieve the Rasdaman collection name
             names = tmp->getQualifiedColumnNames();
             collName = names[1];
-            if (collName.rfind("_oid") == string::npos)
+            
+            if (collName.rfind(suffix) == string::npos)
                 throw string("Could not determine Rasdaman collection name.");
-            collName = collName.substr(0, collName.rfind("_oid"));
+            collName = collName.substr(0, collName.rfind(suffix));
             TRACE << "Found collection name: " << collName;
 
             /* Build intermediate queries and execute them. */
@@ -156,9 +182,26 @@ IqlTable* QtRasqlFunction::execute()
 
 void QtRasqlFunction::print(ostream& o, std::string indent)
 {
-    o << indent << "QtRasqlFunction (" << id << "): " << fname << endl;
+    o << indent << "QtRasqlFunction (" << id << "): " << fname;
+    if (scalarOutput)
+        o << ", Scalar Output";
+    else
+        o << ", MDD Output";
+    o << endl;
     if (child1)
         child1->print(o, indent + QTINDENT);
     if (child2)
         child2->print(o, indent + QTINDENT);
+}
+
+string QtRasqlFunction::computeDatatype()
+{
+    string type = "VARCHAR";
+    if (scalarOutput)
+    {
+        type = "INTEGER";
+        if (fname == "avg_cells")
+            type = "FLOAT";
+    }
+    return type;
 }

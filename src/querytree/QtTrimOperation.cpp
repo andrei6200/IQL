@@ -55,9 +55,10 @@ IqlTable* QtTrimOperation::execute()
     if (names.size() < 2)
         throw string("A Trim operation needs non-empty interval limits. ");
     string collName = names[1];
-    if (collName.rfind("_oid") == string::npos)
+    string suffix = IQL_TBL_COL_SEP + "oid";
+    if (collName.rfind(suffix) == string::npos)
         throw string("Could not determine Rasdaman collection name.");
-    collName = collName.substr(0, collName.rfind("_oid"));
+    collName = collName.substr(0, collName.rfind(suffix));
     TRACE << "Found collection name: " << collName;
 
     /* Build intermediate queries and execute them. */
