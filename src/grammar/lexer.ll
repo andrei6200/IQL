@@ -12,7 +12,7 @@ int errorCount = 0;
 
 //#include "parser/gramparse.h"
 #include "parser/keywords.h"
-#include "HqlMain.hpp"
+#include "IqlApp.hpp"
 /* Not needed now that this file is compiled as part of gram.y */
 /* #include "parser/gram.h" */
 #include "parser/scansup.h"
@@ -899,7 +899,7 @@ other			.
                                         }
 
                                         /* Is it a PostGIS function name ? */
-                                        bool postgisOk = HqlMain::getInstance().isPostGisFunction(yytext);
+                                        bool postgisOk = IqlApp::getInstance().isPostGisFunction(yytext);
                                         if (postgisOk)
                                         {
                                             yylval.keyword = strdup(yytext);
