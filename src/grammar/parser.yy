@@ -608,12 +608,12 @@ simple_select:
                             /* same as SELECT * FROM relation_expr */
                             
                             QtList *from = new QtList();
-                            QtDataSource src($2);
-                            from->add(&src);
+                            QtDataSource *src = new QtDataSource($2);
+                            from->add(src);
                             QtColumn *ref = new QtColumn((char*)"*");
                             QtList *what = new QtList();
                             what->add(ref);
-                            QtSelectStatement *select = new QtSelectStatement(from, what, NULL);
+                            QtSelectStatement *select = new QtSelectStatement(what, from, NULL);
                             select->query = cat2($1, $2->toCString());
 
                             $$ = select;
@@ -2973,8 +2973,7 @@ condenseOpLit: PLUS
 
 functionExp: OID LRPAR collectionIterator RRPAR
 	{
-            // TODO: Implement the OID function
-            $$ = new QtString($1);
+            $$ = new QtRasqlFunction(strdup($1), new QtColumn($3));
 	}
 	| SHIFT LRPAR generalExp COMMA generalExp RRPAR
 	{
