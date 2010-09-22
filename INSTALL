@@ -1,0 +1,31 @@
+=====================================================
+			Installation Guidelines 
+					for the 
+	Integrated Query Language client application
+=====================================================
+
+
+(1) Rasdaman needs to be patched:
+$ cd rasdaman.community
+$ wget http://github.com/downloads/andrei6200/IQL/0001-Bugfix-Custom-inserted-MDD-or-Set-types-could-not-be.patch
+$ wget http://github.com/downloads/andrei6200/IQL/0002-Implemented-SELECT-INTO-statements.patch
+$ git am -3 *.patch
+$ make install
+
+(2) Optionally, download the sample PostgreSQL + PostGIS database and use it:
+$ wget http://github.com/downloads/andrei6200/IQL/gis.sql.tar.gz
+$ tar zxvf gis.sql.tar.gz
+$ sudo /etc/init.d/postgresql-8.4 start
+$ psql < gis.sql
+
+(3) The compilation from source is done as follows:
+
+$ git clone git://github.com/andrei6200/IQL.git
+.... edit configure.ac and modify the rasdaman installation path
+$ autoconf && automake
+$ ./configure
+$ edit src/config.hpp   and change the default settings for database connectivity
+$ make
+
+That's it ! You can now run the IQL application with 
+$ ./src/iql

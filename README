@@ -1,0 +1,28 @@
+  Integrated Query Language 
+	Client Application
+
+
+The Integrated Query Language combines the Rasdaman Query Language and the SQL language. Thus, it allows queries that access array data from Rasdaman and relational data from Postgres, combining them in interesting ways. 
+
+A sample database that can be used is located at <http://github.com/downloads/andrei6200/IQL/gis.sql.tar.gz>. Instructions on how to use it can be found in the INSTALL file. 
+
+Below are some sample queries:
+	SELECT png(rgb) FROM rgb
+	SELECT * FROM sql
+	SELECT * FROM sql, mr
+	SELECT png(rgb), sql.* FROM sql, rgb
+	SELECT ST_AsText(geom) FROM gtest;
+	SELECT ST_AsText(ST_GeomFromText(str)) FROM gtest2;
+	SELECT id ^ 2 + id FROM sql;
+	SELECT rgb[1:100, *:*] FROM rgb;
+	SELECT scale(rgb, 2) FROM rgb;
+	SELECT scale(rgb, vector) FROM rgb, limits;
+	SELECT 'a' LIKE '%a%' FROM sql;
+	SELECT * FROM sql WHERE id > 1;
+	SELECT * FROM sql NATURAL JOIN rgb;
+	SELECT * FROM sql CROSS JOIN sql2;
+	SELECT * FROM sql NATURAL JOIN sql2 USING (id, oid);
+	SELECT * FROM sql JOIN sql2 ON sql.id != sql2.id;
+	SELECT png(100 + rgb) FROM rgb;
+	SELECT avg_cells(rgb) from rgb;
+	SELECT max_cells(mr) FROM mr;
