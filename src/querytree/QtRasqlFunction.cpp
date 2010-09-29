@@ -101,6 +101,7 @@ IqlTable* QtRasqlFunction::execute()
 
                 pg.insertData(result, this->id);
                 pg.insertHqlIdToTable(this->id);
+				pg.addTempTable(this->id);
             }
             else    
             {
@@ -115,6 +116,7 @@ IqlTable* QtRasqlFunction::execute()
 
                 pg.insertData(result, this->id);
                 pg.insertHqlIdToTable(this->id);
+				pg.addTempTable(this->id);
             }
             
             break;
